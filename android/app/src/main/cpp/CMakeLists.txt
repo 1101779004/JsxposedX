@@ -1,0 +1,66 @@
+cmake_minimum_required(VERSION 3.22.1)
+project(so_analysis)
+
+include(FetchContent)
+
+set(CAPSTONE_ARCHITECTURE_DEFAULT OFF)
+set(CAPSTONE_ARM_SUPPORT ON)
+set(CAPSTONE_ARM64_SUPPORT ON)
+set(CAPSTONE_X86_SUPPORT OFF)
+set(CAPSTONE_MIPS_SUPPORT OFF)
+set(CAPSTONE_PPC_SUPPORT OFF)
+set(CAPSTONE_SPARC_SUPPORT OFF)
+set(CAPSTONE_SYSZ_SUPPORT OFF)
+set(CAPSTONE_XCORE_SUPPORT OFF)
+set(CAPSTONE_M68K_SUPPORT OFF)
+set(CAPSTONE_TMS320C64X_SUPPORT OFF)
+set(CAPSTONE_M680X_SUPPORT OFF)
+set(CAPSTONE_EVM_SUPPORT OFF)
+set(CAPSTONE_BUILD_STATIC ON)
+set(CAPSTONE_BUILD_SHARED OFF)
+set(CAPSTONE_BUILD_TESTS OFF)
+set(CAPSTONE_BUILD_CSTOOL OFF)
+
+FetchContent_Declare(
+    capstone
+    GIT_REPOSITORY https://github.com/capstone-engine/capstone.git
+    GIT_TAG        5.0.1
+    GIT_SHALLOW    TRUE
+)
+FetchContent_MakeAvailable(capstone)
+
+set(LIEF_PREBUILT_DIR ${CMAKE_SOURCE_DIR}/../jniLibs/lief/${ANDROID_ABI})
+set(LIEF_LIB ${LIEF_PREBUILT_DIR}/libLIEF.a)
+
+if(EXISTS ${LIEF_LIB})
+    add_library(LIEF STATIC IMPORTED)
+    set_target_properties(LIEF PROPERTIES
+        IMPORTED_LOCATION ${LIEF_LIB}
+        INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_SOURCE_DIR}/../jniLibs/lief/include
+    )
+
+    add_library(so_analysis SHARED
+        so_analysis_jni.cpp
+    )
+
+    target_include_directories(so_analysis PRIVATE
+        ${CMAKE_SOURCE_DIR}/../jniLibs/lief/include
+        ${capstone_SOURCE_DIR}/include
+    )
+
+    target_link_libraries(so_analysis
+        LIEF
+        capstone
+        android
+        log
+        z
+    )
+
+    target_compile_options(so_analysis PRIVATE
+        -fexceptions
+        -frtti
+        -std=c++17
+    )
+else()
+    message(STATUS "LIEF not found for ${ANDROID_ABI}, skipping so_analysis")
+endif()

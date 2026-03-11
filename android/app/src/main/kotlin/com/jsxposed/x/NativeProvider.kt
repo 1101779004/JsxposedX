@@ -1,0 +1,34 @@
+package com.jsxposed.x
+
+import com.jsxposed.x.core.bridge.apk_analysis_native.ApkAnalysisNative
+import com.jsxposed.x.core.bridge.apk_analysis_native.ApkAnalysisNativeImpl
+import com.jsxposed.x.core.bridge.app_native.AppNative
+import com.jsxposed.x.core.bridge.pinia_native.PiniaNativeImpl
+import com.jsxposed.x.core.bridge.zygisk_frida_native.ZygiskFridaNative
+import com.jsxposed.x.core.bridge.zygisk_frida_native.ZygiskFridaNativeImpl
+import com.jsxposed.x.core.bridge.status_management_native.StatusManagementNative
+import com.jsxposed.x.core.bridge.status_management_native.StatusManagementNativeImpl
+import com.jsxposed.x.core.bridge.app_native.AppNativeImpl
+import com.jsxposed.x.core.bridge.pinia_native.PiniaNative
+import com.jsxposed.x.core.bridge.project_native.ProjectNative
+import com.jsxposed.x.core.bridge.project_native.ProjectNativeImpl
+import com.jsxposed.x.core.bridge.so_analysis_native.SoAnalysisNative
+import com.jsxposed.x.core.bridge.so_analysis_native.SoAnalysisNativeImpl
+import com.jsxposed.x.core.bridge.lsposed_native.LSPosedNative
+import com.jsxposed.x.core.bridge.lsposed_native.LSPosedNativeImpl
+import io.flutter.plugin.common.BinaryMessenger
+
+object NativeProvider {
+    fun registerAll(context: android.content.Context, messenger: BinaryMessenger) {
+        PiniaNative.setUp(messenger, PiniaNativeImpl(context))
+        StatusManagementNative.setUp(messenger, StatusManagementNativeImpl(context))
+        AppNative.setUp(messenger, AppNativeImpl(context))
+        ProjectNative.setUp(messenger, ProjectNativeImpl(context))
+        val apkAnalysisImpl = ApkAnalysisNativeImpl(context)
+        ApkAnalysisNative.setUp(messenger, apkAnalysisImpl)
+        SoAnalysisNative.setUp(messenger, SoAnalysisNativeImpl(context, apkAnalysisImpl.sharedSession))
+        // XposedService 连接已在 App.onCreate() 中初始化
+        LSPosedNative.setUp(messenger, LSPosedNativeImpl(context))
+        ZygiskFridaNative.setUp(messenger, ZygiskFridaNativeImpl(context))
+    }
+}

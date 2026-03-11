@@ -1,0 +1,674 @@
+﻿{
+  "@@locale": "en",
+  "appName": "JSXPOSEDX",
+  "@appName": {
+    "description": "Application name"
+  },
+  "appSubtitle": "Cross-platform Hook debugging tool based on Xposed Frida",
+  "@appSubtitle": {
+    "description": "Application subtitle"
+  },
+  "home": "Home",
+  "@home": {
+    "description": "Home page title"
+  },
+  "project": "Project",
+  "@project": {
+    "description": "Project"
+  },
+  "repository": "Repository",
+  "@repository": {
+    "description": "Repository"
+  },
+  "settings": "Settings",
+  "@settings": {
+    "description": "Settings page"
+  },
+  "language": "Language",
+  "@language": {
+    "description": "Language settings"
+  },
+  "theme": "Theme",
+  "@theme": {
+    "description": "Theme settings"
+  },
+  "lightTheme": "Light Theme",
+  "@lightTheme": {
+    "description": "Light theme"
+  },
+  "darkTheme": "Dark Theme",
+  "@darkTheme": {
+    "description": "Dark theme"
+  },
+  "chinese": "简体中文",
+  "@chinese": {
+    "description": "Chinese"
+  },
+  "english": "English",
+  "@english": {
+    "description": "English"
+  },
+  "confirm": "Confirm",
+  "@confirm": {
+    "description": "Confirm button"
+  },
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Cancel button"
+  },
+  "save": "Save",
+  "@save": {
+    "description": "Save button"
+  },
+  "delete": "Delete",
+  "@delete": {
+    "description": "Delete button"
+  },
+  "edit": "Edit",
+  "@edit": {
+    "description": "Edit button"
+  },
+  "add": "Add",
+  "@add": {
+    "description": "Add button"
+  },
+  "search": "Search",
+  "@search": {
+    "description": "Search"
+  },
+  "loading": "Loading...",
+  "@loading": {
+    "description": "Loading message"
+  },
+  "success": "Success",
+  "@success": {
+    "description": "Success message"
+  },
+  "error": "Error",
+  "@error": {
+    "description": "Error message"
+  },
+  "warning": "Warning",
+  "@warning": {
+    "description": "Warning message"
+  },
+  "info": "Info",
+  "@info": {
+    "description": "Info message"
+  },
+  "hookStatus": "Hook Status",
+  "@hookStatus": {
+    "description": "Hook status"
+  },
+  "hookEnabled": "Hook Enabled",
+  "@hookEnabled": {
+    "description": "Hook enabled"
+  },
+  "hookDisabled": "Hook Disabled",
+  "@hookDisabled": {
+    "description": "Hook disabled"
+  },
+  "moduleInfo": "Module Info",
+  "@moduleInfo": {
+    "description": "Module information"
+  },
+  "version": "Version",
+  "@version": {
+    "description": "Version number"
+  },
+  "about": "About",
+  "@about": {
+    "description": "About page"
+  },
+  "community": "Community",
+  "@community": {
+    "description": "Community section title"
+  },
+  "officialCommunity": "Get tutorials and community support",
+  "@officialCommunity": {
+    "description": "Official community description"
+  },
+  "forum": "Forum",
+  "@forum": {
+    "description": "Forum"
+  },
+  "visitForum": "Visit Forum",
+  "@visitForum": {
+    "description": "Visit forum button"
+  },
+  "joinDiscord": "Join Discord",
+  "@joinDiscord": {
+    "description": "Join Discord button"
+  },
+  "joinQQGroup": "Join QQ Group",
+  "@joinQQGroup": {
+    "description": "Join QQ group button"
+  },
+  "followAuthor": "Follow the Author",
+  "@followAuthor": {
+    "description": "Follow author section title"
+  },
+  "creatorPlatforms": "Get Tutorials",
+  "@creatorPlatforms": {
+    "description": "Creator platforms entry"
+  },
+  "morePlatforms": "More Platforms",
+  "@morePlatforms": {
+    "description": "More platforms"
+  },
+  "pageNotFound": "Page Not Found: {error}",
+  "@pageNotFound": {
+    "description": "404 page title",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "backToHome": "Back to Home",
+  "@backToHome": {
+    "description": "Back to home button"
+  },
+  "retry": "Retry",
+  "@retry": {
+    "description": "Retry button"
+  },
+  "loadFailedMessage": "Load failed, please retry",
+  "@loadFailedMessage": {
+    "description": "Load failed message"
+  },
+  "activated": "Activated",
+  "@activated": {
+    "description": "Activated status"
+  },
+  "notActivated": "Not Activated",
+  "@notActivated": {
+    "description": "Not activated status"
+  },
+  "fridaPartial": "Partial",
+  "@fridaPartial": {
+    "description": "Frida partial status"
+  },
+  "fridaGlobal": "Global",
+  "@fridaGlobal": {
+    "description": "Frida global status"
+  },
+  "fridaUnknown": "Unknown",
+  "@fridaUnknown": {
+    "description": "Unknown status"
+  },
+  "fridaNotInstalledShort": "Not installed",
+  "@fridaNotInstalledShort": {
+    "description": "Short Frida not installed status"
+  },
+  "fridaInitAbnormal": "Initialization error",
+  "@fridaInitAbnormal": {
+    "description": "Frida initialization abnormal state"
+  },
+  "fridaStatusEnabled": "Enabled",
+  "@fridaStatusEnabled": {
+    "description": "Frida enabled status"
+  },
+  "fridaStatusDisabled": "Disabled",
+  "@fridaStatusDisabled": {
+    "description": "Frida disabled status"
+  },
+  "fridaTargetDisabled": "Target disabled",
+  "@fridaTargetDisabled": {
+    "description": "Frida target disabled state"
+  },
+  "fridaEffective": "Active",
+  "@fridaEffective": {
+    "description": "Frida effective status"
+  },
+  "zygiskFridaModuleNotInstalled": "Zygisk Frida module is not installed",
+  "@zygiskFridaModuleNotInstalled": {
+    "description": "Prompt when Zygisk Frida module is missing"
+  },
+  "systemVersion": "System Version",
+  "sdkVersion": "SDK Version",
+  "deviceModel": "Device Model",
+  "systemStorage": "System Storage",
+  "cpuArchitecture": "CPU Architecture",
+  "frameworkPackageName": "Framework Package Name",
+  "copy": "Copy",
+  "selectAll": "Select All",
+  "cut": "Cut",
+  "paste": "Paste",
+  "comment": "Comment",
+  "codeCopied": "Code copied to clipboard",
+  "totalStorage": "Total",
+  "available": "Available",
+  "softwareIcon": "Software Icon",
+  "needRootPermission": "You must grant Root permission",
+  "pleaseActivateXposed": "Please activate Xposed first",
+  "initFrida": "Initialize Frida",
+
+  "homeTitleAI": "AI",
+  "homeTitleRoot": "Root",
+  "homeTitleXposed": "Xposed",
+  "homeTitleFrida": "Frida",
+  "themeColor": "Theme Color",
+  "selectThemeColor": "Select Theme Color",
+  "aiConfig": "AI Configuration",
+  "aiConfigTitle": "AI Settings",
+  "aiBaseUrl": "API Base URL",
+  "aiBaseUrlHint": "Enter API Base URL",
+  "aiApiKeyHint": "Enter API Key",
+  "aiMaxTokens": "Max Tokens",
+  "aiMaxTokensHint": "Enter maximum tokens",
+  "aiModelName": "Model Name",
+  "aiModelNameHint": "Enter model name",
+  "aiTemperature": "Temperature",
+  "aiMemoryRounds": "Memory Rounds",
+  "cannotBeEmpty": "{field} cannot be empty",
+  "saveSuccess": "Save Success",
+  "test": "Test",
+  "selectApp": "Select App",
+  "showSystemApps": "Show System Apps",
+  "searchAppsPlaceholder": "Global search app name or package...",
+  "loadedCount": "Loaded: {loaded} / Match: {total}",
+  "@loadedCount": {
+    "placeholders": {
+      "loaded": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "systemAppLabel": "System",
+  "alreadySelected": "Selected: {name}",
+  "notice": "Notice",
+  "updateAvailableTitle": "New Version Available",
+  "updateContentTitle": "What's New",
+  "updateNow": "Update Now",
+  "updateContentFallback": "• Fix known issues\n• Improve user experience\n• Enhance app performance",
+  "noRelatedApps": "No related apps found",
+  "projectListEmpty": "No projects yet, create one from the home page",
+  "projectLoadFailed": "Load failed: {error}",
+  "confirmDelete": "Confirm delete?",
+  "xposedProject": "Xposed Project",
+  "fridaProject": "Frida Project",
+  "quickFunctions": "Quick Functions",
+  "aiReverse": "AI Cracker",
+
+  "qfPageTitle": "Quick Functions",
+  "qfSectionBasic": "Basic",
+  "qfSectionEnv": "Environment",
+  "qfSectionCrypto": "Crypto Analysis",
+
+  "qfRemoveDialogs": "Remove Dialogs",
+  "qfRemoveScreenshotDetection": "Bypass Screenshot/Recording Detection",
+  "qfRemoveCaptureDetection": "Bypass Capture Detection",
+  "qfInjectTip": "Injection Tip",
+  "qfModifiedVersion": "Remove Updates",
+
+  "qfHideXposed": "Hide Xposed",
+  "qfHideRoot": "Hide Root",
+  "qfHideApps": "Hide App List",
+
+  "qfAlgorithmicTracking": "Algorithm Tracking",
+  "keywordManagement": "Keyword Management",
+  "addKeyword": "Add Keyword",
+  "keywordPlaceholder": "Enter keyword...",
+  "noKeywords": "No keywords",
+  "noData": "No data",
+  "encrypt": "Encrypt",
+  "decrypt": "Decrypt",
+  "detailInfo": "Detail Info",
+  "inputLabel": "Input",
+  "outputLabel": "Output",
+  "algorithmLabel": "Algorithm",
+  "keyLabel": "Key",
+  "ivLabel": "IV Vector",
+  "stackLabel": "Stack",
+  "plaintextLabel": "Plaintext",
+  "hexLabel": "HEX",
+  "base64Label": "Base64",
+  "fingerprintLabel": "Fingerprint",
+  "clear": "Clear",
+  "clearConfirm": "Are you sure you want to clear all algorithm tracking logs? This action cannot be undone.",
+  "searchPlaceholder": "Search algorithm, content or stack...",
+  "visualRulesTab": "Visual Rules",
+  "codeSourceTab": "Code Source",
+  "noVisualRules": "No visual rules configured",
+  "addRuleBtn": "Add Intercept Rule",
+  "ruleConfig": "Rule Configuration",
+  "targetFingerprint": "Target Fingerprint",
+  "interceptDirection": "Intercept Direction",
+  "directionInput": "Pre-encryption (Input)",
+  "directionOutput": "Post-decryption (Output)",
+  "specifyAlgorithm": "Specify Algorithm",
+  "anyAlgorithm": "Any Algorithm (All)",
+  "replaceData": "Replace With (Plaintext)",
+  "replaceDataHint": "Enter the data you want to mutate...",
+  "aiNotActivated": "AI not activated. Please configure AI model.",
+  "aiSwitchSession": "Switch Session",
+  "aiNewSession": "New Session",
+  "aiSessionName": "Session Name",
+  "aiSessionNameHint": "Enter session name...",
+  "aiDeleteHistory": "Clear History",
+  "aiDeleteConfirmTitle": "Confirm Delete",
+  "aiDeleteConfirmContent": "This will permanently delete all chat history for this app. Are you sure?",
+  "aiIdentifying": "Identifying...",
+  "aiGetInfo": "Fetching info...",
+  "aiChatInputHint": "Ask me anything...",
+  "aiAssistantTitle": "I am your AI Reverse Assistant",
+  "aiAssistantSubtitle": "You can ask about manifest analysis, hardening detection, etc.",
+  "aiMessageSendFailed": "Message failed to send. Please check your network or configuration.",
+  "aiCodeCopied": "Code copied to clipboard",
+  "aiOneClickCopy": "Copy Code",
+  "aiAnalyzeManifest": "Analyze Manifest",
+  "aiHardeningDetection": "Hardening Detection",
+  "aiExportInterfaces": "Export Interfaces",
+  "aiFindHookPoints": "Find Hook Points",
+  "aiTestConnecting": "Testing connection...",
+  "aiTestSuccess": "Test successful! Received reply: \n{result}",
+  "aiTestFailed": "Test failed: {error}",
+  "aiSavingAndTesting": "Saving and testing connectivity...",
+  "aiSaveFailed": "Save failed (Connection test failed): \n{error}",
+  "aiShowMoreMessages": "Show earlier messages ({count})",
+  "aiToolUnknown": "Unknown tool: {toolName}",
+  "@aiToolUnknown": {
+    "placeholders": { "toolName": { "type": "String" } }
+  },
+  "aiToolCallFailed": "Tool call failed. Please send keyword 'continue' to retry",
+  "aiToolCalling": "Calling tool...",
+  "aiToolReading": "Reading {toolName}...",
+  "@aiToolReading": {
+    "placeholders": { "toolName": { "type": "String" } }
+  },
+  "aiToolNameManifest": "Manifest",
+  "aiToolNameDecompile": "Decompile",
+  "aiToolNameSmali": "Smali",
+  "aiToolNameSearch": "Search",
+  "aiToolNamePackages": "Packages",
+  "aiToolNameClasses": "Classes",
+  "aiContinueKeyword": "continue",
+  "projectCreate": "Create",
+  "projectCreated": "Project created: {name}",
+  "projectName": "Project Name",
+  "projectNameHint": "Please enter project name",
+  "projectType": "Project Type",
+  "newProject": "Create Project",
+  "visualType": "Visual",
+  "traditionalType": "Traditional",
+  "xposedScripts": "Xposed Scripts",
+  "projectNameEmpty": "Project name cannot be empty",
+  "formatCode": "Format Code",
+  "find": "Find",
+  "replace": "Replace",
+  "replaceWith": "Replace with...",
+  "matchCase": "Match Case",
+  "regex": "Regex",
+  "prevMatch": "Previous",
+  "nextMatch": "Next",
+  "close": "Close",
+  "replaceAll": "Replace All",
+  "searchCode": "Search code...",
+  "toggleReplace": "Toggle Replace",
+  "aiConfigList": "Config List",
+  "aiConfigNew": "New",
+  "aiConfigCurrent": "Current",
+  "aiConfigEmpty": "No config yet, fill in the form below to save",
+  "aiConfigEditTitle": "Edit Config",
+  "aiConfigNewTitle": "New Config",
+  "aiConfigName": "Config Name",
+  "aiConfigNameHint": "e.g. OpenAI GPT-4",
+  "aiConfigSwitch": "Switch to this config",
+  "aiConfigDelete": "Delete config",
+  "aiConfigDeleteConfirm": "Delete config '{name}'?",
+  "@aiConfigDeleteConfirm": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "aiApiType": "API Type",
+  "aiApiTypeOpenAI": "OpenAI Compatible",
+  "aiApiTypeAnthropic": "Anthropic Claude",
+  "aiTutorial": "Tutorial",
+  "terminal": "Terminal",
+  "terminalFilterHint": "Secondary Filter...",
+  "autoScroll": "Auto Scroll",
+  "clearPanel": "Clear Panel",
+  "noLogs": "No output yet",
+  "noLogsFiltered": "No matching logs",
+  "logcatFullscreen": "Fullscreen",
+  "apiManual": "Manual",
+  "aiApiManualTitle": "API AI Assistant",
+  "aiApiManualSubtitle": "Ask me about JsxposedX API usage",
+
+  "visualEditorTab": "Visual",
+  "codeEditorTab": "Code",
+  "addBlock": "Add Block",
+  "noBlocks": "No hook blocks yet",
+  "noBlocksHint": "Tap the button below to add your first block",
+
+  "blockHookMethod": "Hook Method",
+  "blockHookMethodDesc": "Hook a method with before/after/replace callback",
+  "blockHookConstructor": "Hook Constructor",
+  "blockHookConstructorDesc": "Hook a class constructor",
+  "blockReturnConst": "Return Constant",
+  "blockReturnConstDesc": "Force a method to return a constant value",
+  "blockLogParams": "Log Params",
+  "blockLogParamsDesc": "Log all parameters and return value of a method",
+  "blockSetField": "Set Field",
+  "blockSetFieldDesc": "Modify a field value (static or instance)",
+  "blockCustomCode": "Custom Code",
+  "blockCustomCodeDesc": "Write free-form JavaScript code",
+
+  "blockClassName": "Class Name",
+  "blockClassNameHint": "e.g. com.example.MyClass",
+  "blockMethodName": "Method Name",
+  "blockMethodNameHint": "e.g. login",
+  "blockParamTypes": "Parameter Types",
+  "blockParamTypesHint": "comma-separated, e.g. int, java.lang.String, boolean",
+  "blockTiming": "Timing",
+  "blockTimingBefore": "Before",
+  "blockTimingAfter": "After",
+  "blockTimingReplace": "Replace",
+  "blockConstValue": "Return Value",
+  "blockConstValueHint": "e.g. true",
+  "blockConstType": "Value Type",
+  "blockFieldName": "Field Name",
+  "blockFieldNameHint": "e.g. isVip",
+  "blockFieldValue": "Field Value",
+  "blockFieldValueHint": "e.g. true",
+  "blockIsStaticField": "Static Field",
+  "blockCustomJs": "JavaScript Code",
+  "blockCustomJsHint": "Jx.log(\"hello\");",
+  "blockSelectType": "Select Block Type",
+  "blockHookBefore": "Hook Before",
+  "blockHookAfter": "Hook After",
+  "blockHookReplace": "Hook Replace",
+  "blockBeforeConstructor": "Before Constructor",
+  "blockAfterConstructor": "After Constructor",
+  "blockLog": "Log",
+  "blockLogException": "Log Exception",
+  "blockConsoleLog": "Console Log",
+  "blockStackTrace": "Stack Trace",
+  "blockGetField": "Get Field",
+  "blockGetInt": "Get Int",
+  "blockSetInt": "Set Int",
+  "blockGetBool": "Get Bool",
+  "blockSetBool": "Set Bool",
+  "blockGetArg": "Get Arg",
+  "blockSetArg": "Set Arg",
+  "blockGetResult": "Get Result",
+  "blockSetResult": "Set Result",
+  "blockCallMethod": "Call Method",
+  "blockCallStatic": "Call Static",
+  "blockNewInstance": "New Instance",
+  "blockIf": "If / Else",
+  "blockForLoop": "For Loop",
+  "blockVarAssign": "Variable",
+  "blockToast": "Toast",
+  "blockGetApplication": "Get Application",
+  "blockGetPackageName": "Get Package Name",
+  "blockGetSharedPrefs": "Get SharedPrefs",
+  "blockGetPrefString": "Get Pref String",
+  "blockGetBuild": "Get Build Info",
+  "blockStartActivity": "Start Activity",
+  "blockFindClass": "Find Class",
+  "blockMessage": "Message",
+  "blockMessageHint": "Log content",
+  "blockTag": "Tag",
+  "blockTagHint": "e.g. Net.request",
+  "blockValue": "Value",
+  "blockValueHint": "e.g. true",
+  "blockIndex": "Index",
+  "blockIndexHint": "e.g. 0",
+  "blockVarName": "Var Name",
+  "blockVarNameHint": "e.g. result",
+  "blockArgs": "Args",
+  "blockArgsHint": "comma-separated, e.g. arg0, \"hello\", 123",
+  "blockCondition": "Condition",
+  "blockConditionHint": "e.g. x > 0",
+  "blockFrom": "From",
+  "blockFromHint": "e.g. 0",
+  "blockTo": "To",
+  "blockToHint": "e.g. 10",
+  "blockConstTypeHint": "Select type",
+  "blockPrefsName": "Prefs Name",
+  "blockPrefsNameHint": "e.g. app_config",
+  "blockPrefKey": "Key",
+  "blockPrefKeyHint": "e.g. token",
+  "blockSlotBody": "Body",
+  "blockSlotBefore": "Before",
+  "blockSlotAfter": "After",
+  "blockSlotThen": "Then",
+  "blockSlotElse": "Else",
+  "blockConsoleWarn": "Console Warn",
+  "blockConsoleError": "Console Error",
+  "blockGetClassName": "Get Class Name",
+  "blockCallMethodTyped": "Call Method (Typed)",
+  "blockCallStaticAuto": "Call Static (Auto)",
+  "blockNewInstanceTyped": "New Instance (Typed)",
+  "blockGetPrefInt": "Get Pref Int",
+  "blockGetPrefBool": "Get Pref Bool",
+  "blockGetSystemProp": "Get System Property",
+  "blockLoadClass": "Load Class",
+  "blockHookAllMethods": "Hook All Overloads",
+  "blockHookAllConstructors": "Hook All Constructors",
+  "blockUnhook": "Remove Hook",
+  "blockGetLong": "Get Long",
+  "blockSetLong": "Set Long",
+  "blockGetFloat": "Get Float",
+  "blockSetFloat": "Set Float",
+  "blockGetDouble": "Get Double",
+  "blockSetDouble": "Set Double",
+  "blockGetThrowable": "Get Throwable",
+  "blockSetThrowable": "Set Throwable",
+  "blockGetMethods": "Get Methods",
+  "blockGetFields": "Get Fields",
+  "blockInstanceOf": "Instance Of",
+  "blockSetExtra": "Set Extra Data",
+  "blockGetExtra": "Get Extra Data",
+  "pickVariable": "Pick Variable",
+  "contextVariables": "Context Variables",
+  "userVariables": "User Variables",
+  "noVariablesAvailable": "No variables available",
+  "collapseAll": "Collapse All",
+  "expandAll": "Expand All",
+  "importScript": "Import",
+  "selectScriptType": "Select Script Type",
+  "traditionalScriptDesc": "Traditional Hook Script",
+  "visualScriptDesc": "Visual Script",
+  "saveScript": "Save",
+  "exportScript": "Export",
+  "scriptSaved": "Script saved",
+  "scriptExported": "Script exported",
+  "reservedScriptFileName": "Reserved internal file name. Please use a different file name",
+  "aiScriptSavedTo": "Saved to {target}: {name}",
+  "@aiScriptSavedTo": {
+    "description": "Toast shown when saving a script from AI bubble succeeds",
+    "placeholders": {
+      "target": { "type": "String" },
+      "name": { "type": "String" }
+    }
+  },
+  "aiScriptSaveFailed": "Save failed: {error}",
+  "@aiScriptSaveFailed": {
+    "description": "Toast shown when saving a script from AI bubble fails",
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+
+  "manifestBasicInfo": "Basic Info",
+  "manifestPackage": "Package",
+  "manifestMinSdk": "Min SDK",
+  "manifestTargetSdk": "Target SDK",
+  "manifestDebuggable": "Debuggable",
+  "manifestAllowBackup": "Allow Backup",
+  "manifestPermissions": "Permissions ({count})",
+  "@manifestPermissions": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "manifestNoPermissions": "No permissions",
+  "manifestActivities": "Activities",
+  "manifestServices": "Services",
+  "manifestReceivers": "Receivers",
+  "manifestProviders": "Providers",
+  "manifestNoItems": "No {name}",
+  "@manifestNoItems": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "manifestExported": "exported",
+
+  "apkNoAiSession": "No AI session linked",
+  "apkAiAnalyze": "AI Analyze",
+  "apkSentToAi": "Sent to AI: analyzing {name}",
+  "@apkSentToAi": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "apkAnalyzeSmaliPrompt": "Please analyze the Smali code of {className}, explain the logic and suggest possible Hook points.",
+  "@apkAnalyzeSmaliPrompt": {
+    "placeholders": { "className": { "type": "String" } }
+  },
+  "apkAnalyzeJavaPrompt": "Please analyze the decompiled Java code of {className}, explain the logic and suggest possible Hook points.",
+  "@apkAnalyzeJavaPrompt": {
+    "placeholders": { "className": { "type": "String" } }
+  },
+  "undo": "Undo",
+  "redo": "Redo",
+  "sendToAi": "Send to AI",
+  "pressBackAgainToExit": "Press back again to exit",
+  "apkAnalyzeSelectedCode": "The following is a {language} code snippet from {className}, please help me analyze it:\n\n{code}",
+  "@apkAnalyzeSelectedCode": {
+    "placeholders": {
+      "className": { "type": "String" },
+      "language": { "type": "String" },
+      "code": { "type": "String" }
+    }
+  },
+  "dexSearchHint": "Search class name...",
+  "dexNoClassFound": "No class found containing \"{keyword}\"",
+  "@dexNoClassFound": {
+    "placeholders": { "keyword": { "type": "String" } }
+  },
+  "dexCopied": "Copied: {name}",
+  "@dexCopied": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "dexCopyShortName": "Copy Class Name",
+  "dexCopyFullName": "Copy Fully Qualified Name",
+  "soAskAi": "Ask AI",
+  "soSentToAi": "Sent to AI: analyzing {name}",
+  "@soSentToAi": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "lsposedNotAvailable": "LSPosed service unavailable. Make sure the module is activated in LSPosed and restart the app.",
+  "lsposedAddingScope": "Requesting to add {name} to scope...",
+  "@lsposedAddingScope": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "lsposedScopeRequestedCheckNotification": "Scope request sent for {name}. Check your notification bar to approve.",
+  "@lsposedScopeRequestedCheckNotification": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "lsposedAddFailed": "Failed to add {name}",
+  "@lsposedAddFailed": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "lsposedAddFailedService": "Add failed: LSPosed service unavailable"
+}
+
+
+

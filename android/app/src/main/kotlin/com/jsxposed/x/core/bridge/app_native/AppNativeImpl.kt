@@ -1,0 +1,55 @@
+package com.jsxposed.x.core.bridge.app_native
+
+import android.content.Context
+import kotlinx.coroutines.*
+
+class AppNativeImpl(val context: Context) : AppNative {
+    private val app = App(context)
+
+    override fun getAppCount(includeSystemApps: Boolean, query: String): Long {
+        return app.getAppCount(includeSystemApps, query).toLong()
+    }
+
+    @OptIn(DelicateCoroutinesApi::class)
+    override fun getInstalledApps(
+        includeSystemApps: Boolean,
+        offset: Long,
+        limit: Long,
+        query: String,
+        callback: (Result<List<AppInfo>>) -> Unit
+    ) {
+        // 使用协程在 IO 线程执行查询，避免 UI 卡顿
+        GlobalScope.launch(Dispatchers.IO) {
+            try {
+                val apps = app.getInstalledApps(
+                    includeSystemApps,
+                    offset.toInt(),
+                    limit.toInt(),
+                    query
+                )
+                callback(Result.success(apps))
+            } catch (e: Exception) {
+                callback(Result.failure(e))
+            }
+        }
+    }
+
+    @OptIn(DelicateCoroutinesApi::class)
+    override fun getAppByPackageName(packageName: String, callback: (Result<AppInfo?>) -> Unit) {
+        GlobalScope.launch(Dispatchers.IO) {
+            try {
+                val app = app.getAppByPackageName(packageName)
+                callback(Result.success(app))
+            } catch (e: Exception) {
+                callback(Result.failure(e))
+            }
+        }
+    }
+
+    override fun openAppX(
+        packageName: String,
+        callback: (Result<Unit>) -> Unit
+    ) {
+        return app.openAppX(packageName)
+    }
+}

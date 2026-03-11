@@ -1,0 +1,680 @@
+﻿{
+  "@@locale": "zh",
+  "appName": "JSXPOSEDX",
+  "@appName": {
+    "description": "应用名称"
+  },
+  "appSubtitle": "基于 Xposed Frida 的跨平台Hook调试工具",
+  "@appSubtitle": {
+    "description": "应用副标题"
+  },
+  "home": "首页",
+  "@home": {
+    "description": "首页标题"
+  },
+  "project": "项目",
+  "@project": {
+    "description": "项目"
+  },
+  "repository": "仓库",
+  "@repository": {
+    "description": "仓库"
+  },
+  "settings": "设置",
+  "@settings": {
+    "description": "设置页面"
+  },
+  "language": "语言",
+  "@language": {
+    "description": "语言设置"
+  },
+  "theme": "主题",
+  "@theme": {
+    "description": "主题设置"
+  },
+  "lightTheme": "浅色主题",
+  "@lightTheme": {
+    "description": "浅色主题"
+  },
+  "darkTheme": "深色主题",
+  "@darkTheme": {
+    "description": "深色主题"
+  },
+  "chinese": "简体中文",
+  "@chinese": {
+    "description": "中文"
+  },
+  "english": "English",
+  "@english": {
+    "description": "英文"
+  },
+  "confirm": "确认",
+  "@confirm": {
+    "description": "确认按钮"
+  },
+  "cancel": "取消",
+  "@cancel": {
+    "description": "取消按钮"
+  },
+  "save": "保存",
+  "@save": {
+    "description": "保存按钮"
+  },
+  "delete": "删除",
+  "@delete": {
+    "description": "删除按钮"
+  },
+  "edit": "编辑",
+  "@edit": {
+    "description": "编辑按钮"
+  },
+  "add": "添加",
+  "@add": {
+    "description": "添加按钮"
+  },
+  "search": "搜索",
+  "@search": {
+    "description": "搜索"
+  },
+  "loading": "加载中...",
+  "@loading": {
+    "description": "加载提示"
+  },
+  "success": "成功",
+  "@success": {
+    "description": "成功提示"
+  },
+  "error": "错误",
+  "@error": {
+    "description": "错误提示"
+  },
+  "warning": "警告",
+  "@warning": {
+    "description": "警告提示"
+  },
+  "info": "信息",
+  "@info": {
+    "description": "信息提示"
+  },
+  "hookStatus": "Hook 状态",
+  "@hookStatus": {
+    "description": "Hook状态"
+  },
+  "hookEnabled": "Hook 已启用",
+  "@hookEnabled": {
+    "description": "Hook已启用"
+  },
+  "hookDisabled": "Hook 未启用",
+  "@hookDisabled": {
+    "description": "Hook未启用"
+  },
+  "moduleInfo": "模块信息",
+  "@moduleInfo": {
+    "description": "模块信息"
+  },
+  "version": "版本",
+  "@version": {
+    "description": "版本号"
+  },
+  "about": "关于",
+  "@about": {
+    "description": "关于页面"
+  },
+  "community": "社区",
+  "@community": {
+    "description": "社区分组标题"
+  },
+  "officialCommunity": "获取教程与社区支持",
+  "@officialCommunity": {
+    "description": "官方社区说明"
+  },
+  "forum": "论坛",
+  "@forum": {
+    "description": "论坛"
+  },
+  "visitForum": "进入论坛",
+  "@visitForum": {
+    "description": "进入论坛按钮"
+  },
+  "joinDiscord": "加入 Discord",
+  "@joinDiscord": {
+    "description": "加入 Discord 按钮"
+  },
+  "joinQQGroup": "加入 QQ 群",
+  "@joinQQGroup": {
+    "description": "加入 QQ 群按钮"
+  },
+  "followAuthor": "关注作者",
+  "@followAuthor": {
+    "description": "关注作者分组标题"
+  },
+  "creatorPlatforms": "获取教程",
+  "@creatorPlatforms": {
+    "description": "作者平台入口"
+  },
+  "morePlatforms": "查看更多平台",
+  "@morePlatforms": {
+    "description": "查看更多平台"
+  },
+  "pageNotFound": "页面未找到: {error}",
+  "@pageNotFound": {
+    "description": "404页面标题",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "backToHome": "返回首页",
+  "@backToHome": {
+    "description": "返回首页按钮"
+  },
+  "retry": "重试",
+  "@retry": {
+    "description": "重试按钮"
+  },
+  "loadFailedMessage": "加载失败，请重试",
+  "@loadFailedMessage": {
+    "description": "加载失败提示"
+  },
+  "activated": "已激活",
+  "@activated": {
+    "description": "已激活状态"
+  },
+  "notActivated": "未激活",
+  "@notActivated": {
+    "description": "未激活状态"
+  },
+  "fridaPartial": "局部",
+  "@fridaPartial": {
+    "description": "Frida 局部状态"
+  },
+  "fridaGlobal": "全局",
+  "@fridaGlobal": {
+    "description": "Frida 全局状态"
+  },
+  "fridaUnknown": "未知",
+  "@fridaUnknown": {
+    "description": "未知状态"
+  },
+  "fridaNotInstalledShort": "未安装",
+  "@fridaNotInstalledShort": {
+    "description": "Frida 未安装简短状态"
+  },
+  "fridaInitAbnormal": "初始化异常",
+  "@fridaInitAbnormal": {
+    "description": "Frida 初始化异常状态"
+  },
+  "fridaStatusEnabled": "已启用",
+  "@fridaStatusEnabled": {
+    "description": "Frida 启用状态"
+  },
+  "fridaStatusDisabled": "已禁用",
+  "@fridaStatusDisabled": {
+    "description": "Frida 禁用状态"
+  },
+  "fridaTargetDisabled": "目标关闭",
+  "@fridaTargetDisabled": {
+    "description": "Frida 目标关闭状态"
+  },
+  "fridaEffective": "已生效",
+  "@fridaEffective": {
+    "description": "Frida 已生效状态"
+  },
+  "zygiskFridaModuleNotInstalled": "Zygisk Frida 模块未安装",
+  "@zygiskFridaModuleNotInstalled": {
+    "description": "Zygisk Frida 模块未安装提示"
+  },
+  "systemVersion": "系统版本",
+  "sdkVersion": "SDK版本",
+  "deviceModel": "设备型号",
+  "systemStorage": "系统存储",
+  "cpuArchitecture": "CPU架构",
+  "frameworkPackageName": "框架包名",
+  "copy": "复制",
+  "selectAll": "全选",
+  "cut": "剪切",
+  "paste": "粘贴",
+  "comment": "注释",
+  "codeCopied": "代码已复制到剪贴板",
+  "totalStorage": "总存",
+  "available": "可用",
+  "softwareIcon": "软件图标",
+  "needRootPermission": "你必须授予Root权限",
+  "pleaseActivateXposed": "请先激活Xposed,随意勾选一个模块即可",
+  "initFrida": "初始化Frida",
+  "homeTitleAI": "AI",
+  "homeTitleRoot": "Root",
+  "homeTitleXposed": "Xposed",
+  "homeTitleFrida": "Frida",
+  "themeColor": "主题配色",
+  "selectThemeColor": "选择皮肤颜色",
+  "aiConfig": "AI 配置",
+  "aiConfigTitle": "AI 设置",
+  "aiBaseUrl": "API 地址",
+  "aiBaseUrlHint": "请输入 API 地址",
+  "aiApiKeyHint": "请输入 API Key",
+  "aiMaxTokens": "最大 Token",
+  "aiMaxTokensHint": "请输入最大 Token 数量",
+  "aiModelName": "模型名称",
+  "aiModelNameHint": "请输入模型名称",
+  "aiTemperature": "温度 (Temperature)",
+  "aiMemoryRounds": "对话记忆轮数",
+  "cannotBeEmpty": "{field}不能为空",
+  "saveSuccess": "保存成功",
+  "test": "测试",
+  "selectApp": "选择应用",
+  "showSystemApps": "显示系统应用",
+  "searchAppsPlaceholder": "全局搜索应用名称或包名...",
+  "loadedCount": "加载: {loaded} / 符合: {total}",
+  "@loadedCount": {
+    "placeholders": {
+      "loaded": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "systemAppLabel": "系统",
+  "alreadySelected": "已选择: {name}",
+  "notice": "公告",
+  "updateAvailableTitle": "发现新版本",
+  "updateContentTitle": "更新内容",
+  "updateNow": "立即更新",
+  "updateContentFallback": "• 修复已知问题\n• 优化用户体验\n• 提升应用性能",
+  "noRelatedApps": "没有找到相关应用",
+  "projectListEmpty": "暂无项目，去首页创建一个吧",
+  "projectLoadFailed": "加载失败: {error}",
+  "confirmDelete": "确认删除?",
+  "xposedProject": "Xposed 项目",
+  "fridaProject": "Frida 项目",
+  "quickFunctions": "快捷功能",
+  "aiReverse": "AI 逆向",
+
+  "qfPageTitle": "快捷功能",
+  "qfSectionBasic": "基础功能",
+  "qfSectionEnv": "环境功能",
+  "qfSectionCrypto": "加密分析",
+
+  "qfRemoveDialogs": "去除弹窗",
+  "qfRemoveScreenshotDetection": "去除截屏/录屏检测",
+  "qfRemoveCaptureDetection": "去除抓包检测",
+  "qfInjectTip": "注入提示",
+  "qfModifiedVersion": "去除更新",
+
+  "qfHideXposed": "隐藏 Xposed",
+  "qfHideRoot": "隐藏 Root",
+  "qfHideApps": "隐藏应用列表",
+
+  "qfAlgorithmicTracking": "算法追踪",
+  "keywordManagement": "关键词管理",
+  "addKeyword": "添加关键词",
+  "keywordPlaceholder": "输入关键词...",
+  "noKeywords": "暂无关键词",
+  "noData": "暂无数据",
+  "encrypt": "加密",
+  "decrypt": "解密",
+  "detailInfo": "详情信息",
+  "inputLabel": "输入",
+  "outputLabel": "输出",
+  "algorithmLabel": "算法",
+  "keyLabel": "密钥",
+  "ivLabel": "IV 向量",
+  "stackLabel": "方法堆栈",
+  "plaintextLabel": "明文",
+  "hexLabel": "HEX",
+  "base64Label": "Base64",
+  "fingerprintLabel": "指纹",
+  "clear": "清空",
+  "clearConfirm": "确定要清空所有算法追踪日志吗？此操作不可恢复。",
+  "searchPlaceholder": "搜索算法、内容或堆栈...",
+  "visualRulesTab": "可视化规则 (Visual)",
+  "codeSourceTab": "底层源码 (Code)",
+  "noVisualRules": "暂无可视化规则",
+  "addRuleBtn": "添加新拦截规则",
+  "ruleConfig": "拦截配置项",
+  "targetFingerprint": "目标指纹 (Fingerprint)",
+  "interceptDirection": "拦截方向 (Direction)",
+  "directionInput": "加密前 (Input)",
+  "directionOutput": "解密后 (Output)",
+  "specifyAlgorithm": "指定算法 (可选)",
+  "anyAlgorithm": "全部算法 (Any)",
+  "replaceData": "替换为 (明文)",
+  "replaceDataHint": "填入你期望篡改的数据...",
+  "aiNotActivated": "AI未激活，请先配置AI大模型",
+  "aiSwitchSession": "切换会话",
+  "aiNewSession": "新建会话",
+  "aiSessionName": "会话名称",
+  "aiSessionNameHint": "请输入会话名称...",
+  "aiDeleteHistory": "清除历史",
+  "aiDeleteConfirmTitle": "确认删除",
+  "aiDeleteConfirmContent": "这将永久删除该应用的所有聊天记录，确定吗？",
+  "aiIdentifying": "正在识别...",
+  "aiGetInfo": "正在获取信息...",
+  "aiChatInputHint": "有问题尽管问我...",
+  "aiAssistantTitle": "我是你的 AI 逆向助手",
+  "aiAssistantSubtitle": "您可以询问清单分析、加固检测等专业问题",
+  "aiMessageSendFailed": "消息发送失败，请检查网络或配置",
+  "aiCodeCopied": "代码已复制到剪贴板",
+  "aiOneClickCopy": "一键复制",
+  "aiAnalyzeManifest": "分析 Manifest",
+  "aiHardeningDetection": "加固检测",
+  "aiExportInterfaces": "导出接口",
+  "aiFindHookPoints": "寻找 Hook 点",
+  "aiTestConnecting": "正在测试连接...",
+  "aiTestSuccess": "测试成功！收到回复: \n{result}",
+  "aiTestFailed": "测试失败: {error}",
+  "aiSavingAndTesting": "正在保存并测试连通性...",
+  "aiSaveFailed": "配置保存失败（连接测试未通过）: \n{error}",
+  "aiShowMoreMessages": "显示更早的消息 ({count})",
+  "aiToolUnknown": "未知工具: {toolName}",
+  "@aiToolUnknown": {
+    "placeholders": { "toolName": { "type": "String" } }
+  },
+  "aiToolCallFailed": "工具调用失败，请发送关键词\"继续\"重试",
+  "aiToolCalling": "正在调用工具...",
+  "aiToolReading": "正在读取 {toolName}...",
+  "@aiToolReading": {
+    "placeholders": { "toolName": { "type": "String" } }
+  },
+  "aiToolNameManifest": "清单",
+  "aiToolNameDecompile": "反编译",
+  "aiToolNameSmali": "Smali",
+  "aiToolNameSearch": "搜索",
+  "aiToolNamePackages": "包信息",
+  "aiToolNameClasses": "类信息",
+  "aiContinueKeyword": "继续",
+  "projectCreate": "创建",
+  "projectCreated": "项目已创建: {name}",
+  "projectName": "项目名称",
+  "projectNameHint": "请输入项目名称",
+  "projectType": "项目类型",
+  "newProject": "创建项目",
+  "visualType": "可视化",
+  "traditionalType": "传统",
+  "xposedScripts": "Xposed 脚本列表",
+  "projectNameEmpty": "项目名称不能为空",
+  "formatCode": "格式化代码",
+  "find": "查找",
+  "replace": "替换",
+  "replaceWith": "替换为...",
+  "matchCase": "区分大小写",
+  "regex": "正则表达式",
+  "prevMatch": "上一个",
+  "nextMatch": "下一个",
+  "close": "关闭",
+  "replaceAll": "全部替换",
+  "searchCode": "搜索代码...",
+  "toggleReplace": "切换替换模式",
+  "aiConfigList": "配置列表",
+  "aiConfigNew": "新建",
+  "aiConfigCurrent": "当前",
+  "aiConfigEmpty": "暂无配置，请填写下方表单保存",
+  "aiConfigEditTitle": "编辑配置",
+  "aiConfigNewTitle": "新建配置",
+  "aiConfigName": "配置名称",
+  "aiConfigNameHint": "例如：OpenAI GPT-4",
+  "aiConfigSwitch": "切换到此配置",
+  "aiConfigDelete": "删除配置",
+  "aiConfigDeleteConfirm": "确认删除 '{name}' 配置？",
+  "@aiConfigDeleteConfirm": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "aiApiType": "API 类型",
+  "aiApiTypeOpenAI": "OpenAI",
+  "aiApiTypeAnthropic": "Anthropic Claude",
+  "aiTutorial": "教程",
+  "terminal": "控制台",
+  "terminalFilterHint": "二次过滤...",
+  "autoScroll": "自动滚屏",
+  "clearPanel": "清空面板",
+  "noLogs": "暂无日志",
+  "noLogsFiltered": "过滤后无匹配",
+  "logcatFullscreen": "全屏",
+  "apiManual": "手册",
+  "aiApiManualTitle": "API AI 助手",
+  "aiApiManualSubtitle": "向我提问 JsxposedX API 用法",
+
+  "visualEditorTab": "可视化",
+  "codeEditorTab": "代码",
+  "addBlock": "添加 Block",
+  "noBlocks": "暂无 Hook Block",
+  "noBlocksHint": "点击下方按钮添加第一个 Block",
+
+  "blockHookMethod": "Hook 方法",
+  "blockHookMethodDesc": "Hook 一个方法，支持 before/after/replace 回调",
+  "blockHookConstructor": "Hook 构造函数",
+  "blockHookConstructorDesc": "Hook 一个类的构造函数",
+  "blockReturnConst": "返回常量",
+  "blockReturnConstDesc": "强制方法返回一个固定值",
+  "blockLogParams": "打印参数",
+  "blockLogParamsDesc": "打印方法的所有参数和返回值",
+  "blockSetField": "修改字段",
+  "blockSetFieldDesc": "修改字段值（静态或实例）",
+  "blockCustomCode": "自定义代码",
+  "blockCustomCodeDesc": "编写自由 JavaScript 代码",
+
+  "blockClassName": "类名",
+  "blockClassNameHint": "如 com.example.MyClass",
+  "blockMethodName": "方法名",
+  "blockMethodNameHint": "如 login",
+  "blockParamTypes": "参数类型",
+  "blockParamTypesHint": "逗号分隔，如 int, java.lang.String, boolean",
+  "blockTiming": "时机",
+  "blockTimingBefore": "之前",
+  "blockTimingAfter": "之后",
+  "blockTimingReplace": "替换",
+  "blockConstValue": "返回值",
+  "blockConstValueHint": "如 true",
+  "blockConstType": "值类型",
+  "blockFieldName": "字段名",
+  "blockFieldNameHint": "如 isVip",
+  "blockFieldValue": "字段值",
+  "blockFieldValueHint": "如 true",
+  "blockIsStaticField": "静态字段",
+  "blockCustomJs": "JavaScript 代码",
+  "blockCustomJsHint": "Jx.log(\"hello\");",
+  "blockSelectType": "选择 Block 类型",
+  "blockHookBefore": "Hook Before",
+  "blockHookAfter": "Hook After",
+  "blockHookReplace": "Hook Replace",
+  "blockBeforeConstructor": "构造前",
+  "blockAfterConstructor": "构造后",
+  "blockLog": "日志",
+  "blockLogException": "异常日志",
+  "blockConsoleLog": "Console 日志",
+  "blockStackTrace": "调用栈",
+  "blockGetField": "读取字段",
+  "blockGetInt": "读取 Int",
+  "blockSetInt": "设置 Int",
+  "blockGetBool": "读取 Bool",
+  "blockSetBool": "设置 Bool",
+  "blockGetArg": "获取参数",
+  "blockSetArg": "修改参数",
+  "blockGetResult": "获取返回值",
+  "blockSetResult": "修改返回值",
+  "blockCallMethod": "调用方法",
+  "blockCallStatic": "调用静态方法",
+  "blockNewInstance": "创建实例",
+  "blockIf": "条件判断",
+  "blockForLoop": "循环",
+  "blockVarAssign": "变量赋值",
+  "blockToast": "Toast 提示",
+  "blockGetApplication": "获取 Application",
+  "blockGetPackageName": "获取包名",
+  "blockGetSharedPrefs": "获取 SharedPrefs",
+  "blockGetPrefString": "读取 Pref 字符串",
+  "blockGetBuild": "获取 Build 信息",
+  "blockStartActivity": "启动 Activity",
+  "blockFindClass": "查找类",
+  "blockMessage": "消息",
+  "blockMessageHint": "日志内容",
+  "blockTag": "标签",
+  "blockTagHint": "如 Net.request",
+  "blockValue": "值",
+  "blockValueHint": "如 true",
+  "blockIndex": "索引",
+  "blockIndexHint": "如 0",
+  "blockVarName": "变量名",
+  "blockVarNameHint": "如 result",
+  "blockArgs": "参数",
+  "blockArgsHint": "逗号分隔，如 arg0, \"hello\", 123",
+  "blockCondition": "条件",
+  "blockConditionHint": "如 x > 0",
+  "blockFrom": "起始",
+  "blockFromHint": "如 0",
+  "blockTo": "结束",
+  "blockToHint": "如 10",
+  "blockConstTypeHint": "选择类型",
+  "blockPrefsName": "Prefs 名",
+  "blockPrefsNameHint": "如 app_config",
+  "blockPrefKey": "Key",
+  "blockPrefKeyHint": "如 token",
+  "blockSlotBody": "执行体",
+  "blockSlotBefore": "之前",
+  "blockSlotAfter": "之后",
+  "blockSlotThen": "满足条件",
+  "blockSlotElse": "否则",
+  "blockConsoleWarn": "Console 警告",
+  "blockConsoleError": "Console 错误",
+  "blockGetClassName": "获取类名",
+  "blockCallMethodTyped": "调用方法 (指定类型)",
+  "blockCallStaticAuto": "调用静态方法 (自动推断)",
+  "blockNewInstanceTyped": "创建实例 (指定类型)",
+  "blockGetPrefInt": "读取 Pref 整数",
+  "blockGetPrefBool": "读取 Pref 布尔",
+  "blockGetSystemProp": "获取系统属性",
+  "blockLoadClass": "加载类",
+  "blockHookAllMethods": "Hook 所有重载",
+  "blockHookAllConstructors": "Hook 所有构造",
+  "blockUnhook": "移除 Hook",
+  "blockGetLong": "读取 Long",
+  "blockSetLong": "设置 Long",
+  "blockGetFloat": "读取 Float",
+  "blockSetFloat": "设置 Float",
+  "blockGetDouble": "读取 Double",
+  "blockSetDouble": "设置 Double",
+  "blockGetThrowable": "获取异常",
+  "blockSetThrowable": "设置异常",
+  "blockGetMethods": "获取方法列表",
+  "blockGetFields": "获取字段列表",
+  "blockInstanceOf": "类型检查",
+  "blockSetExtra": "设置附加数据",
+  "blockGetExtra": "获取附加数据",
+  "pickVariable": "选择变量",
+  "contextVariables": "上下文变量",
+  "userVariables": "用户变量",
+  "noVariablesAvailable": "暂无可用变量",
+  "collapseAll": "全部折叠",
+  "expandAll": "全部展开",
+  "importScript": "导入",
+  "selectScriptType": "选择脚本类型",
+  "traditionalScriptDesc": "传统Hook脚本",
+  "visualScriptDesc": "可视化脚本",
+  "saveScript": "保存",
+  "exportScript": "导出",
+  "scriptSaved": "脚本已保存",
+  "scriptExported": "脚本已导出",
+  "reservedScriptFileName": "内部保留文件名，请更换文件名",
+  "aiScriptSavedTo": "已保存到 {target}: {name}",
+  "@aiScriptSavedTo": {
+    "description": "AI 气泡保存脚本成功提示",
+    "placeholders": {
+      "target": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "aiScriptSaveFailed": "保存失败: {error}",
+  "@aiScriptSaveFailed": {
+    "description": "AI 气泡保存脚本失败提示",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+
+  "manifestBasicInfo": "基本信息",
+  "manifestPackage": "包名",
+  "manifestMinSdk": "最低 SDK",
+  "manifestTargetSdk": "目标 SDK",
+  "manifestDebuggable": "可调试",
+  "manifestAllowBackup": "允许备份",
+  "manifestPermissions": "权限 ({count})",
+  "@manifestPermissions": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "manifestNoPermissions": "无权限",
+  "manifestActivities": "Activity",
+  "manifestServices": "Service",
+  "manifestReceivers": "Receiver",
+  "manifestProviders": "Provider",
+  "manifestNoItems": "无 {name}",
+  "@manifestNoItems": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "manifestExported": "已导出",
+
+  "apkNoAiSession": "未关联 AI 分析会话",
+  "apkAiAnalyze": "AI分析",
+  "apkSentToAi": "已发送到 AI：分析 {name}",
+  "@apkSentToAi": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "apkAnalyzeSmaliPrompt": "请分析 {className} 的 Smali 代码，解释逻辑并给出可能的 Hook 点。",
+  "@apkAnalyzeSmaliPrompt": {
+    "placeholders": { "className": { "type": "String" } }
+  },
+  "apkAnalyzeJavaPrompt": "请分析 {className} 的反编译 Java 代码，解释逻辑并给出可能的 Hook 点。",
+  "@apkAnalyzeJavaPrompt": {
+    "placeholders": { "className": { "type": "String" } }
+  },
+  "undo": "撤销",
+  "redo": "重做",
+  "sendToAi": "发送给AI",
+  "pressBackAgainToExit": "再按一次返回退出",
+  "apkAnalyzeSelectedCode": "以下是 {className} 的 {language} 代码片段，请帮我分析：\n\n{code}",
+  "@apkAnalyzeSelectedCode": {
+    "placeholders": {
+      "className": { "type": "String" },
+      "language": { "type": "String" },
+      "code": { "type": "String" }
+    }
+  },
+  "dexSearchHint": "搜索类名...",
+  "dexNoClassFound": "未找到包含 \"{keyword}\" 的类",
+  "@dexNoClassFound": {
+    "placeholders": { "keyword": { "type": "String" } }
+  },
+  "dexCopied": "已复制: {name}",
+  "@dexCopied": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "dexCopyShortName": "复制类名",
+  "dexCopyFullName": "复制全限定类名",
+  "soAskAi": "询问AI",
+  "soSentToAi": "已发送给 AI：分析 {name}",
+  "@soSentToAi": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "lsposedNotAvailable": "LSPosed 服务不可用，请确保模块已在 LSPosed 中激活并重启应用",
+  "lsposedAddingScope": "正在请求添加 {name} 到作用域...",
+  "@lsposedAddingScope": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "lsposedScopeRequestedCheckNotification": "已请求添加 {name} 到作用域，请查看通知栏并允许",
+  "@lsposedScopeRequestedCheckNotification": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "lsposedAddFailed": "添加 {name} 失败",
+  "@lsposedAddFailed": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "lsposedAddFailedService": "添加失败: LSPosed 服务不可用"
+}
+
+
+
+
