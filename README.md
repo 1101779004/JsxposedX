@@ -35,3 +35,9 @@ Install the `api101` shell explicitly with:
 ```powershell
 .\.buildScript\run_install_debug.ps1 -GradleTask :app:installApi101Debug
 ```
+
+Build/release note:
+
+- `flutter build appbundle --flavor api100 --release` goes through the Flutter CLI first, then calls the matching Android variant
+- `.\gradlew.bat :app:bundleApi100Release` goes directly through Android Gradle
+- for the same flavor, both commands target the same Android release variant output
