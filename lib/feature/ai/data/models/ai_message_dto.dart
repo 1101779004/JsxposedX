@@ -15,6 +15,9 @@ abstract class AiMessageDto with _$AiMessageDto {
     @JsonKey(includeFromJson: false, includeToJson: false) String? id,
     @Default("user") String role,
     @Default("") String content,
+    @JsonKey(includeFromJson: false, includeToJson: false)
+    @Default(false)
+    bool isThinking,
     @JsonKey(name: 'tool_calls', includeIfNull: false)
     List<Map<String, dynamic>>? toolCalls,
     @JsonKey(name: 'tool_call_id', includeIfNull: false) String? toolCallId,
@@ -36,6 +39,7 @@ abstract class AiMessageDto with _$AiMessageDto {
       id: json['id'] as String?,
       role: json['role'] as String? ?? 'user',
       content: json['content'] as String? ?? '',
+      isThinking: json['is_thinking'] == true,
       toolCalls: rawToolCalls
           ?.map((item) => Map<String, dynamic>.from(item as Map))
           .toList(),
@@ -63,6 +67,7 @@ abstract class AiMessageDto with _$AiMessageDto {
       role: role,
       content: content,
       isError: isError,
+      isThinking: isThinking,
       toolCalls: toolCalls,
       toolCallId: toolCallId,
       isToolResultBubble: isToolResultBubble,

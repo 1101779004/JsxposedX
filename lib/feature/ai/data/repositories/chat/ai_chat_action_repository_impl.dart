@@ -4,7 +4,9 @@ import 'package:JsxposedX/core/models/ai_session.dart';
 import 'package:JsxposedX/feature/ai/data/datasources/chat/ai_chat_action_datasource.dart';
 import 'package:JsxposedX/feature/ai/data/models/ai_message_dto.dart';
 import 'package:JsxposedX/feature/ai/data/models/ai_session_dto.dart';
+import 'package:JsxposedX/feature/ai/domain/models/ai_chat_session_context.dart';
 import 'package:JsxposedX/feature/ai/domain/repositories/chat/ai_chat_action_repository.dart';
+import 'package:dio/dio.dart';
 
 class AiChatActionRepositoryImpl implements AiChatActionRepository {
   AiChatActionRepositoryImpl({required this.dataSource});
@@ -16,6 +18,7 @@ class AiChatActionRepositoryImpl implements AiChatActionRepository {
     required AiConfig config,
     required List<AiMessage> messages,
     List<Map<String, dynamic>>? tools,
+    CancelToken? cancelToken,
   }) {
     final messageDtos = messages
         .map(
@@ -23,6 +26,7 @@ class AiChatActionRepositoryImpl implements AiChatActionRepository {
             id: message.id,
             role: message.role,
             content: message.content,
+            isThinking: message.isThinking,
             toolCalls: message.toolCalls,
             toolCallId: message.toolCallId,
             isError: message.isError,
@@ -32,7 +36,12 @@ class AiChatActionRepositoryImpl implements AiChatActionRepository {
         .toList(growable: false);
 
     return dataSource
-        .postChatStream(config: config, messages: messageDtos, tools: tools)
+        .postChatStream(
+          config: config,
+          messages: messageDtos,
+          tools: tools,
+          cancelToken: cancelToken,
+        )
         .map((dto) => dto.toEntity());
   }
 
@@ -69,6 +78,7 @@ class AiChatActionRepositoryImpl implements AiChatActionRepository {
             id: message.id,
             role: message.role,
             content: message.content,
+            isThinking: message.isThinking,
             toolCalls: message.toolCalls,
             toolCallId: message.toolCallId,
             isError: message.isError,
@@ -77,6 +87,15 @@ class AiChatActionRepositoryImpl implements AiChatActionRepository {
         )
         .toList(growable: false);
     return dataSource.saveChatHistory(packageName, sessionId, dtos);
+  }
+
+  @override
+  Future<void> saveSessionContext(
+    String packageName,
+    String sessionId,
+    AiChatSessionContext context,
+  ) {
+    return dataSource.saveSessionContext(packageName, sessionId, context);
   }
 
   @override

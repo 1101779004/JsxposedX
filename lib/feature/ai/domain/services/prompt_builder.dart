@@ -1,3 +1,4 @@
+import 'package:JsxposedX/core/enums/ai_api_type.dart';
 import 'package:JsxposedX/feature/ai/data/prompts/system_prompts.dart';
 import 'package:JsxposedX/feature/ai/domain/models/ai_context.dart';
 import 'package:JsxposedX/feature/ai/domain/models/ai_tool_definition.dart';
@@ -80,10 +81,19 @@ class PromptBuilder {
   }
 
   /// 构建 Function Calling 工具定义列表
-  List<Map<String, dynamic>> buildToolsJson() {
+  List<Map<String, dynamic>> buildToolsJson({
+    AiApiType apiType = AiApiType.openai,
+  }) {
     if (!_withTools) return [];
     final tools = _withSoTools ? ApkAnalysisTools.allWithSo : ApkAnalysisTools.all;
-    return tools.map((t) => t.toFunctionJson()).toList();
+    return tools
+        .map(
+          (tool) => switch (apiType) {
+            AiApiType.openai => tool.toOpenAiToolJson(),
+            AiApiType.anthropic => tool.toAnthropicToolJson(),
+          },
+        )
+        .toList();
   }
 
   // ==================== 静态工具方法 ====================

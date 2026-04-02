@@ -13,6 +13,7 @@ abstract class BaseAiChatBubble extends StatelessWidget {
   final bool isToolCalling;
   final String? packageName;
   final String? retryLabel;
+  final String? loadingHint;
 
   const BaseAiChatBubble({
     super.key,
@@ -23,6 +24,7 @@ abstract class BaseAiChatBubble extends StatelessWidget {
     this.isToolCalling = false,
     this.packageName,
     this.retryLabel,
+    this.loadingHint,
   });
 
   @protected
@@ -35,6 +37,7 @@ abstract class BaseAiChatBubble extends StatelessWidget {
       isToolCalling: isToolCalling,
       packageName: packageName,
       retryLabel: retryLabel,
+      loadingHint: loadingHint,
     );
   }
 
@@ -78,5 +81,6 @@ class AiChatBubble extends BaseAiChatBubble {
     super.isToolCalling,
     super.packageName,
     super.retryLabel,
+    super.loadingHint,
   });
 }

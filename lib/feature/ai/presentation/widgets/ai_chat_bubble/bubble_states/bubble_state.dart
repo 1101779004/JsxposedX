@@ -9,6 +9,7 @@ class BubbleState {
   final bool isToolCalling;
   final String? packageName;
   final String? retryLabel;
+  final String? loadingHint;
 
   const BubbleState({
     required this.content,
@@ -18,6 +19,7 @@ class BubbleState {
     required this.isToolCalling,
     required this.packageName,
     this.retryLabel,
+    this.loadingHint,
   });
 
   bool get isUser => role == 'user';

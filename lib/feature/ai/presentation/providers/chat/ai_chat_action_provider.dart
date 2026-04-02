@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:JsxposedX/core/enums/ai_api_type.dart';
 import 'package:JsxposedX/core/models/ai_config.dart';
 import 'package:JsxposedX/core/models/ai_message.dart';
 import 'package:JsxposedX/core/models/ai_session.dart';
@@ -7,10 +8,13 @@ import 'package:JsxposedX/core/network/http_service.dart';
 import 'package:JsxposedX/core/providers/pinia_provider.dart';
 import 'package:JsxposedX/feature/ai/data/datasources/chat/ai_chat_action_datasource.dart';
 import 'package:JsxposedX/feature/ai/data/repositories/chat/ai_chat_action_repository_impl.dart';
+import 'package:JsxposedX/feature/ai/domain/models/ai_chat_session_context.dart';
 import 'package:JsxposedX/feature/ai/domain/models/ai_response_issue.dart';
 import 'package:JsxposedX/feature/ai/domain/models/ai_session_init_state.dart';
+import 'package:JsxposedX/feature/ai/domain/models/ai_thinking_markup.dart';
 import 'package:JsxposedX/feature/ai/domain/models/ai_tool_call.dart';
 import 'package:JsxposedX/feature/ai/domain/repositories/chat/ai_chat_action_repository.dart';
+import 'package:JsxposedX/feature/ai/domain/services/ai_chat_context_assembler.dart';
 import 'package:JsxposedX/feature/ai/domain/services/prompt_builder.dart';
 import 'package:JsxposedX/feature/ai/domain/services/tool_executor.dart';
 import 'package:JsxposedX/feature/ai/presentation/providers/chat/ai_chat_query_provider.dart';
@@ -18,6 +22,7 @@ import 'package:JsxposedX/feature/ai/presentation/providers/config/ai_config_que
 import 'package:JsxposedX/feature/ai/presentation/states/ai_chat_action_state.dart';
 import 'package:JsxposedX/feature/apk_analysis/presentation/providers/apk_analysis_query_provider.dart';
 import 'package:JsxposedX/feature/so_analysis/presentation/providers/so_analysis_provider.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
@@ -64,20 +69,29 @@ class AiChatAction extends _$AiChatAction {
   bool _stopRequested = false;
   final StreamController<String> _streamingContentController =
       StreamController<String>.broadcast();
+  final StreamController<bool> _streamingThinkingController =
+      StreamController<bool>.broadcast();
   StreamSubscription? _activeResponseSubscription;
   Completer<_CollectedAssistantResponse>? _activeResponseCompleter;
+  CancelToken? _activeRequestCancelToken;
   String _latestStreamingContent = '';
+  String _latestStreamingThinkingContent = '';
+  final AiChatContextAssembler _contextAssembler = AiChatContextAssembler();
 
   Stream<String> get streamingContentStream =>
       _streamingContentController.stream;
+  Stream<bool> get streamingThinkingStream =>
+      _streamingThinkingController.stream;
 
   @override
   AiChatActionState build({required String packageName}) {
     _isDisposed = false;
     ref.onDispose(() {
       _isDisposed = true;
+      _activeRequestCancelToken?.cancel('provider_disposed');
       _activeResponseSubscription?.cancel();
       _streamingContentController.close();
+      _streamingThinkingController.close();
     });
     Future.microtask(() {
       if (!_isDisposed) {
@@ -89,6 +103,7 @@ class AiChatAction extends _$AiChatAction {
 
   void beginSessionInitialization() {
     _clearStreamingContent();
+    _clearStreamingThinking();
     state = state.copyWith(
       sessionInitState: AiSessionInitState.initializing,
       error: null,
@@ -99,6 +114,7 @@ class AiChatAction extends _$AiChatAction {
   }
 
   void markSessionReady() {
+    _clearStreamingThinking();
     state = state.copyWith(
       sessionInitState: AiSessionInitState.ready,
       error: null,
@@ -108,6 +124,7 @@ class AiChatAction extends _$AiChatAction {
 
   void markSessionInitFailed(String message) {
     _clearStreamingContent();
+    _clearStreamingThinking();
     state = state.copyWith(
       sessionInitState: AiSessionInitState.failed,
       error: message,
@@ -119,7 +136,10 @@ class AiChatAction extends _$AiChatAction {
   }
 
   void setSystemPrompt(String prompt) {
-    state = state.copyWith(systemPrompt: prompt);
+    state = state.copyWith(
+      systemPrompt: prompt,
+      sessionContext: state.sessionContext.copyWith(sessionRules: prompt),
+    );
   }
 
   void setApkSession(String sessionId, List<String> dexPaths) {
@@ -178,26 +198,44 @@ class AiChatAction extends _$AiChatAction {
 
   Future<void> switchSession(String sessionId) async {
     _clearStreamingContent();
+    _clearStreamingThinking();
     final protocolMessages = await ref
         .read(aiChatQueryRepositoryProvider)
         .getChatHistory(packageName, sessionId);
+    final storedContext = await ref
+        .read(aiChatQueryRepositoryProvider)
+        .getSessionContext(packageName, sessionId);
     if (_isDisposed) {
       return;
     }
 
-    final displayMessages = _buildDisplayMessagesFromProtocol(protocolMessages);
+    final contextAssembly = _buildPersistedContextAssembly(
+      protocolMessages: protocolMessages,
+      previousContext: storedContext,
+      config: ref.read(aiConfigProvider).value,
+      lastError: null,
+    );
+    final displayMessages = _buildDisplayMessagesFromProtocol(
+      contextAssembly.sanitizedProtocolMessages,
+    );
     state = state.copyWith(
       currentSessionId: sessionId,
-      protocolMessages: List<AiMessage>.unmodifiable(protocolMessages),
+      protocolMessages: List<AiMessage>.unmodifiable(
+        contextAssembly.sanitizedProtocolMessages,
+      ),
       messages: List<AiMessage>.unmodifiable(displayMessages),
       visibleMessageCount: 10,
       error: null,
       isStreaming: false,
       lastResponseIssue: null,
+      sessionContext: contextAssembly.context,
+      contextStats: contextAssembly.context.stats,
+      contextVersion: contextAssembly.context.version,
     );
     await ref
         .read(aiChatActionRepositoryProvider)
         .saveLastActiveSessionId(packageName, sessionId);
+    await _saveChatHistory();
   }
 
   void loadMore() {
@@ -237,6 +275,11 @@ class AiChatAction extends _$AiChatAction {
       error: null,
       isStreaming: false,
       lastResponseIssue: null,
+      sessionContext: AiChatSessionContext(
+        sessionRules: state.systemPrompt ?? '',
+      ),
+      contextStats: const AiChatContextStats(),
+      contextVersion: AiChatSessionContext.currentVersion,
     );
 
     await ref
@@ -292,27 +335,49 @@ class AiChatAction extends _$AiChatAction {
 
     final protocolMessages = [...state.protocolMessages, userMessage];
     final displayMessages = [...state.messages, userMessage, placeholder];
+    final contextAssembly = _assembleContext(
+      protocolMessages: protocolMessages,
+      previousContext: state.sessionContext,
+      config: config,
+      recoveryMode: AiChatRecoveryMode.retryLastTurn,
+    );
+    final checkpoint = AiChatCheckpoint(
+      createdAtIso: DateTime.now().toIso8601String(),
+      lastUserMessage: userMessage,
+      protocolMessages: contextAssembly.sanitizedProtocolMessages,
+      sessionMemorySnapshot: contextAssembly.context.sessionMemory,
+      taskStateSnapshot: contextAssembly.context.taskState,
+      toolTraceSnapshot: contextAssembly.context.toolTrace,
+      recoveryMode: AiChatRecoveryMode.retryLastTurn,
+    );
     state = state.copyWith(
-      protocolMessages: List<AiMessage>.unmodifiable(protocolMessages),
+      protocolMessages: List<AiMessage>.unmodifiable(
+        contextAssembly.sanitizedProtocolMessages,
+      ),
       messages: List<AiMessage>.unmodifiable(displayMessages),
       isStreaming: true,
       error: null,
       lastResponseIssue: null,
+      sessionContext: contextAssembly.context.copyWith(checkpoint: checkpoint),
+      contextStats: contextAssembly.context.stats,
+      contextVersion: contextAssembly.context.version,
     );
+    await _saveChatHistory();
 
     try {
       _latestStreamingContent = '';
       await _runAssistantTurn(
         config: config,
-        protocolMessages: protocolMessages,
+        protocolMessages: contextAssembly.sanitizedProtocolMessages,
         placeholderId: placeholder.id,
         toolsJson: _buildToolsJson(),
         retriesRemaining: 2,
+        recoveryMode: AiChatRecoveryMode.retryLastTurn,
       );
     } catch (error) {
       _markDisplayMessageError(
         placeholder.id,
-        '发送失败：$error',
+        '发送失败：${_describeThrownError(error)}',
         AiResponseIssue.networkError,
       );
     }
@@ -324,18 +389,18 @@ class AiChatAction extends _$AiChatAction {
     required String placeholderId,
     required int retriesRemaining,
     List<Map<String, dynamic>>? toolsJson,
+    AiChatRecoveryMode recoveryMode = AiChatRecoveryMode.none,
   }) async {
-    final preparedProtocolMessages = await _prepareProtocolMessages(
-      protocolMessages,
-      config,
-    );
-    final requestMessages = _buildRequestMessages(
-      preparedProtocolMessages,
-      config,
+    final contextAssembly = _assembleContext(
+      protocolMessages: protocolMessages,
+      previousContext: state.sessionContext,
+      config: config,
+      recoveryMode: recoveryMode,
+      lastError: null,
     );
     final response = await _collectAssistantResponse(
       config: config,
-      requestMessages: requestMessages,
+      requestMessages: contextAssembly.requestMessages,
       toolsJson: toolsJson,
     );
     if (_isDisposed) {
@@ -346,10 +411,11 @@ class AiChatAction extends _$AiChatAction {
         retriesRemaining > 0) {
       await _runAssistantTurn(
         config: config,
-        protocolMessages: preparedProtocolMessages,
+        protocolMessages: contextAssembly.sanitizedProtocolMessages,
         placeholderId: placeholderId,
         retriesRemaining: retriesRemaining - 1,
         toolsJson: toolsJson,
+        recoveryMode: recoveryMode,
       );
       return;
     }
@@ -384,7 +450,10 @@ class AiChatAction extends _$AiChatAction {
     if (response.issue == AiResponseIssue.partialResponse) {
       final partialContent = response.content.isEmpty
           ? (response.errorMessage ?? 'AI 响应中断，内容可能不完整。')
-          : response.content;
+          : _composeDisplayContent(
+              thinkingContent: response.thinkingContent,
+              answerContent: response.content,
+            );
       _updateDisplayMessage(
         placeholderId,
         content: partialContent,
@@ -395,6 +464,12 @@ class AiChatAction extends _$AiChatAction {
         error: response.errorMessage ?? 'AI 响应中断，内容可能不完整。',
         lastResponseIssue: AiResponseIssue.partialResponse,
       );
+      _syncContextState(
+        protocolMessages: contextAssembly.sanitizedProtocolMessages,
+        config: config,
+        lastError: response.errorMessage,
+        recoveryMode: recoveryMode,
+      );
       await _saveChatHistory();
       return;
     }
@@ -402,9 +477,13 @@ class AiChatAction extends _$AiChatAction {
     if (response.toolCalls != null && response.toolCalls!.isNotEmpty) {
       await _handleToolCalls(
         config: config,
-        protocolMessages: preparedProtocolMessages,
+        protocolMessages: contextAssembly.sanitizedProtocolMessages,
         placeholderId: placeholderId,
         initialContent: response.content,
+        initialDisplayContent: _composeDisplayContent(
+          thinkingContent: response.thinkingContent,
+          answerContent: response.content,
+        ),
         toolCalls: response.toolCalls!,
         toolsJson: toolsJson,
       );
@@ -413,9 +492,12 @@ class AiChatAction extends _$AiChatAction {
 
     _finishAssistantMessage(
       placeholderId,
-      response.content,
+      _composeDisplayContent(
+        thinkingContent: response.thinkingContent,
+        answerContent: response.content,
+      ),
       protocolMessages: [
-        ...preparedProtocolMessages,
+        ...contextAssembly.sanitizedProtocolMessages,
         AiMessage(
           id: const Uuid().v4(),
           role: 'assistant',
@@ -431,6 +513,7 @@ class AiChatAction extends _$AiChatAction {
     required String placeholderId,
     required List<Map<String, dynamic>> toolCalls,
     required String initialContent,
+    required String initialDisplayContent,
     List<Map<String, dynamic>>? toolsJson,
   }) async {
     final toolExecutor = _getToolExecutor();
@@ -453,9 +536,14 @@ class AiChatAction extends _$AiChatAction {
     state = state.copyWith(
       protocolMessages: List<AiMessage>.unmodifiable(nextProtocolMessages),
     );
+    _syncContextState(
+      protocolMessages: nextProtocolMessages,
+      config: config,
+      recoveryMode: AiChatRecoveryMode.resumeToolPhase,
+    );
 
-    if (initialContent.isNotEmpty) {
-      _updateDisplayMessage(placeholderId, content: initialContent);
+    if (initialDisplayContent.isNotEmpty) {
+      _updateDisplayMessage(placeholderId, content: initialDisplayContent);
     } else {
       _removeDisplayMessage(placeholderId);
     }
@@ -469,6 +557,12 @@ class AiChatAction extends _$AiChatAction {
           isStreaming: false,
           error: '已停止生成。',
           lastResponseIssue: AiResponseIssue.partialResponse,
+        );
+        _syncContextState(
+          protocolMessages: state.protocolMessages,
+          config: config,
+          lastError: '已停止生成。',
+          recoveryMode: AiChatRecoveryMode.resumeToolPhase,
         );
         await _saveChatHistory();
         return;
@@ -516,6 +610,11 @@ class AiChatAction extends _$AiChatAction {
       state = state.copyWith(
         protocolMessages: List<AiMessage>.unmodifiable(nextProtocolMessages),
       );
+      _syncContextState(
+        protocolMessages: nextProtocolMessages,
+        config: config,
+        recoveryMode: AiChatRecoveryMode.resumeToolPhase,
+      );
 
       if (!result.success && _isCriticalTool(call.name)) {
         final errorMessage = AiMessage(
@@ -530,6 +629,12 @@ class AiChatAction extends _$AiChatAction {
           error: errorMessage.content,
           lastResponseIssue: AiResponseIssue.toolInitError,
         );
+        _syncContextState(
+          protocolMessages: state.protocolMessages,
+          config: config,
+          lastError: errorMessage.content,
+          recoveryMode: AiChatRecoveryMode.resumeToolPhase,
+        );
         await _saveChatHistory();
         return;
       }
@@ -542,6 +647,12 @@ class AiChatAction extends _$AiChatAction {
         isStreaming: false,
         error: '已停止生成。',
         lastResponseIssue: AiResponseIssue.partialResponse,
+      );
+      _syncContextState(
+        protocolMessages: state.protocolMessages,
+        config: config,
+        lastError: '已停止生成。',
+        recoveryMode: AiChatRecoveryMode.resumeToolPhase,
       );
       return;
     }
@@ -559,6 +670,7 @@ class AiChatAction extends _$AiChatAction {
       placeholderId: newPlaceholder.id,
       retriesRemaining: 2,
       toolsJson: toolsJson,
+      recoveryMode: AiChatRecoveryMode.resumeToolPhase,
     );
   }
 
@@ -567,25 +679,46 @@ class AiChatAction extends _$AiChatAction {
     required List<AiMessage> requestMessages,
     List<Map<String, dynamic>>? toolsJson,
   }) async {
+    final cancelToken = CancelToken();
+    _activeRequestCancelToken = cancelToken;
     final stream = ref
         .read(aiChatActionRepositoryProvider)
         .getChatStream(
           config: config,
           messages: requestMessages,
           tools: toolsJson,
+          cancelToken: cancelToken,
         );
 
     final contentBuffer = StringBuffer();
+    final thinkingBuffer = StringBuffer();
     List<Map<String, dynamic>>? toolCalls;
     var sawChunk = false;
     final completer = Completer<_CollectedAssistantResponse>();
     _activeResponseCompleter = completer;
     _latestStreamingContent = '';
+    _clearStreamingThinking();
 
     try {
       _activeResponseSubscription = stream.listen(
         (chunk) {
           if (_isDisposed) {
+            return;
+          }
+
+          if (chunk.isThinking) {
+            sawChunk = true;
+            _pushStreamingThinking(true);
+            if (chunk.content.isNotEmpty) {
+              thinkingBuffer.write(chunk.content);
+              _latestStreamingThinkingContent = thinkingBuffer.toString();
+              _pushStreamingContent(
+                _composeDisplayContent(
+                  thinkingContent: _latestStreamingThinkingContent,
+                  answerContent: _latestStreamingContent,
+                ),
+              );
+            }
             return;
           }
 
@@ -596,9 +729,15 @@ class AiChatAction extends _$AiChatAction {
           }
 
           if (chunk.content.isNotEmpty) {
+            _pushStreamingThinking(false);
             contentBuffer.write(chunk.content);
             _latestStreamingContent = contentBuffer.toString();
-            _pushStreamingContent(_latestStreamingContent);
+            _pushStreamingContent(
+              _composeDisplayContent(
+                thinkingContent: _latestStreamingThinkingContent,
+                answerContent: _latestStreamingContent,
+              ),
+            );
           }
         },
         onError: (Object error, StackTrace stackTrace) {
@@ -612,6 +751,7 @@ class AiChatAction extends _$AiChatAction {
               completer.complete(
                 _CollectedAssistantResponse(
                   content: bufferedContent,
+                  thinkingContent: thinkingBuffer.toString(),
                   issue: AiResponseIssue.partialResponse,
                   errorMessage: _describePlatformException(error),
                 ),
@@ -621,6 +761,7 @@ class AiChatAction extends _$AiChatAction {
             completer.complete(
               _CollectedAssistantResponse(
                 content: bufferedContent,
+                thinkingContent: thinkingBuffer.toString(),
                 issue: _classifyPlatformIssue(error),
                 errorMessage: _describePlatformException(error),
               ),
@@ -632,6 +773,7 @@ class AiChatAction extends _$AiChatAction {
             completer.complete(
               _CollectedAssistantResponse(
                 content: bufferedContent,
+                thinkingContent: thinkingBuffer.toString(),
                 issue: AiResponseIssue.partialResponse,
                 errorMessage: error.toString(),
               ),
@@ -679,6 +821,7 @@ class AiChatAction extends _$AiChatAction {
           completer.complete(
             _CollectedAssistantResponse(
               content: fullContent,
+              thinkingContent: thinkingBuffer.toString(),
               toolCalls: toolCalls,
             ),
           );
@@ -688,11 +831,16 @@ class AiChatAction extends _$AiChatAction {
 
       return await completer.future;
     } finally {
+      if (identical(_activeRequestCancelToken, cancelToken)) {
+        _activeRequestCancelToken = null;
+      }
       if (identical(_activeResponseCompleter, completer)) {
         _activeResponseCompleter = null;
       }
       _activeResponseSubscription = null;
       _latestStreamingContent = '';
+      _latestStreamingThinkingContent = '';
+      _clearStreamingThinking();
     }
   }
 
@@ -756,7 +904,10 @@ class AiChatAction extends _$AiChatAction {
     }
 
     final isZh = state.systemPrompt?.contains('你是') ?? true;
-    return PromptBuilder(isZh: isZh).withTools().withSoTools().buildToolsJson();
+    final apiType = ref.read(aiConfigProvider).value?.apiType ?? AiApiType.openai;
+    return PromptBuilder(
+      isZh: isZh,
+    ).withTools().withSoTools().buildToolsJson(apiType: apiType);
   }
 
   Future<void> retryByMessageId(String messageId) async {
@@ -772,77 +923,25 @@ class AiChatAction extends _$AiChatAction {
     }
 
     final displayMessage = state.messages[displayIndex];
-    final isContinueEligible =
-        displayMessage.role == 'assistant' &&
-        displayMessage.isError &&
-        state.lastResponseIssue == AiResponseIssue.partialResponse &&
-        displayIndex == state.messages.length - 1 &&
-        displayMessage.content.trim().isNotEmpty;
-    if (isContinueEligible) {
-      await _continueFromPartialMessage(
-        displayMessage: displayMessage,
-        displayIndex: displayIndex,
+    if (_isResumeToolPhaseEligible(displayMessage, displayIndex)) {
+      await _restoreFromCheckpointAndRun(
+        recoveryMode: AiChatRecoveryMode.resumeToolPhase,
       );
       return;
     }
 
-    String? retryText;
-    if (displayMessage.role == 'user') {
-      retryText = displayMessage.content;
-    } else {
-      for (var index = displayIndex - 1; index >= 0; index--) {
-        final candidate = state.messages[index];
-        if (candidate.role == 'user') {
-          retryText = candidate.content;
-          break;
-        }
-      }
-    }
-
-    if (retryText == null || retryText.trim().isEmpty) {
+    if (_isContinueEligible(displayMessage, displayIndex)) {
+      await _continueFromPartialMessage(displayMessage: displayMessage);
       return;
     }
 
-    var retryUserDisplayIndex = displayIndex;
-    if (displayMessage.role != 'user') {
-      for (var index = displayIndex - 1; index >= 0; index--) {
-        if (state.messages[index].role == 'user') {
-          retryUserDisplayIndex = index;
-          break;
-        }
-      }
-    }
-
-    var retryUserProtocolIndex = state.protocolMessages.length;
-    for (var index = state.protocolMessages.length - 1; index >= 0; index--) {
-      final candidate = state.protocolMessages[index];
-      if (candidate.role == 'user' && candidate.content == retryText) {
-        retryUserProtocolIndex = index;
-        break;
-      }
-    }
-
-    final nextDisplayMessages = retryUserDisplayIndex <= 0
-        ? const <AiMessage>[]
-        : List<AiMessage>.from(state.messages.sublist(0, retryUserDisplayIndex));
-    final nextProtocolMessages = retryUserProtocolIndex <= 0
-        ? const <AiMessage>[]
-        : List<AiMessage>.from(
-            state.protocolMessages.sublist(0, retryUserProtocolIndex),
-          );
-
-    state = state.copyWith(
-      messages: List<AiMessage>.unmodifiable(nextDisplayMessages),
-      protocolMessages: List<AiMessage>.unmodifiable(nextProtocolMessages),
-      error: null,
-      lastResponseIssue: null,
+    await _restoreFromCheckpointAndRun(
+      recoveryMode: AiChatRecoveryMode.retryLastTurn,
     );
-    await send(retryText);
   }
 
   Future<void> _continueFromPartialMessage({
     required AiMessage displayMessage,
-    required int displayIndex,
   }) async {
     final config = ref.read(aiConfigProvider).value;
     if (config == null) {
@@ -850,141 +949,82 @@ class AiChatAction extends _$AiChatAction {
       return;
     }
 
-    final partialContent = displayMessage.content.trim();
-    final updatedMessages = List<AiMessage>.from(state.messages);
-    updatedMessages[displayIndex] = updatedMessages[displayIndex].copyWith(
-      isError: false,
+    final checkpoint = state.sessionContext.checkpoint;
+    if (checkpoint == null || checkpoint.lastUserMessage == null) {
+      await _restoreFromCheckpointAndRun(
+        recoveryMode: AiChatRecoveryMode.retryLastTurn,
+      );
+      return;
+    }
+
+    final partialContent = AiThinkingMarkup.strip(displayMessage.content);
+    final continuationProtocolMessages = List<AiMessage>.from(
+      checkpoint.protocolMessages,
+    );
+    final lastUserIndex = continuationProtocolMessages.lastIndexWhere(
+      (message) => message.id == checkpoint.lastUserMessage!.id,
+    );
+    if (lastUserIndex == -1) {
+      await _restoreFromCheckpointAndRun(
+        recoveryMode: AiChatRecoveryMode.retryLastTurn,
+      );
+      return;
+    }
+
+    final updatedUserMessage = continuationProtocolMessages[lastUserIndex]
+        .copyWith(
+          content:
+              '${continuationProtocolMessages[lastUserIndex].content}\n\n${_buildContinuationPrompt(partialContent)}',
+        );
+    continuationProtocolMessages[lastUserIndex] = updatedUserMessage;
+    final displayMessages = [
+      ..._buildDisplayMessagesFromProtocol(checkpoint.protocolMessages),
+      displayMessage.copyWith(isError: false),
+    ];
+    final placeholder = AiMessage(
+      id: const Uuid().v4(),
+      role: 'assistant',
+      content: '',
+    );
+    final contextAssembly = _assembleContext(
+      protocolMessages: continuationProtocolMessages,
+      previousContext: state.sessionContext,
+      config: config,
+      recoveryMode: AiChatRecoveryMode.continueGeneration,
+    );
+    final checkpointForContinuation = checkpoint.copyWith(
+      protocolMessages: contextAssembly.sanitizedProtocolMessages,
+      recoveryMode: AiChatRecoveryMode.continueGeneration,
     );
     state = state.copyWith(
-      messages: List<AiMessage>.unmodifiable(updatedMessages),
+      messages: List<AiMessage>.unmodifiable([...displayMessages, placeholder]),
+      protocolMessages: List<AiMessage>.unmodifiable(
+        contextAssembly.sanitizedProtocolMessages,
+      ),
       isStreaming: true,
       error: null,
       lastResponseIssue: null,
+      sessionContext: contextAssembly.context.copyWith(
+        checkpoint: checkpointForContinuation,
+      ),
+      contextStats: contextAssembly.context.stats,
+      contextVersion: contextAssembly.context.version,
     );
+    await _saveChatHistory();
 
     try {
-      final preparedProtocolMessages = await _prepareProtocolMessages(
-        state.protocolMessages,
-        config,
-      );
-      final continuationProtocolMessages = _buildContinuationProtocolMessages(
-        preparedProtocolMessages,
-        partialContent,
-      );
-      final requestMessages = _buildRequestMessages(
-        continuationProtocolMessages,
-        config,
-      );
-
-      final response = await _collectAssistantResponse(
+      await _runAssistantTurn(
         config: config,
-        requestMessages: requestMessages,
+        protocolMessages: contextAssembly.sanitizedProtocolMessages,
+        placeholderId: placeholder.id,
+        retriesRemaining: 1,
         toolsJson: _buildToolsJson(),
+        recoveryMode: AiChatRecoveryMode.continueGeneration,
       );
-      if (_isDisposed) {
-        return;
-      }
-
-      if (response.issue == AiResponseIssue.emptyResponse) {
-        _updateDisplayMessage(
-          displayMessage.id,
-          content: partialContent,
-          isError: true,
-        );
-        state = state.copyWith(
-          isStreaming: false,
-          error: response.errorMessage ?? 'AI 未返回有效内容，请稍后重试。',
-          lastResponseIssue: AiResponseIssue.emptyResponse,
-        );
-        await _saveChatHistory();
-        return;
-      }
-
-      if (response.issue == AiResponseIssue.parseError) {
-        _updateDisplayMessage(
-          displayMessage.id,
-          content: partialContent,
-          isError: true,
-        );
-        state = state.copyWith(
-          isStreaming: false,
-          error: response.errorMessage ?? 'AI 响应格式异常。',
-          lastResponseIssue: AiResponseIssue.parseError,
-        );
-        await _saveChatHistory();
-        return;
-      }
-
-      if (response.issue == AiResponseIssue.networkError) {
-        _updateDisplayMessage(
-          displayMessage.id,
-          content: partialContent,
-          isError: true,
-        );
-        state = state.copyWith(
-          isStreaming: false,
-          error: response.errorMessage ?? 'AI 请求失败。',
-          lastResponseIssue: AiResponseIssue.networkError,
-        );
-        await _saveChatHistory();
-        return;
-      }
-
-      final mergedContent = _mergeContinuationContent(
-        partialContent,
-        response.content,
-      );
-
-      if (response.issue == AiResponseIssue.partialResponse) {
-        _updateDisplayMessage(
-          displayMessage.id,
-          content: mergedContent,
-          isError: true,
-        );
-        state = state.copyWith(
-          isStreaming: false,
-          error: response.errorMessage ?? 'AI 响应中断，内容可能不完整。',
-          lastResponseIssue: AiResponseIssue.partialResponse,
-        );
-        await _saveChatHistory();
-        return;
-      }
-
-      if (response.toolCalls != null && response.toolCalls!.isNotEmpty) {
-        await _handleToolCalls(
-          config: config,
-          protocolMessages: preparedProtocolMessages,
-          placeholderId: displayMessage.id,
-          initialContent: response.content,
-          toolCalls: response.toolCalls!,
-          toolsJson: _buildToolsJson(),
-        );
-        return;
-      }
-
-      _updateDisplayMessage(
-        displayMessage.id,
-        content: mergedContent,
-        isError: false,
-      );
-      state = state.copyWith(
-        protocolMessages: List<AiMessage>.unmodifiable([
-          ...preparedProtocolMessages,
-          AiMessage(
-            id: const Uuid().v4(),
-            role: 'assistant',
-            content: mergedContent,
-          ),
-        ]),
-        isStreaming: false,
-        error: null,
-        lastResponseIssue: null,
-      );
-      await _saveChatHistory();
-    } catch (_) {
+    } catch (error) {
       _markDisplayMessageError(
-        displayMessage.id,
-        partialContent,
+        placeholder.id,
+        _describeThrownError(error),
         AiResponseIssue.networkError,
       );
     }
@@ -1003,17 +1043,18 @@ class AiChatAction extends _$AiChatAction {
 
   Future<bool> compactContext() async {
     final config = ref.read(aiConfigProvider).value;
-    if (config == null || state.protocolMessages.isEmpty) {
+    if (state.protocolMessages.isEmpty) {
       return false;
     }
-
-    final previousMessages = List<AiMessage>.from(state.protocolMessages);
-    await _prepareProtocolMessages(
-      state.protocolMessages,
-      config,
+    final previousStats = state.contextStats;
+    _syncContextState(
+      protocolMessages: state.protocolMessages,
+      config: config,
       forceCompact: true,
+      recoveryMode: state.sessionContext.taskState.lastRecoveryMode,
     );
-    return !_sameMessages(previousMessages, state.protocolMessages);
+    await _saveChatHistory();
+    return state.contextStats.didCompact || state.contextStats != previousStats;
   }
 
   @Deprecated('Use retryByMessageId instead.')
@@ -1049,6 +1090,11 @@ class AiChatAction extends _$AiChatAction {
           protocolMessages: const [],
           sessions: const [],
           currentSessionId: null,
+          sessionContext: AiChatSessionContext(
+            sessionRules: state.systemPrompt ?? '',
+          ),
+          contextStats: const AiChatContextStats(),
+          contextVersion: AiChatSessionContext.currentVersion,
         );
         await ref
             .read(aiChatActionRepositoryProvider)
@@ -1062,6 +1108,7 @@ class AiChatAction extends _$AiChatAction {
   }
 
   void resetStreaming() {
+    _clearStreamingThinking();
     state = state.copyWith(isStreaming: false);
   }
 
@@ -1072,9 +1119,34 @@ class AiChatAction extends _$AiChatAction {
 
     _stopRequested = true;
     final partialContent = _latestStreamingContent;
+    final hasPendingToolPhase = state.sessionContext.hasPendingToolPhase;
+    final stopMessage = partialContent.isEmpty ? '已停止生成。' : partialContent;
+    if (hasPendingToolPhase) {
+      _appendDisplayMessage(
+        AiMessage(
+          id: const Uuid().v4(),
+          role: 'assistant',
+          content: '已停止生成。',
+          isError: true,
+        ),
+      );
+    } else {
+      _replaceLatestAssistantPlaceholder(
+        content: stopMessage,
+        isError: true,
+      );
+    }
+    state = state.copyWith(
+      isStreaming: false,
+      error: '已停止生成。',
+      lastResponseIssue: AiResponseIssue.partialResponse,
+    );
+    _activeRequestCancelToken?.cancel('user_stopped');
+    _activeRequestCancelToken = null;
+    _clearStreamingContent();
+    _clearStreamingThinking();
     await _activeResponseSubscription?.cancel();
     _activeResponseSubscription = null;
-    _clearStreamingContent();
 
     final completer = _activeResponseCompleter;
     if (completer != null && !completer.isCompleted) {
@@ -1085,21 +1157,16 @@ class AiChatAction extends _$AiChatAction {
           errorMessage: '已停止生成。',
         ),
       );
-    } else {
-      _appendDisplayMessage(
-        AiMessage(
-          id: const Uuid().v4(),
-          role: 'assistant',
-          content: '已停止生成。',
-          isError: true,
-        ),
-      );
-      state = state.copyWith(
-        isStreaming: false,
-        error: '已停止生成。',
-        lastResponseIssue: AiResponseIssue.partialResponse,
-      );
     }
+    _syncContextState(
+      protocolMessages: state.protocolMessages,
+      config: ref.read(aiConfigProvider).value,
+      lastError: '已停止生成。',
+      recoveryMode: hasPendingToolPhase
+          ? AiChatRecoveryMode.resumeToolPhase
+          : AiChatRecoveryMode.continueGeneration,
+    );
+    await _saveChatHistory();
   }
 
   Future<String> testConnection(AiConfig config) {
@@ -1126,6 +1193,9 @@ class AiChatAction extends _$AiChatAction {
       await ref
           .read(aiChatActionRepositoryProvider)
           .saveChatHistory(packageName, sessionId, state.protocolMessages);
+      await ref
+          .read(aiChatActionRepositoryProvider)
+          .saveSessionContext(packageName, sessionId, state.sessionContext);
 
       final sessionIndex = state.sessions.indexWhere(
         (session) => session.id == sessionId,
@@ -1662,11 +1732,18 @@ class AiChatAction extends _$AiChatAction {
     required List<AiMessage> protocolMessages,
   }) {
     _updateDisplayMessage(placeholderId, content: content, isError: false);
+    final config = ref.read(aiConfigProvider).value;
     state = state.copyWith(
       protocolMessages: List<AiMessage>.unmodifiable(protocolMessages),
       isStreaming: false,
       error: null,
       lastResponseIssue: null,
+    );
+    _syncContextState(
+      protocolMessages: protocolMessages,
+      config: config,
+      lastError: null,
+      recoveryMode: AiChatRecoveryMode.none,
     );
     _saveChatHistory();
   }
@@ -1677,10 +1754,18 @@ class AiChatAction extends _$AiChatAction {
     AiResponseIssue issue,
   ) {
     _updateDisplayMessage(placeholderId, content: message, isError: true);
+    final config = ref.read(aiConfigProvider).value;
+    _clearStreamingThinking();
     state = state.copyWith(
       isStreaming: false,
       error: message,
       lastResponseIssue: issue,
+    );
+    _syncContextState(
+      protocolMessages: state.protocolMessages,
+      config: config,
+      lastError: message,
+      recoveryMode: state.sessionContext.taskState.lastRecoveryMode,
     );
     _saveChatHistory();
   }
@@ -1721,6 +1806,38 @@ class AiChatAction extends _$AiChatAction {
     );
   }
 
+  void _replaceLatestAssistantPlaceholder({
+    required String content,
+    required bool isError,
+  }) {
+    final updatedMessages = List<AiMessage>.from(state.messages);
+    for (var index = updatedMessages.length - 1; index >= 0; index--) {
+      final message = updatedMessages[index];
+      if (message.role != 'assistant' ||
+          message.isToolResultBubble ||
+          message.isError) {
+        continue;
+      }
+      updatedMessages[index] = message.copyWith(
+        content: content,
+        isError: isError,
+      );
+      state = state.copyWith(
+        messages: List<AiMessage>.unmodifiable(updatedMessages),
+      );
+      return;
+    }
+
+    _appendDisplayMessage(
+      AiMessage(
+        id: const Uuid().v4(),
+        role: 'assistant',
+        content: content,
+        isError: isError,
+      ),
+    );
+  }
+
   void _pushStreamingContent(String content) {
     if (_streamingContentController.isClosed) {
       return;
@@ -1728,11 +1845,226 @@ class AiChatAction extends _$AiChatAction {
     _streamingContentController.add(content);
   }
 
+  void _pushStreamingThinking(bool isThinking) {
+    if (_streamingThinkingController.isClosed) {
+      return;
+    }
+    _streamingThinkingController.add(isThinking);
+  }
+
   void _clearStreamingContent() {
     if (_streamingContentController.isClosed) {
       return;
     }
     _streamingContentController.add('');
+    _latestStreamingContent = '';
+    _latestStreamingThinkingContent = '';
+  }
+
+  String _composeDisplayContent({
+    required String thinkingContent,
+    required String answerContent,
+  }) {
+    return AiThinkingMarkup.compose(
+      thinking: thinkingContent,
+      answer: answerContent,
+    );
+  }
+
+  void _clearStreamingThinking() {
+    if (_streamingThinkingController.isClosed) {
+      return;
+    }
+    _streamingThinkingController.add(false);
+  }
+
+  AiChatContextAssembly _assembleContext({
+    required List<AiMessage> protocolMessages,
+    AiChatSessionContext? previousContext,
+    AiConfig? config,
+    bool forceCompact = false,
+    String? lastError,
+    AiChatRecoveryMode recoveryMode = AiChatRecoveryMode.none,
+  }) {
+    final recentRounds = _resolveRecentRounds(config);
+    final tokenBudget = _resolveTokenBudget(config);
+    return _contextAssembler.assemble(
+      protocolMessages: protocolMessages,
+      sessionRules: state.systemPrompt ?? previousContext?.sessionRules ?? '',
+      tokenBudget: tokenBudget,
+      recentRounds: recentRounds,
+      previousContext: previousContext,
+      forceCompact: forceCompact,
+      lastError: lastError,
+      recoveryMode: recoveryMode,
+    );
+  }
+
+  void _syncContextState({
+    required List<AiMessage> protocolMessages,
+    AiConfig? config,
+    bool forceCompact = false,
+    String? lastError,
+    AiChatRecoveryMode recoveryMode = AiChatRecoveryMode.none,
+  }) {
+    final assembly = _buildPersistedContextAssembly(
+      protocolMessages: protocolMessages,
+      previousContext: state.sessionContext,
+      config: config,
+      forceCompact: forceCompact,
+      lastError: lastError,
+      recoveryMode: recoveryMode,
+    );
+    state = state.copyWith(
+      protocolMessages: List<AiMessage>.unmodifiable(
+        assembly.sanitizedProtocolMessages,
+      ),
+      sessionContext: assembly.context.copyWith(
+        checkpoint: state.sessionContext.checkpoint,
+      ),
+      contextStats: assembly.context.stats,
+      contextVersion: assembly.context.version,
+    );
+  }
+
+  AiChatContextAssembly _buildPersistedContextAssembly({
+    required List<AiMessage> protocolMessages,
+    AiChatSessionContext? previousContext,
+    AiConfig? config,
+    bool forceCompact = false,
+    String? lastError,
+    AiChatRecoveryMode recoveryMode = AiChatRecoveryMode.none,
+  }) {
+    var assembly = _assembleContext(
+      protocolMessages: protocolMessages,
+      previousContext: previousContext,
+      config: config,
+      forceCompact: forceCompact,
+      lastError: lastError,
+      recoveryMode: recoveryMode,
+    );
+    final sanitizedMessages = assembly.sanitizedProtocolMessages;
+    final shouldCompactStoredProtocol =
+        forceCompact ||
+        _estimateProtocolSize(sanitizedMessages) > _contextTargetBudgetChars;
+    if (!shouldCompactStoredProtocol) {
+      return assembly;
+    }
+
+    final compactedMessages = _compactProtocolMessages(sanitizedMessages);
+    if (_sameMessages(sanitizedMessages, compactedMessages)) {
+      return assembly;
+    }
+
+    assembly = _assembleContext(
+      protocolMessages: compactedMessages,
+      previousContext: previousContext,
+      config: config,
+      forceCompact: forceCompact,
+      lastError: lastError,
+      recoveryMode: recoveryMode,
+    );
+    return assembly;
+  }
+
+  int _resolveRecentRounds(AiConfig? config) {
+    if (config == null) {
+      return 3;
+    }
+    final rounds = config.memoryRounds <= 0 ? 1 : config.memoryRounds.toInt();
+    return rounds < 1 ? 1 : rounds;
+  }
+
+  int _resolveTokenBudget(AiConfig? config) {
+    if (config == null || config.maxToken <= 0) {
+      return 6000;
+    }
+    final estimate = config.maxToken * 6;
+    if (estimate < 2400) {
+      return 2400;
+    }
+    if (estimate > 12000) {
+      return 12000;
+    }
+    return estimate;
+  }
+
+  bool _isContinueEligible(AiMessage displayMessage, int displayIndex) {
+    return displayMessage.role == 'assistant' &&
+        displayMessage.isError &&
+        state.lastResponseIssue == AiResponseIssue.partialResponse &&
+        displayIndex == state.messages.length - 1 &&
+        displayMessage.content.trim().isNotEmpty &&
+        !state.sessionContext.hasPendingToolPhase;
+  }
+
+  bool _isResumeToolPhaseEligible(AiMessage displayMessage, int displayIndex) {
+    return displayMessage.role == 'assistant' &&
+        displayMessage.isError &&
+        state.lastResponseIssue == AiResponseIssue.partialResponse &&
+        displayIndex == state.messages.length - 1 &&
+        state.sessionContext.hasPendingToolPhase;
+  }
+
+  Future<void> _restoreFromCheckpointAndRun({
+    required AiChatRecoveryMode recoveryMode,
+  }) async {
+    final config = ref.read(aiConfigProvider).value;
+    final checkpoint = state.sessionContext.checkpoint;
+    if (config == null || checkpoint == null || checkpoint.protocolMessages.isEmpty) {
+      return;
+    }
+
+    final restoredProtocolMessages = List<AiMessage>.from(
+      checkpoint.protocolMessages,
+    );
+    final restoredDisplayMessages = _buildDisplayMessagesFromProtocol(
+      restoredProtocolMessages,
+    );
+    final placeholder = AiMessage(
+      id: const Uuid().v4(),
+      role: 'assistant',
+      content: '',
+    );
+    final contextAssembly = _assembleContext(
+      protocolMessages: restoredProtocolMessages,
+      previousContext: state.sessionContext.copyWith(
+        checkpoint: checkpoint,
+      ),
+      config: config,
+      recoveryMode: recoveryMode,
+    );
+    state = state.copyWith(
+      messages: List<AiMessage>.unmodifiable([
+        ...restoredDisplayMessages,
+        placeholder,
+      ]),
+      protocolMessages: List<AiMessage>.unmodifiable(
+        contextAssembly.sanitizedProtocolMessages,
+      ),
+      isStreaming: true,
+      error: null,
+      lastResponseIssue: null,
+      sessionContext: contextAssembly.context.copyWith(checkpoint: checkpoint),
+      contextStats: contextAssembly.context.stats,
+      contextVersion: contextAssembly.context.version,
+    );
+    await _saveChatHistory();
+    await _runAssistantTurn(
+      config: config,
+      protocolMessages: contextAssembly.sanitizedProtocolMessages,
+      placeholderId: placeholder.id,
+      retriesRemaining: 1,
+      toolsJson: _buildToolsJson(),
+      recoveryMode: recoveryMode,
+    );
+  }
+
+  String _describeThrownError(Object error) {
+    if (error is PlatformException) {
+      return _describePlatformException(error);
+    }
+    return error.toString();
   }
 
   AiResponseIssue _classifyPlatformIssue(PlatformException error) {
@@ -1754,12 +2086,14 @@ class _SessionSummarySections {
 class _CollectedAssistantResponse {
   const _CollectedAssistantResponse({
     required this.content,
+    this.thinkingContent = '',
     this.toolCalls,
     this.issue,
     this.errorMessage,
   });
 
   final String content;
+  final String thinkingContent;
   final List<Map<String, dynamic>>? toolCalls;
   final AiResponseIssue? issue;
   final String? errorMessage;

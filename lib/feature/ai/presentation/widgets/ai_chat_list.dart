@@ -73,7 +73,9 @@ class AiChatList extends HookConsumerWidget {
     final remainingCount = (totalVisibleCount - messages.length).clamp(0, totalVisibleCount);
     final reversedMessages = messages.reversed.toList(growable: false);
     final retryLabel = chatState.lastResponseIssue == AiResponseIssue.partialResponse
-        ? context.l10n.aiContinue
+        ? (chatState.sessionContext.hasPendingToolPhase
+              ? context.l10n.aiResumeToolPhase
+              : context.l10n.aiContinue)
         : context.l10n.retry;
 
     return ListView.builder(
@@ -113,6 +115,7 @@ class AiChatList extends HookConsumerWidget {
             isToolCalling: message.isToolResultBubble,
             retryLabel: retryLabel,
             streamingContentStream: chatNotifier.streamingContentStream,
+            streamingThinkingStream: chatNotifier.streamingThinkingStream,
             onRetry: () => chatNotifier.retryByMessageId(message.id),
             packageName: packageName,
           );
@@ -146,6 +149,7 @@ class _StreamingAiChatBubble extends HookWidget {
     required this.isToolCalling,
     required this.retryLabel,
     required this.streamingContentStream,
+    required this.streamingThinkingStream,
     this.onRetry,
     this.packageName,
   });
@@ -155,6 +159,7 @@ class _StreamingAiChatBubble extends HookWidget {
   final bool isToolCalling;
   final String retryLabel;
   final Stream<String> streamingContentStream;
+  final Stream<bool> streamingThinkingStream;
   final VoidCallback? onRetry;
   final String? packageName;
 
@@ -162,6 +167,7 @@ class _StreamingAiChatBubble extends HookWidget {
   Widget build(BuildContext context) {
     final content = useState('');
     final lastUpdateTime = useState<DateTime?>(null);
+    final isThinking = useState(false);
 
     useEffect(() {
       final subscription = streamingContentStream.listen((data) {
@@ -184,6 +190,17 @@ class _StreamingAiChatBubble extends HookWidget {
       return subscription.cancel;
     }, [streamingContentStream]);
 
+    useEffect(() {
+      final subscription = streamingThinkingStream.listen((value) {
+        if (!context.mounted) {
+          return;
+        }
+        isThinking.value = value;
+      });
+
+      return subscription.cancel;
+    }, [streamingThinkingStream]);
+
     return RepaintBoundary(
       child: AiChatBubble(
         content: content.value,
@@ -193,6 +210,9 @@ class _StreamingAiChatBubble extends HookWidget {
         retryLabel: retryLabel,
         onRetry: onRetry,
         packageName: packageName,
+        loadingHint: isThinking.value
+            ? (context.isZh ? 'AI 正在深度思考...' : 'AI is thinking deeply...')
+            : null,
       ),
     );
   }

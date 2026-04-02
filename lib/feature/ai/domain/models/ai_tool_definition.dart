@@ -1,5 +1,4 @@
 /// Function Calling 工具定义模型
-/// 符合 OpenAI tools 参数格式
 class AiToolDefinition {
   final String name;
   final String description;
@@ -12,7 +11,7 @@ class AiToolDefinition {
   });
 
   /// 转为 OpenAI Function Calling 格式
-  Map<String, dynamic> toFunctionJson() => {
+  Map<String, dynamic> toOpenAiToolJson() => {
         'type': 'function',
         'function': {
           'name': name,
@@ -20,6 +19,16 @@ class AiToolDefinition {
           'parameters': parameters,
         },
       };
+
+  /// 转为 Anthropic Messages API tools 格式
+  Map<String, dynamic> toAnthropicToolJson() => {
+        'name': name,
+        'description': description,
+        'input_schema': parameters,
+      };
+
+  /// 兼容旧调用方，默认输出 OpenAI 格式。
+  Map<String, dynamic> toFunctionJson() => toOpenAiToolJson();
 }
 
 /// 参数 JSON Schema 构建器

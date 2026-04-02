@@ -1,6 +1,8 @@
 import 'package:JsxposedX/core/models/ai_config.dart';
 import 'package:JsxposedX/core/models/ai_message.dart';
 import 'package:JsxposedX/core/models/ai_session.dart';
+import 'package:JsxposedX/feature/ai/domain/models/ai_chat_session_context.dart';
+import 'package:dio/dio.dart';
 
 /// AI 对话操作仓储接口
 abstract class AiChatActionRepository {
@@ -9,6 +11,7 @@ abstract class AiChatActionRepository {
     required AiConfig config,
     required List<AiMessage> messages,
     List<Map<String, dynamic>>? tools,
+    CancelToken? cancelToken,
   });
 
   /// 测试连接
@@ -22,6 +25,12 @@ abstract class AiChatActionRepository {
     String packageName,
     String sessionId,
     List<AiMessage> messages,
+  );
+
+  Future<void> saveSessionContext(
+    String packageName,
+    String sessionId,
+    AiChatSessionContext context,
   );
 
   /// 记录最后活跃会话

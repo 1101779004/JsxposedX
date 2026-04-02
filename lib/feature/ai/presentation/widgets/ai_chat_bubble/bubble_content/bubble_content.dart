@@ -1,5 +1,7 @@
 import 'package:JsxposedX/core/extensions/context_extensions.dart';
+import 'package:JsxposedX/feature/ai/domain/models/ai_thinking_markup.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -32,7 +34,7 @@ abstract class BaseBubbleContentPart {
 
   @protected
   Widget buildLoading(BuildContext context, BubbleState state) {
-    return const DotLoadingIndicator();
+    return DotLoadingIndicator(statusText: state.loadingHint);
   }
 
   @protected
@@ -51,18 +53,22 @@ abstract class BaseBubbleContentPart {
     BubbleState state, {
     required BaseBubbleToolbarPart toolbarPart,
   }) {
-    return GestureDetector(
-      onLongPress: () => toolbarPart.handleCopyToClipboard(context, state.content),
-      child: MarkdownBody(
-        data: resolveMarkdownData(context, state),
-        styleSheet: buildMarkdownTheme(context, state),
-        selectable: false,
-        builders: {
-          'code': AiCodeElementBuilder(state: state, toolbarPart: toolbarPart),
-        },
-        shrinkWrap: true,
-        fitContent: true,
-      ),
+    final parts = AiThinkingMarkup.split(resolveMarkdownData(context, state));
+    if (parts.hasThinking) {
+      return _ThinkingMarkdownContent(
+        state: state,
+        toolbarPart: toolbarPart,
+        thinkingContent: parts.thinking,
+        answerContent: parts.answer,
+        theme: buildMarkdownTheme(context, state),
+      );
+    }
+
+    return _buildMarkdownBody(
+      context,
+      state,
+      toolbarPart: toolbarPart,
+      markdown: parts.answer,
     );
   }
 
@@ -108,8 +114,156 @@ abstract class BaseBubbleContentPart {
       ),
     );
   }
+
+  Widget _buildMarkdownBody(
+    BuildContext context,
+    BubbleState state, {
+    required BaseBubbleToolbarPart toolbarPart,
+    required String markdown,
+  }) {
+    return GestureDetector(
+      onLongPress: () => toolbarPart.handleCopyToClipboard(context, markdown),
+      child: MarkdownBody(
+        data: markdown,
+        styleSheet: buildMarkdownTheme(context, state),
+        selectable: false,
+        builders: {
+          'code': AiCodeElementBuilder(state: state, toolbarPart: toolbarPart),
+        },
+        shrinkWrap: true,
+        fitContent: true,
+      ),
+    );
+  }
 }
 
 class DefaultBubbleContentPart extends BaseBubbleContentPart {
   const DefaultBubbleContentPart();
+}
+
+class _ThinkingMarkdownContent extends HookWidget {
+  const _ThinkingMarkdownContent({
+    required this.state,
+    required this.toolbarPart,
+    required this.thinkingContent,
+    required this.answerContent,
+    required this.theme,
+  });
+
+  final BubbleState state;
+  final BaseBubbleToolbarPart toolbarPart;
+  final String thinkingContent;
+  final String answerContent;
+  final MarkdownStyleSheet theme;
+
+  @override
+  Widget build(BuildContext context) {
+    final expanded = useState(false);
+    final cardColor = context.isDark
+        ? Colors.white.withValues(alpha: 0.04)
+        : Colors.black.withValues(alpha: 0.035);
+    final borderColor = context.colorScheme.primary.withValues(alpha: 0.18);
+    final title = context.isZh ? '思考过程' : 'Thinking';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: double.infinity,
+          margin: EdgeInsets.only(bottom: answerContent.isNotEmpty ? 10.h : 0),
+          decoration: BoxDecoration(
+            color: cardColor,
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(color: borderColor),
+          ),
+          child: InkWell(
+            onTap: () => expanded.value = !expanded.value,
+            borderRadius: BorderRadius.circular(12.r),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.psychology_alt_outlined,
+                        size: 16.sp,
+                        color: context.colorScheme.primary,
+                      ),
+                      SizedBox(width: 8.w),
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 12.5.sp,
+                            fontWeight: FontWeight.w600,
+                            color: context.colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        expanded.value ? Icons.expand_less : Icons.expand_more,
+                        size: 16.sp,
+                        color: context.colorScheme.primary,
+                      ),
+                    ],
+                  ),
+                  if (expanded.value) ...[
+                    SizedBox(height: 10.h),
+                    GestureDetector(
+                      onLongPress: () => toolbarPart.handleCopyToClipboard(
+                        context,
+                        thinkingContent,
+                      ),
+                      child: MarkdownBody(
+                        data: thinkingContent,
+                        styleSheet: theme,
+                        selectable: false,
+                        builders: {
+                          'code': AiCodeElementBuilder(
+                            state: state,
+                            toolbarPart: toolbarPart,
+                          ),
+                        },
+                        shrinkWrap: true,
+                        fitContent: true,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+        if (answerContent.isNotEmpty)
+          GestureDetector(
+            onLongPress: () => toolbarPart.handleCopyToClipboard(
+              context,
+              answerContent,
+            ),
+            child: MarkdownBody(
+              data: answerContent,
+              styleSheet: theme,
+              selectable: false,
+              builders: {
+                'code': AiCodeElementBuilder(
+                  state: state,
+                  toolbarPart: toolbarPart,
+                ),
+              },
+              shrinkWrap: true,
+              fitContent: true,
+            ),
+          )
+        else if (!state.isError) ...[
+          SizedBox(height: 8.h),
+          DotLoadingIndicator(
+            statusText: context.isZh ? 'AI 正在深度思考...' : 'AI is thinking deeply...',
+          ),
+        ],
+      ],
+    );
+  }
 }

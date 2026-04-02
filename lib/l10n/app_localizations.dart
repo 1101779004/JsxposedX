@@ -1154,6 +1154,192 @@ abstract class AppLocalizations {
   /// **'压缩上下文'**
   String get aiCompressContext;
 
+  /// No description provided for @aiContext.
+  ///
+  /// In zh, this message translates to:
+  /// **'上下文'**
+  String get aiContext;
+
+  /// No description provided for @aiContextTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'上下文'**
+  String get aiContextTitle;
+
+  /// No description provided for @aiContextBudget.
+  ///
+  /// In zh, this message translates to:
+  /// **'上下文预算'**
+  String get aiContextBudget;
+
+  /// No description provided for @aiContextRemaining.
+  ///
+  /// In zh, this message translates to:
+  /// **'剩余预算'**
+  String get aiContextRemaining;
+
+  /// No description provided for @aiContextLayers.
+  ///
+  /// In zh, this message translates to:
+  /// **'装配层'**
+  String get aiContextLayers;
+
+  /// No description provided for @aiContextRecentRounds.
+  ///
+  /// In zh, this message translates to:
+  /// **'最近原始轮次'**
+  String get aiContextRecentRounds;
+
+  /// No description provided for @aiContextCheckpoint.
+  ///
+  /// In zh, this message translates to:
+  /// **'最近检查点'**
+  String get aiContextCheckpoint;
+
+  /// No description provided for @aiContextNoCheckpoint.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无检查点'**
+  String get aiContextNoCheckpoint;
+
+  /// No description provided for @aiContextCheckpointTime.
+  ///
+  /// In zh, this message translates to:
+  /// **'更新时间'**
+  String get aiContextCheckpointTime;
+
+  /// No description provided for @aiContextCheckpointPrompt.
+  ///
+  /// In zh, this message translates to:
+  /// **'最近用户输入'**
+  String get aiContextCheckpointPrompt;
+
+  /// No description provided for @aiContextCheckpointMode.
+  ///
+  /// In zh, this message translates to:
+  /// **'恢复模式'**
+  String get aiContextCheckpointMode;
+
+  /// No description provided for @aiContextLastError.
+  ///
+  /// In zh, this message translates to:
+  /// **'最近错误'**
+  String get aiContextLastError;
+
+  /// No description provided for @aiContextNoError.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无错误'**
+  String get aiContextNoError;
+
+  /// No description provided for @aiContextMigration.
+  ///
+  /// In zh, this message translates to:
+  /// **'会话迁移'**
+  String get aiContextMigration;
+
+  /// No description provided for @aiContextMigrationDone.
+  ///
+  /// In zh, this message translates to:
+  /// **'已从旧会话迁移'**
+  String get aiContextMigrationDone;
+
+  /// No description provided for @aiContextMigrationNone.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前会话已使用新结构'**
+  String get aiContextMigrationNone;
+
+  /// No description provided for @aiContextCompression.
+  ///
+  /// In zh, this message translates to:
+  /// **'压缩状态'**
+  String get aiContextCompression;
+
+  /// No description provided for @aiContextCompactReasonBudget.
+  ///
+  /// In zh, this message translates to:
+  /// **'达到预算上限'**
+  String get aiContextCompactReasonBudget;
+
+  /// No description provided for @aiContextCompactReasonManual.
+  ///
+  /// In zh, this message translates to:
+  /// **'手动压缩'**
+  String get aiContextCompactReasonManual;
+
+  /// No description provided for @aiContextCompactReasonNone.
+  ///
+  /// In zh, this message translates to:
+  /// **'未触发压缩'**
+  String get aiContextCompactReasonNone;
+
+  /// No description provided for @aiContextToolTrace.
+  ///
+  /// In zh, this message translates to:
+  /// **'工具轨迹'**
+  String get aiContextToolTrace;
+
+  /// No description provided for @aiContextToolTracePending.
+  ///
+  /// In zh, this message translates to:
+  /// **'存在未完成工具阶段'**
+  String get aiContextToolTracePending;
+
+  /// No description provided for @aiContextToolTraceClear.
+  ///
+  /// In zh, this message translates to:
+  /// **'工具链完整'**
+  String get aiContextToolTraceClear;
+
+  /// No description provided for @aiContextMemory.
+  ///
+  /// In zh, this message translates to:
+  /// **'结构化摘要'**
+  String get aiContextMemory;
+
+  /// No description provided for @aiContextGoals.
+  ///
+  /// In zh, this message translates to:
+  /// **'用户目标'**
+  String get aiContextGoals;
+
+  /// No description provided for @aiContextFacts.
+  ///
+  /// In zh, this message translates to:
+  /// **'已确认事实'**
+  String get aiContextFacts;
+
+  /// No description provided for @aiContextHypotheses.
+  ///
+  /// In zh, this message translates to:
+  /// **'未确认假设'**
+  String get aiContextHypotheses;
+
+  /// No description provided for @aiContextFindings.
+  ///
+  /// In zh, this message translates to:
+  /// **'工具发现'**
+  String get aiContextFindings;
+
+  /// No description provided for @aiContextTaskCurrent.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前步骤'**
+  String get aiContextTaskCurrent;
+
+  /// No description provided for @aiContextTaskNext.
+  ///
+  /// In zh, this message translates to:
+  /// **'下一步'**
+  String get aiContextTaskNext;
+
+  /// No description provided for @aiContextTaskBlockers.
+  ///
+  /// In zh, this message translates to:
+  /// **'阻塞/错误'**
+  String get aiContextTaskBlockers;
+
   /// No description provided for @aiViewSummary.
   ///
   /// In zh, this message translates to:
@@ -1201,6 +1387,30 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'继续'**
   String get aiContinue;
+
+  /// No description provided for @aiResumeToolPhase.
+  ///
+  /// In zh, this message translates to:
+  /// **'恢复工具阶段'**
+  String get aiResumeToolPhase;
+
+  /// No description provided for @aiRecoveryModeRetry.
+  ///
+  /// In zh, this message translates to:
+  /// **'重试上一轮'**
+  String get aiRecoveryModeRetry;
+
+  /// No description provided for @aiRecoveryModeContinue.
+  ///
+  /// In zh, this message translates to:
+  /// **'继续生成'**
+  String get aiRecoveryModeContinue;
+
+  /// No description provided for @aiRecoveryModeTool.
+  ///
+  /// In zh, this message translates to:
+  /// **'恢复工具阶段'**
+  String get aiRecoveryModeTool;
 
   /// No description provided for @aiUnavailableToSend.
   ///

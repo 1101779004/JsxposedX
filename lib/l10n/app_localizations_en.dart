@@ -558,6 +558,100 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiCompressContext => 'Compress context';
 
   @override
+  String get aiContext => 'Context';
+
+  @override
+  String get aiContextTitle => 'Context';
+
+  @override
+  String get aiContextBudget => 'Context budget';
+
+  @override
+  String get aiContextRemaining => 'Remaining budget';
+
+  @override
+  String get aiContextLayers => 'Assembled layers';
+
+  @override
+  String get aiContextRecentRounds => 'Recent raw rounds';
+
+  @override
+  String get aiContextCheckpoint => 'Latest checkpoint';
+
+  @override
+  String get aiContextNoCheckpoint => 'No checkpoint yet';
+
+  @override
+  String get aiContextCheckpointTime => 'Updated at';
+
+  @override
+  String get aiContextCheckpointPrompt => 'Latest user input';
+
+  @override
+  String get aiContextCheckpointMode => 'Recovery mode';
+
+  @override
+  String get aiContextLastError => 'Last error';
+
+  @override
+  String get aiContextNoError => 'No error';
+
+  @override
+  String get aiContextMigration => 'Session migration';
+
+  @override
+  String get aiContextMigrationDone => 'Migrated from legacy session';
+
+  @override
+  String get aiContextMigrationNone =>
+      'This session already uses the new structure';
+
+  @override
+  String get aiContextCompression => 'Compression';
+
+  @override
+  String get aiContextCompactReasonBudget => 'Budget limit reached';
+
+  @override
+  String get aiContextCompactReasonManual => 'Manual compression';
+
+  @override
+  String get aiContextCompactReasonNone => 'No compression';
+
+  @override
+  String get aiContextToolTrace => 'Tool trace';
+
+  @override
+  String get aiContextToolTracePending => 'Pending tool phase exists';
+
+  @override
+  String get aiContextToolTraceClear => 'Tool chain is complete';
+
+  @override
+  String get aiContextMemory => 'Structured summary';
+
+  @override
+  String get aiContextGoals => 'User goals';
+
+  @override
+  String get aiContextFacts => 'Confirmed facts';
+
+  @override
+  String get aiContextHypotheses => 'Open hypotheses';
+
+  @override
+  String get aiContextFindings => 'Tool findings';
+
+  @override
+  String get aiContextTaskCurrent => 'Current step';
+
+  @override
+  String get aiContextTaskNext => 'Next step';
+
+  @override
+  String get aiContextTaskBlockers => 'Blockers / errors';
+
+  @override
   String get aiViewSummary => 'View summary';
 
   @override
@@ -580,6 +674,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiContinue => 'Continue';
+
+  @override
+  String get aiResumeToolPhase => 'Resume tool phase';
+
+  @override
+  String get aiRecoveryModeRetry => 'Retry last turn';
+
+  @override
+  String get aiRecoveryModeContinue => 'Continue generation';
+
+  @override
+  String get aiRecoveryModeTool => 'Resume tool phase';
 
   @override
   String get aiUnavailableToSend => 'Unavailable';

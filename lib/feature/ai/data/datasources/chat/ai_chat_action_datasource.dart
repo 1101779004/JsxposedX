@@ -6,6 +6,7 @@ import 'package:JsxposedX/core/network/http_service.dart';
 import 'package:JsxposedX/core/providers/pinia_provider.dart';
 import 'package:JsxposedX/feature/ai/data/models/ai_message_dto.dart';
 import 'package:JsxposedX/feature/ai/data/models/ai_session_dto.dart';
+import 'package:JsxposedX/feature/ai/domain/models/ai_chat_session_context.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
 
@@ -23,12 +24,15 @@ class AiChatActionDatasource {
   static const String _chatSpacePrefix = 'ai_v2_chat_';
   static const String _chatConfigSpacePrefix = 'ai_v2_chat_config_';
   static const String _chatContentKey = 'messages';
+  static const String _chatContextKey = 'context';
   static const String _chatConfigKey = 'config';
+  static const Duration _streamReceiveTimeout = Duration(minutes: 5);
 
   Stream<AiMessageDto> postChatStream({
     required AiConfig config,
     required List<AiMessageDto> messages,
     List<Map<String, dynamic>>? tools,
+    CancelToken? cancelToken,
   }) {
     switch (config.apiType) {
       case AiApiType.openai:
@@ -36,12 +40,14 @@ class AiChatActionDatasource {
           config: config,
           messages: messages,
           tools: tools,
+          cancelToken: cancelToken,
         );
       case AiApiType.anthropic:
         return _postAnthropicChatStream(
           config: config,
           messages: messages,
           tools: tools,
+          cancelToken: cancelToken,
         );
     }
   }
@@ -94,6 +100,18 @@ class AiChatActionDatasource {
     );
   }
 
+  Future<void> saveSessionContext(
+    String packageName,
+    String sessionId,
+    AiChatSessionContext context,
+  ) async {
+    await _storage.setString(
+      _chatContextKey,
+      jsonEncode(context.toStorageJson()),
+      space: _getChatSpace(sessionId, packageName),
+    );
+  }
+
   Future<void> removeChatHistory(String packageName, String sessionId) async {
     await _storage.clear(space: _getChatSpace(sessionId, packageName));
   }
@@ -111,6 +129,7 @@ class AiChatActionDatasource {
     required AiConfig config,
     required List<AiMessageDto> messages,
     List<Map<String, dynamic>>? tools,
+    CancelToken? cancelToken,
   }) async* {
     final request = <String, dynamic>{
       'model': config.moduleName,
@@ -125,8 +144,10 @@ class AiChatActionDatasource {
       final response = await _httpService.dio.post(
         config.fullApiUrl,
         data: request,
+        cancelToken: cancelToken,
         options: Options(
           responseType: ResponseType.stream,
+          receiveTimeout: _streamReceiveTimeout,
           headers: {
             if (config.apiKey.isNotEmpty) 'Authorization': 'Bearer ${config.apiKey}',
             'Content-Type': 'application/json',
@@ -181,6 +202,17 @@ class AiChatActionDatasource {
           final delta = choices.first['delta'];
           if (delta is! Map<String, dynamic>) {
             continue;
+          }
+
+          final reasoningContent =
+              delta['reasoning_content']?.toString() ??
+              delta['reasoning']?.toString();
+          if ((reasoningContent?.isNotEmpty ?? false)) {
+            yield AiMessageDto(
+              role: 'assistant',
+              content: reasoningContent!,
+              isThinking: true,
+            );
           }
 
           final content = delta['content']?.toString();
@@ -243,6 +275,7 @@ class AiChatActionDatasource {
     required AiConfig config,
     required List<AiMessageDto> messages,
     List<Map<String, dynamic>>? tools,
+    CancelToken? cancelToken,
   }) async* {
     String? system;
     final payloadMessages = <Map<String, dynamic>>[];
@@ -263,15 +296,18 @@ class AiChatActionDatasource {
       'temperature': config.temperature,
       'stream': true,
       if (system != null && system.isNotEmpty) 'system': system,
-      if (tools != null && tools.isNotEmpty) 'tools': tools,
+      if (tools != null && tools.isNotEmpty)
+        'tools': tools.map(_normalizeAnthropicTool).toList(growable: false),
     };
 
     try {
       final response = await _httpService.dio.post(
         config.fullApiUrl,
         data: request,
+        cancelToken: cancelToken,
         options: Options(
           responseType: ResponseType.stream,
+          receiveTimeout: _streamReceiveTimeout,
           headers: {
             'x-api-key': config.apiKey,
             'anthropic-version': '2023-06-01',
@@ -287,6 +323,7 @@ class AiChatActionDatasource {
       var buffered = '';
       final toolCalls = <Map<String, dynamic>>[];
       final toolArgumentBuffers = <int, StringBuffer>{};
+      String? stopReason;
 
       await for (final chunk in stream) {
         buffered += utf8.decode(chunk);
@@ -312,6 +349,14 @@ class AiChatActionDatasource {
           final type = decoded['type']?.toString();
           if (type == 'content_block_start') {
             final contentBlock = decoded['content_block'];
+            if (contentBlock is Map<String, dynamic> &&
+                contentBlock['type'] == 'thinking') {
+              yield AiMessageDto(
+                role: 'assistant',
+                isThinking: true,
+              );
+              continue;
+            }
             if (contentBlock is Map<String, dynamic> &&
                 contentBlock['type'] == 'tool_use') {
               final index = toolCalls.length;
@@ -343,11 +388,32 @@ class AiChatActionDatasource {
               continue;
             }
 
+            if (deltaType == 'thinking_delta') {
+              final thinkingText = delta['thinking']?.toString() ?? '';
+              yield AiMessageDto(
+                role: 'assistant',
+                content: thinkingText,
+                isThinking: true,
+              );
+              continue;
+            }
+
             if (deltaType == 'input_json_delta' && toolCalls.isNotEmpty) {
               final currentIndex = toolCalls.length - 1;
               toolArgumentBuffers[currentIndex]?.write(
                 delta['partial_json']?.toString() ?? '',
               );
+            }
+            continue;
+          }
+
+          if (type == 'message_delta') {
+            final delta = decoded['delta'];
+            if (delta is Map<String, dynamic>) {
+              final nextStopReason = delta['stop_reason']?.toString();
+              if (nextStopReason != null && nextStopReason.isNotEmpty) {
+                stopReason = nextStopReason;
+              }
             }
             continue;
           }
@@ -379,6 +445,14 @@ class AiChatActionDatasource {
                 toolCalls: toolCalls,
               );
             }
+            if (stopReason == 'pause_turn' || stopReason == 'max_tokens') {
+              throw PlatformException(
+                code: stopReason ?? 'partial_response',
+                message: stopReason == 'pause_turn'
+                    ? 'Anthropic 响应暂停，需要继续生成。'
+                    : 'Anthropic 达到当前输出上限，需要继续生成。',
+              );
+            }
             return;
           }
         }
@@ -398,8 +472,18 @@ class AiChatActionDatasource {
                   rawArgs.isEmpty ? '{}' : rawArgs;
             }
             yield AiMessageDto(role: 'assistant', content: '', toolCalls: toolCalls);
+            return;
           }
         }
+      }
+
+      if (stopReason == 'pause_turn' || stopReason == 'max_tokens') {
+        throw PlatformException(
+          code: stopReason ?? 'partial_response',
+          message: stopReason == 'pause_turn'
+              ? 'Anthropic 响应暂停，需要继续生成。'
+              : 'Anthropic 达到当前输出上限，需要继续生成。',
+        );
       }
     } on DioException catch (error) {
       throw PlatformException(
@@ -632,9 +716,15 @@ class AiChatActionDatasource {
     }
 
     if (message.toolCalls != null && message.toolCalls!.isNotEmpty) {
-      return {
-        'role': 'assistant',
-        'content': message.toolCalls!.map((toolCall) {
+      final content = <Map<String, dynamic>>[];
+      if (message.content.trim().isNotEmpty) {
+        content.add({
+          'type': 'text',
+          'text': message.content,
+        });
+      }
+      content.addAll(
+        message.toolCalls!.map((toolCall) {
           final function = toolCall['function'] as Map<String, dynamic>? ?? {};
           final rawArguments = function['arguments'];
           return {
@@ -645,7 +735,11 @@ class AiChatActionDatasource {
                 ? (_tryDecodeJson(rawArguments) ?? <String, dynamic>{})
                 : (rawArguments ?? <String, dynamic>{}),
           };
-        }).toList(),
+        }),
+      );
+      return {
+        'role': 'assistant',
+        'content': content,
       };
     }
 
@@ -653,5 +747,24 @@ class AiChatActionDatasource {
       'role': message.role,
       'content': message.content,
     };
+  }
+
+  Map<String, dynamic> _normalizeAnthropicTool(Map<String, dynamic> tool) {
+    if (tool.containsKey('name') && tool.containsKey('input_schema')) {
+      return Map<String, dynamic>.from(tool);
+    }
+
+    final function = tool['function'];
+    if (function is Map<String, dynamic>) {
+      return {
+        'name': function['name']?.toString() ?? '',
+        'description': function['description']?.toString() ?? '',
+        'input_schema': Map<String, dynamic>.from(
+          function['parameters'] as Map? ?? const <String, dynamic>{},
+        ),
+      };
+    }
+
+    return Map<String, dynamic>.from(tool);
   }
 }

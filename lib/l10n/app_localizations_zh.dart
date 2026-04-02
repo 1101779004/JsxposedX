@@ -547,6 +547,99 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiCompressContext => '压缩上下文';
 
   @override
+  String get aiContext => '上下文';
+
+  @override
+  String get aiContextTitle => '上下文';
+
+  @override
+  String get aiContextBudget => '上下文预算';
+
+  @override
+  String get aiContextRemaining => '剩余预算';
+
+  @override
+  String get aiContextLayers => '装配层';
+
+  @override
+  String get aiContextRecentRounds => '最近原始轮次';
+
+  @override
+  String get aiContextCheckpoint => '最近检查点';
+
+  @override
+  String get aiContextNoCheckpoint => '暂无检查点';
+
+  @override
+  String get aiContextCheckpointTime => '更新时间';
+
+  @override
+  String get aiContextCheckpointPrompt => '最近用户输入';
+
+  @override
+  String get aiContextCheckpointMode => '恢复模式';
+
+  @override
+  String get aiContextLastError => '最近错误';
+
+  @override
+  String get aiContextNoError => '暂无错误';
+
+  @override
+  String get aiContextMigration => '会话迁移';
+
+  @override
+  String get aiContextMigrationDone => '已从旧会话迁移';
+
+  @override
+  String get aiContextMigrationNone => '当前会话已使用新结构';
+
+  @override
+  String get aiContextCompression => '压缩状态';
+
+  @override
+  String get aiContextCompactReasonBudget => '达到预算上限';
+
+  @override
+  String get aiContextCompactReasonManual => '手动压缩';
+
+  @override
+  String get aiContextCompactReasonNone => '未触发压缩';
+
+  @override
+  String get aiContextToolTrace => '工具轨迹';
+
+  @override
+  String get aiContextToolTracePending => '存在未完成工具阶段';
+
+  @override
+  String get aiContextToolTraceClear => '工具链完整';
+
+  @override
+  String get aiContextMemory => '结构化摘要';
+
+  @override
+  String get aiContextGoals => '用户目标';
+
+  @override
+  String get aiContextFacts => '已确认事实';
+
+  @override
+  String get aiContextHypotheses => '未确认假设';
+
+  @override
+  String get aiContextFindings => '工具发现';
+
+  @override
+  String get aiContextTaskCurrent => '当前步骤';
+
+  @override
+  String get aiContextTaskNext => '下一步';
+
+  @override
+  String get aiContextTaskBlockers => '阻塞/错误';
+
+  @override
   String get aiViewSummary => '查看摘要';
 
   @override
@@ -569,6 +662,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get aiContinue => '继续';
+
+  @override
+  String get aiResumeToolPhase => '恢复工具阶段';
+
+  @override
+  String get aiRecoveryModeRetry => '重试上一轮';
+
+  @override
+  String get aiRecoveryModeContinue => '继续生成';
+
+  @override
+  String get aiRecoveryModeTool => '恢复工具阶段';
 
   @override
   String get aiUnavailableToSend => '不可发送';
