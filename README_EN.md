@@ -51,9 +51,11 @@ Current quick-function keys in code:
 This repository is not only a Flutter UI project.
 
 - `android/app/src/main/AndroidManifest.xml` declares Xposed module metadata
-- `android/app/src/main/assets/xposed_init` points to `com.jsxposed.x.MainHook`
-- `android/app/src/main/resources/META-INF/xposed/module.prop` sets `minApiVersion=53`,
-  `targetApiVersion=100`, and `staticScope=false`
+- `android/app/src/api100/` and `android/app/src/api101/` each contain a thin Xposed shell
+- `android/app/src/api100/assets/xposed_init` points to `com.jsxposed.x.MainHook`
+- `android/app/src/api100/resources/META-INF/xposed/module.prop` describes the `api100` shell
+- `android/app/src/api101/resources/META-INF/xposed/module.prop` describes the `api101` shell
+- `android/app/src/main/` keeps the shared Flutter UI, hook core, and native bridge code
 - `android/app/src/main/kotlin/com/jsxposed/x/App.kt` initializes the LSPosed service
 - `android/app/src/main/kotlin/com/jsxposed/x/NativeProvider.kt` registers native bridge modules for
   `Pinia`, `StatusManagement`, `App`, `Project`, `ApkAnalysis`, `SoAnalysis`, `LSPosed`, and
@@ -75,10 +77,10 @@ Flutter side.
 - `lib/`: Flutter UI, routes, providers, and feature pages
 - `lib/pigeons/`: Pigeon bridge definitions
 - `lib/generated/`: generated Dart bridge code
-- `android/app/src/main/kotlin/com/jsxposed/x/`: Android app code, Xposed hooks, and native bridge
+- `android/app/src/main/kotlin/com/jsxposed/x/`: shared Android code, hook core, and native bridge
   implementations
-- `android/app/src/main/assets/xposed_init`: Xposed entry list
-- `android/app/src/main/resources/META-INF/xposed/module.prop`: Xposed module properties
+- `android/app/src/api100/`: `api100` shell, entry classes, and module resources
+- `android/app/src/api101/`: `api101` shell, entry classes, and module resources
 - `.buildScript/`: shared PowerShell scripts for code generation and debug install
 - `.idea/runConfigurations/`: shared IDE run configurations
 
@@ -111,7 +113,7 @@ Run it from the repository root:
 
 It:
 
-- runs `:app:installDebug`
+- runs `:app:installDebug` by default, which is mapped to `api100Debug`
 - syncs `versionName` and `versionCode` from `pubspec.yaml` into `android/local.properties`
 - resolves the target device from `-DeviceId`, `ANDROID_SERIAL`, the Android Studio selected device,
   or a single connected `adb` device
@@ -130,7 +132,13 @@ Useful switches:
 .\.buildScript\run_install_debug.ps1 -SkipAttach
 .\.buildScript\run_install_debug.ps1 -SkipLaunch
 .\.buildScript\run_install_debug.ps1 -DeviceId <serial>
+.\.buildScript\run_install_debug.ps1 -GradleTask :app:installApi101Debug
 ```
+
+Extra notes:
+
+- `installDebug` / `assembleDebug` still target `api100` by default
+- install the `api101` shell explicitly with `-GradleTask :app:installApi101Debug`
 
 This script is used for the Xposed/LSPosed debug install flow. It is not a replacement for normal
 Flutter hot reload.
@@ -142,6 +150,14 @@ Standard Flutter build commands are still available:
 ```powershell
 flutter build apk --debug
 flutter build apk --release
+```
+
+If you want to build a specific Xposed shell directly, prefer the Gradle tasks:
+
+```powershell
+cd android
+.\gradlew.bat :app:assembleApi100Debug
+.\gradlew.bat :app:assembleApi101Debug
 ```
 
 `.buildScript/run_install_debug.ps1` handles the install, launch, and attach flow for device-side

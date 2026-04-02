@@ -17,3 +17,21 @@ JsxposedX is a Flutter Android application for Xposed/LSPosed and Frida workflow
 ## Build Note
 
 This repository is not a normal Flutter-only app. Device-side verification also involves the Android/Xposed side, so the repository includes shared PowerShell scripts and shared IDE run configurations.
+
+The Android module now uses two thin Xposed shells:
+
+- `android/app/src/api100/` for the legacy `api100` shell
+- `android/app/src/api101/` for the modern `api101` shell
+- `android/app/src/main/` for shared Flutter/UI and hook core code
+
+Default debug tasks still point to `api100`:
+
+```powershell
+.\.buildScript\run_install_debug.ps1
+```
+
+Install the `api101` shell explicitly with:
+
+```powershell
+.\.buildScript\run_install_debug.ps1 -GradleTask :app:installApi101Debug
+```

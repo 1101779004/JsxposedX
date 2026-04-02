@@ -48,8 +48,11 @@ JsxposedX 是一个面向 Xposed/LSPosed 和 Frida 工作流的 Flutter Android 
 这个仓库不只是 Flutter UI 项目。
 
 - `android/app/src/main/AndroidManifest.xml` 声明了 Xposed 模块元数据
-- `android/app/src/main/assets/xposed_init` 指向 `com.jsxposed.x.MainHook`
-- `android/app/src/main/resources/META-INF/xposed/module.prop` 设置了 `minApiVersion=53`、`targetApiVersion=100` 和 `staticScope=false`
+- `android/app/src/api100/` 和 `android/app/src/api101/` 各自维护一套很薄的 Xposed 壳
+- `android/app/src/api100/assets/xposed_init` 指向 `com.jsxposed.x.MainHook`
+- `android/app/src/api100/resources/META-INF/xposed/module.prop` 对应 `api100`
+- `android/app/src/api101/resources/META-INF/xposed/module.prop` 对应 `api101`
+- `android/app/src/main/` 只保留 Flutter UI、共享 Hook 核心和原生 bridge
 - `android/app/src/main/kotlin/com/jsxposed/x/App.kt` 初始化 LSPosed service
 - `android/app/src/main/kotlin/com/jsxposed/x/NativeProvider.kt` 注册了 `Pinia`、`StatusManagement`、`App`、`Project`、`ApkAnalysis`、`SoAnalysis`、`LSPosed`、`ZygiskFrida` 这些原生 bridge 模块
 
@@ -68,9 +71,9 @@ JsxposedX 是一个面向 Xposed/LSPosed 和 Frida 工作流的 Flutter Android 
 - `lib/`：Flutter UI、路由、provider、功能页面
 - `lib/pigeons/`：Pigeon bridge 定义
 - `lib/generated/`：生成出来的 Dart bridge 代码
-- `android/app/src/main/kotlin/com/jsxposed/x/`：Android 应用代码、Xposed Hook、原生 bridge 实现
-- `android/app/src/main/assets/xposed_init`：Xposed 入口列表
-- `android/app/src/main/resources/META-INF/xposed/module.prop`：Xposed 模块属性
+- `android/app/src/main/kotlin/com/jsxposed/x/`：共享 Android 代码、Hook 核心、原生 bridge 实现
+- `android/app/src/api100/`：`api100` 壳、入口类与模块资源
+- `android/app/src/api101/`：`api101` 壳、入口类与模块资源
 - `.buildScript/`：代码生成与 Debug 安装的共享 PowerShell 脚本
 - `.idea/runConfigurations/`：共享 IDE 运行配置
 
@@ -103,7 +106,7 @@ JsxposedX 是一个面向 Xposed/LSPosed 和 Frida 工作流的 Flutter Android 
 
 它会：
 
-- 执行 `:app:installDebug`
+- 默认执行 `:app:installDebug`，这个任务已映射到 `api100Debug`
 - 把 `pubspec.yaml` 里的 `versionName` 和 `versionCode` 同步到 `android/local.properties`
 - 从 `-DeviceId`、`ANDROID_SERIAL`、Android Studio 当前选中设备或单个已连接 `adb` 设备中解析目标设备
 - 安装完成后等待一段时间，给包替换广播和 LSPosed 重扫留时间
@@ -121,7 +124,13 @@ JsxposedX 是一个面向 Xposed/LSPosed 和 Frida 工作流的 Flutter Android 
 .\.buildScript\run_install_debug.ps1 -SkipAttach
 .\.buildScript\run_install_debug.ps1 -SkipLaunch
 .\.buildScript\run_install_debug.ps1 -DeviceId <serial>
+.\.buildScript\run_install_debug.ps1 -GradleTask :app:installApi101Debug
 ```
+
+补充说明：
+
+- `installDebug` / `assembleDebug` 默认仍然走 `api100`
+- 要安装 `api101` 壳，请显式传 `-GradleTask :app:installApi101Debug`
 
 这个脚本用于 Xposed/LSPosed 的 Debug 安装流程，不是普通 Flutter hot reload 的替代品。
 
@@ -132,6 +141,14 @@ Flutter 常规构建命令仍然可以直接使用：
 ```powershell
 flutter build apk --debug
 flutter build apk --release
+```
+
+如果要直接构建某个 Xposed 壳，建议优先使用 Gradle 任务：
+
+```powershell
+cd android
+.\gradlew.bat :app:assembleApi100Debug
+.\gradlew.bat :app:assembleApi101Debug
 ```
 
 `.buildScript/run_install_debug.ps1` 负责设备侧的安装、启动和 attach 流程。

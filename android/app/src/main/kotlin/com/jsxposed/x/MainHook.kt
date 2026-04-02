@@ -97,4 +97,5 @@ class MainHook : IXposedHookLoadPackage, IXposedHookZygoteInit {
             "MainHook.doHook finish package=${lpparam.packageName} process=${lpparam.processName} cost=${System.currentTimeMillis() - start}ms"
         )
     }
+
 }

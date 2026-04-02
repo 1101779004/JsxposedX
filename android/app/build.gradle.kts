@@ -35,10 +35,23 @@ android {
         jvmTarget = JavaVersion.VERSION_17.toString()
     }
 
+    flavorDimensions += "xposedApi"
+
+    productFlavors {
+        create("api100") {
+            dimension = "xposedApi"
+        }
+        create("api101") {
+            dimension = "xposedApi"
+        }
+    }
+
     sourceSets {
         getByName("main") {
             java.srcDirs("src/main/java", "src/main/kotlin")
         }
+        maybeCreate("api100").java.srcDirs("src/api100/java", "src/api100/kotlin")
+        maybeCreate("api101").java.srcDirs("src/api101/java", "src/api101/kotlin")
     }
 
     externalNativeBuild {
@@ -105,6 +118,24 @@ android {
     }
 }
 
+afterEvaluate {
+    if (tasks.findByName("assembleDebug") == null) {
+        tasks.register("assembleDebug") {
+            group = "build"
+            description = "Assembles the default debug variant (api100Debug)."
+            dependsOn("assembleApi100Debug")
+        }
+    }
+
+    if (tasks.findByName("installDebug") == null) {
+        tasks.register("installDebug") {
+            group = "install"
+            description = "Installs the default debug variant (api100Debug)."
+            dependsOn("installApi100Debug")
+        }
+    }
+}
+
 dependencies {
     compileOnly(files("src/lib/XposedBridgeAPI-89.jar"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
@@ -121,8 +152,8 @@ dependencies {
     implementation("io.github.skylot:jadx-dex-input:1.5.1") { isTransitive = true }
     implementation("org.smali:baksmali:2.5.2")
     implementation("org.smali:dexlib2:2.5.2")
-    // Xposed service 100
-    compileOnly(project(":libxposed:api"))
+    add("api100CompileOnly", project(":libxposed:api"))
+    add("api101CompileOnly", "io.github.libxposed:api:101.0.1")
     implementation(project(":libxposed:service"))
 }
 
