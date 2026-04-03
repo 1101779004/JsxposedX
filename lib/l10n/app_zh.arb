@@ -474,6 +474,7 @@
   },
   "aiApiType": "API 类型",
   "aiApiTypeOpenAI": "OpenAI",
+  "aiApiTypeOpenAIResponses": "OpenAI Responses",
   "aiApiTypeAnthropic": "Anthropic Claude",
   "aiTutorial": "教程",
   "terminal": "控制台",

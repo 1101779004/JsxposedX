@@ -66,6 +66,17 @@ class AIConfigSheet extends HookConsumerWidget {
     );
   }
 
+  static String _apiTypeLabel(BuildContext context, AiApiType type) {
+    switch (type) {
+      case AiApiType.openai:
+        return context.l10n.aiApiTypeOpenAI;
+      case AiApiType.openaiResponses:
+        return context.l10n.aiApiTypeOpenAIResponses;
+      case AiApiType.anthropic:
+        return context.l10n.aiApiTypeAnthropic;
+    }
+  }
+
   /// 处理测试连接逻辑
   static Future<void> _handleTest(BuildContext context, WidgetRef ref) async {
     final formKey = ref.read(_sheetFormKeyProvider);
@@ -374,11 +385,7 @@ class AIConfigSheet extends HookConsumerWidget {
                           items: AiApiType.values.map((type) {
                             return DropdownMenuItem(
                               value: type.name,
-                              child: Text(
-                                type == AiApiType.openai
-                                    ? context.l10n.aiApiTypeOpenAI
-                                    : context.l10n.aiApiTypeAnthropic,
-                              ),
+                              child: Text(_apiTypeLabel(context, type)),
                             );
                           }).toList(),
                         ),

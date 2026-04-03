@@ -28,6 +28,7 @@ class AiChatActionDatasource {
   static const String _chatContextKey = 'context';
   static const String _chatConfigKey = 'config';
   static const Duration _streamReceiveTimeout = Duration(minutes: 5);
+  static const String _defaultResponsesReasoningEffort = 'medium';
 
   Stream<AiMessageDto> postChatStream({
     required AiConfig config,
@@ -37,7 +38,14 @@ class AiChatActionDatasource {
   }) {
     switch (config.apiType) {
       case AiApiType.openai:
-        return _postOpenAiChatStream(
+        return _postOpenAiChatCompletionsStream(
+          config: config,
+          messages: messages,
+          tools: tools,
+          cancelToken: cancelToken,
+        );
+      case AiApiType.openaiResponses:
+        return _postOpenAiResponsesStream(
           config: config,
           messages: messages,
           tools: tools,
@@ -56,7 +64,9 @@ class AiChatActionDatasource {
   Future<String> testConnection(AiConfig config) {
     switch (config.apiType) {
       case AiApiType.openai:
-        return _testOpenAiConnection(config);
+        return _testOpenAiChatCompletionsConnection(config);
+      case AiApiType.openaiResponses:
+        return _testOpenAiResponsesConnection(config);
       case AiApiType.anthropic:
         return _testAnthropicConnection(config);
     }
@@ -126,7 +136,7 @@ class AiChatActionDatasource {
   String _getChatConfigSpace(String packageName) =>
       '$_chatConfigSpacePrefix$packageName';
 
-  Stream<AiMessageDto> _postOpenAiChatStream({
+  Stream<AiMessageDto> _postOpenAiChatCompletionsStream({
     required AiConfig config,
     required List<AiMessageDto> messages,
     List<Map<String, dynamic>>? tools,
@@ -159,7 +169,8 @@ class AiChatActionDatasource {
 
       await _ensureSuccessfulResponse(response);
 
-      final stream = response.data.stream as Stream<List<int>>;
+      final stream =
+          (response.data.stream as Stream).cast<List<int>>().transform(utf8.decoder);
       var buffered = '';
       var isDone = false;
       final toolCallsAccum = <int, Map<String, dynamic>>{};
@@ -169,7 +180,7 @@ class AiChatActionDatasource {
           break;
         }
 
-        buffered += utf8.decode(chunk);
+        buffered += chunk;
         final lines = buffered.split('\n');
         buffered = lines.removeLast();
 
@@ -271,6 +282,208 @@ class AiChatActionDatasource {
     }
   }
 
+  Stream<AiMessageDto> _postOpenAiResponsesStream({
+    required AiConfig config,
+    required List<AiMessageDto> messages,
+    List<Map<String, dynamic>>? tools,
+    CancelToken? cancelToken,
+  }) async* {
+    final instructions = _buildResponsesInstructions(messages);
+    final request = <String, dynamic>{
+      'model': config.moduleName,
+      'input': _mapResponsesInput(messages),
+      'stream': true,
+      'store': false,
+      if (instructions.isNotEmpty) 'instructions': instructions,
+      'reasoning': const {
+        'effort': _defaultResponsesReasoningEffort,
+      },
+      'max_output_tokens': config.maxToken,
+      if (tools != null && tools.isNotEmpty)
+        'tools': tools.map(_normalizeOpenAiResponsesTool).toList(growable: false),
+    };
+
+    try {
+      final response = await _httpService.dio.post(
+        config.fullApiUrl,
+        data: request,
+        cancelToken: cancelToken,
+        options: Options(
+          responseType: ResponseType.stream,
+          receiveTimeout: _streamReceiveTimeout,
+          headers: {
+            if (config.apiKey.isNotEmpty) 'Authorization': 'Bearer ${config.apiKey}',
+            'Content-Type': 'application/json',
+            'Accept': 'text/event-stream',
+          },
+        ),
+      );
+
+      await _ensureSuccessfulResponse(response);
+
+      final stream =
+          (response.data.stream as Stream).cast<List<int>>().transform(utf8.decoder);
+      var buffered = '';
+      final toolCallsAccum = <String, Map<String, dynamic>>{};
+
+      await for (final chunk in stream) {
+        buffered += chunk;
+        final lines = buffered.split('\n');
+        buffered = lines.removeLast();
+
+        for (final rawLine in lines) {
+          final line = rawLine.trim();
+          if (line.isEmpty || !line.startsWith('data:')) {
+            continue;
+          }
+
+          final data = line.substring(5).trim();
+          if (data.isEmpty || data == '[DONE]') {
+            continue;
+          }
+
+          final decoded = _tryDecodeJson(data);
+          if (decoded is! Map<String, dynamic>) {
+            continue;
+          }
+
+          final eventType = decoded['type']?.toString() ?? '';
+          switch (eventType) {
+            case 'response.output_text.delta':
+              final delta = decoded['delta']?.toString();
+              if (delta != null && delta.isNotEmpty) {
+                yield AiMessageDto(role: 'assistant', content: delta);
+              }
+              break;
+            case 'response.reasoning_text.delta':
+            case 'response.reasoning_summary_text.delta':
+              final delta = decoded['delta']?.toString();
+              if (delta != null && delta.isNotEmpty) {
+                yield AiMessageDto(
+                  role: 'assistant',
+                  content: delta,
+                  isThinking: true,
+                );
+              }
+              break;
+            case 'response.function_call_arguments.delta':
+              final itemId = decoded['item_id']?.toString();
+              if (itemId == null || itemId.isEmpty) {
+                break;
+              }
+              final current = toolCallsAccum.putIfAbsent(itemId, () {
+                return {
+                  'id': decoded['call_id']?.toString() ?? itemId,
+                  'type': 'function',
+                  'function': {
+                    'name': decoded['name']?.toString() ?? '',
+                    'arguments': <String, dynamic>{},
+                  },
+                  '_argBuffer': StringBuffer(),
+                };
+              });
+              final callId = decoded['call_id']?.toString();
+              if (callId != null && callId.isNotEmpty) {
+                current['id'] = callId;
+              }
+              final delta = decoded['delta']?.toString() ?? '';
+              if (delta.isNotEmpty) {
+                (current['_argBuffer'] as StringBuffer).write(delta);
+              }
+              break;
+            case 'response.function_call_arguments.done':
+              final itemId = decoded['item_id']?.toString();
+              if (itemId == null || itemId.isEmpty) {
+                break;
+              }
+              final current = toolCallsAccum.putIfAbsent(itemId, () {
+                return {
+                  'id': decoded['call_id']?.toString() ?? itemId,
+                  'type': 'function',
+                  'function': {
+                    'name': decoded['name']?.toString() ?? '',
+                    'arguments': <String, dynamic>{},
+                  },
+                };
+              });
+              final function = current['function'] as Map<String, dynamic>;
+              final name = decoded['name']?.toString();
+              if (name != null && name.isNotEmpty) {
+                function['name'] = name;
+              }
+              final callId = decoded['call_id']?.toString();
+              if (callId != null && callId.isNotEmpty) {
+                current['id'] = callId;
+              }
+              final rawArguments = decoded['arguments']?.toString().trim() ?? '';
+              if (rawArguments.isNotEmpty) {
+                final parsedArgs = _tryDecodeJson(rawArguments);
+                function['arguments'] = parsedArgs is Map<String, dynamic>
+                    ? parsedArgs
+                    : rawArguments;
+              }
+              break;
+            case 'response.output_item.done':
+              final item = decoded['item'];
+              if (item is! Map<String, dynamic>) {
+                break;
+              }
+              final itemType = item['type']?.toString();
+              if (itemType == 'function_call') {
+                final itemId = item['id']?.toString() ?? '';
+                if (itemId.isEmpty) {
+                  break;
+                }
+                final current = toolCallsAccum.putIfAbsent(itemId, () {
+                  return {
+                    'id': item['call_id']?.toString() ?? itemId,
+                    'type': 'function',
+                    'function': {
+                      'name': item['name']?.toString() ?? '',
+                      'arguments': <String, dynamic>{},
+                    },
+                  };
+                });
+                final function = current['function'] as Map<String, dynamic>;
+                final rawArguments = item['arguments']?.toString().trim() ?? '';
+                if (rawArguments.isNotEmpty) {
+                  final parsedArgs = _tryDecodeJson(rawArguments);
+                  function['arguments'] = parsedArgs is Map<String, dynamic>
+                      ? parsedArgs
+                      : rawArguments;
+                }
+                final callId = item['call_id']?.toString();
+                if (callId != null && callId.isNotEmpty) {
+                  current['id'] = callId;
+                }
+                final name = item['name']?.toString();
+                if (name != null && name.isNotEmpty) {
+                  function['name'] = name;
+                }
+              }
+              break;
+          }
+        }
+      }
+
+      if (toolCallsAccum.isNotEmpty) {
+        yield* _yieldValidatedResponsesToolCalls(toolCallsAccum);
+      }
+    } on DioException catch (error) {
+      throw await _buildPlatformExceptionFromDio(
+        error,
+        fallbackMessage: 'AI request failed',
+      );
+    } on PlatformException {
+      rethrow;
+    } catch (error) {
+      throw PlatformException(
+        code: 'unknown_error',
+        message: error.toString(),
+      );
+    }
+  }
+
   Stream<AiMessageDto> _postAnthropicChatStream({
     required AiConfig config,
     required List<AiMessageDto> messages,
@@ -319,14 +532,15 @@ class AiChatActionDatasource {
 
       await _ensureSuccessfulResponse(response);
 
-      final stream = response.data.stream as Stream<List<int>>;
+      final stream =
+          (response.data.stream as Stream).cast<List<int>>().transform(utf8.decoder);
       var buffered = '';
       final toolCalls = <Map<String, dynamic>>[];
       final toolArgumentBuffers = <int, StringBuffer>{};
       String? stopReason;
 
       await for (final chunk in stream) {
-        buffered += utf8.decode(chunk);
+        buffered += chunk;
         final lines = buffered.split('\n');
         buffered = lines.removeLast();
 
@@ -500,7 +714,7 @@ class AiChatActionDatasource {
     }
   }
 
-  Future<String> _testOpenAiConnection(AiConfig config) async {
+  Future<String> _testOpenAiChatCompletionsConnection(AiConfig config) async {
     return _testStreamingConnection(
       url: config.fullApiUrl,
       headers: {
@@ -516,6 +730,27 @@ class AiChatActionDatasource {
         'stream': true,
         'temperature': 0.0,
         'max_tokens': 1,
+      },
+    );
+  }
+
+  Future<String> _testOpenAiResponsesConnection(AiConfig config) async {
+    return _testRequestConnection(
+      url: config.fullApiUrl,
+      headers: {
+        if (config.apiKey.isNotEmpty) 'Authorization': 'Bearer ${config.apiKey}',
+        'Content-Type': 'application/json',
+        'Accept': 'text/event-stream',
+      },
+      request: {
+        'model': config.moduleName,
+        'input': 'Hi',
+        'stream': true,
+        'store': false,
+        'reasoning': const {
+          'effort': _defaultResponsesReasoningEffort,
+        },
+        'max_output_tokens': 1,
       },
     );
   }
@@ -579,6 +814,48 @@ class AiChatActionDatasource {
         code: 'no_data',
         message: 'No response data received',
       );
+    } on DioException catch (error) {
+      stopwatch.stop();
+      throw await _buildPlatformExceptionFromDio(
+        error,
+        fallbackMessage: 'Connection failed',
+      );
+    } on PlatformException {
+      rethrow;
+    } catch (error) {
+      stopwatch.stop();
+      throw PlatformException(
+        code: 'unknown_error',
+        message: error.toString(),
+      );
+    }
+  }
+
+  Future<String> _testRequestConnection({
+    required String url,
+    required Map<String, dynamic> request,
+    required Map<String, String> headers,
+  }) async {
+    final stopwatch = Stopwatch()..start();
+
+    try {
+      final response = await _httpService.dio.post(
+        url,
+        data: request,
+        options: Options(
+          responseType: ResponseType.json,
+          headers: headers,
+          sendTimeout: const Duration(seconds: 30),
+          receiveTimeout: const Duration(seconds: 30),
+        ),
+      );
+
+      await _ensureSuccessfulResponse(response);
+      stopwatch.stop();
+      final responseTime = stopwatch.elapsedMilliseconds;
+      return responseTime < 6000
+          ? 'Connection successful (${responseTime}ms)'
+          : 'Connection successful but latency is high (${responseTime}ms)';
     } on DioException catch (error) {
       stopwatch.stop();
       throw await _buildPlatformExceptionFromDio(
@@ -833,6 +1110,158 @@ class AiChatActionDatasource {
     }
 
     return message.toJson();
+  }
+
+  List<Map<String, dynamic>> _mapResponsesInput(List<AiMessageDto> messages) {
+    final input = <Map<String, dynamic>>[];
+
+    for (final message in messages) {
+      if (message.role == 'system' || message.role == 'developer') {
+        continue;
+      }
+
+      if (message.role == 'tool' && message.toolCallId != null) {
+        input.add({
+          'type': 'function_call_output',
+          'call_id': message.toolCallId,
+          'output': message.content,
+        });
+        continue;
+      }
+
+      if (message.hasToolCalls) {
+        if (message.content.trim().isNotEmpty) {
+          input.add({
+            'type': 'message',
+            'role': 'assistant',
+            'content': message.content,
+          });
+        }
+        for (final toolCall in message.toolCalls!) {
+          final function = toolCall['function'] as Map<String, dynamic>? ?? {};
+          input.add({
+            'type': 'function_call',
+            'call_id': toolCall['id']?.toString() ?? '',
+            'name': function['name']?.toString() ?? '',
+            'arguments': function['arguments']?.toString() ?? '{}',
+          });
+        }
+        continue;
+      }
+
+      input.add(_mapResponsesMessage(message));
+    }
+
+    return input;
+  }
+
+  String _buildResponsesInstructions(List<AiMessageDto> messages) {
+    final parts = messages
+        .where((message) => message.role == 'system' || message.role == 'developer')
+        .map((message) => message.content.trim())
+        .where((content) => content.isNotEmpty)
+        .toList(growable: false);
+    return parts.join('\n\n');
+  }
+
+  Map<String, dynamic> _mapResponsesMessage(AiMessageDto message) {
+    if (message.role == 'assistant') {
+      return {
+        'role': 'assistant',
+        'content': message.content,
+      };
+    }
+
+    if (message.role == 'user' &&
+        AiMultimodalMessageCodec.isEncoded(message.content)) {
+      return {
+        'type': 'message',
+        'role': 'user',
+        'content': _toResponsesContent(message.content),
+      };
+    }
+
+    return {
+      'role': 'user',
+      'content': message.content,
+    };
+  }
+
+  List<Map<String, dynamic>> _toResponsesContent(String content) {
+    final openAiContent = AiMultimodalMessageCodec.toOpenAiContent(
+      content,
+      isZh: true,
+    );
+    return openAiContent.map((part) {
+      final type = part['type']?.toString() ?? 'text';
+      switch (type) {
+        case 'image_url':
+          final imagePayload = part['image_url'];
+          return {
+            'type': 'input_image',
+            'image_url': imagePayload is Map<String, dynamic>
+                ? imagePayload['url']?.toString() ?? ''
+                : '',
+          };
+        case 'text':
+        default:
+          return {
+            'type': 'input_text',
+            'text': part['text']?.toString() ?? '',
+          };
+      }
+    }).toList(growable: false);
+  }
+
+  Map<String, dynamic> _normalizeOpenAiResponsesTool(Map<String, dynamic> tool) {
+    if (tool['type']?.toString() == 'function' && tool.containsKey('name')) {
+      return Map<String, dynamic>.from(tool);
+    }
+
+    final function = tool['function'];
+    if (function is Map<String, dynamic>) {
+      return {
+        'type': 'function',
+        'name': function['name']?.toString() ?? '',
+        'description': function['description']?.toString() ?? '',
+        'parameters': Map<String, dynamic>.from(
+          function['parameters'] as Map? ?? const <String, dynamic>{},
+        ),
+      };
+    }
+
+    return Map<String, dynamic>.from(tool);
+  }
+
+  Stream<AiMessageDto> _yieldValidatedResponsesToolCalls(
+    Map<String, Map<String, dynamic>> toolCallsAccum,
+  ) async* {
+    if (toolCallsAccum.isEmpty) {
+      return;
+    }
+
+    final validated = <Map<String, dynamic>>[];
+    for (final call in toolCallsAccum.values) {
+      final function = call['function'] as Map<String, dynamic>;
+      var arguments = function['arguments'];
+      if (call['_argBuffer'] is StringBuffer) {
+        final raw = (call['_argBuffer'] as StringBuffer).toString().trim();
+        if (raw.isNotEmpty) {
+          final parsedArgs = _tryDecodeJson(raw);
+          arguments = parsedArgs is Map<String, dynamic> ? parsedArgs : raw;
+        }
+      }
+
+      function['arguments'] = arguments is Map<String, dynamic>
+          ? jsonEncode(arguments)
+          : arguments?.toString() ?? '{}';
+      call.remove('_argBuffer');
+      validated.add(call);
+    }
+
+    if (validated.isNotEmpty) {
+      yield AiMessageDto(role: 'assistant', content: '', toolCalls: validated);
+    }
   }
 
   Map<String, dynamic> _normalizeAnthropicTool(Map<String, dynamic> tool) {

@@ -3,6 +3,9 @@ enum AiApiType {
   /// OpenAI 兼容 API
   openai,
 
+  /// OpenAI Responses API
+  openaiResponses,
+
   /// Anthropic Claude API
   anthropic;
 
@@ -11,6 +14,8 @@ enum AiApiType {
     switch (this) {
       case AiApiType.openai:
         return 'OpenAI';
+      case AiApiType.openaiResponses:
+        return 'OpenAI Responses';
       case AiApiType.anthropic:
         return 'Anthropic';
     }
@@ -21,6 +26,10 @@ enum AiApiType {
     switch (value.toLowerCase()) {
       case 'openai':
         return AiApiType.openai;
+      case 'openairesponses':
+      case 'openai_responses':
+      case 'openai-responses':
+        return AiApiType.openaiResponses;
       case 'anthropic':
         return AiApiType.anthropic;
       default:

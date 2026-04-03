@@ -37,6 +37,16 @@ abstract class AiConfig with _$AiConfig {
         // 否则添加完整路径
         return '$baseUrl/v1/chat/completions';
 
+      case AiApiType.openaiResponses:
+        // OpenAI Responses 格式：/v1/responses
+        if (baseUrl.contains('/responses')) {
+          return baseUrl;
+        }
+        if (baseUrl.endsWith('/v1')) {
+          return '$baseUrl/responses';
+        }
+        return '$baseUrl/v1/responses';
+
       case AiApiType.anthropic:
         // Anthropic 格式：/v1/messages
         // 如果已经包含 /messages 路径，直接返回

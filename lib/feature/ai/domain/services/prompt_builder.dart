@@ -90,6 +90,7 @@ class PromptBuilder {
         .map(
           (tool) => switch (apiType) {
             AiApiType.openai => tool.toOpenAiToolJson(),
+            AiApiType.openaiResponses => tool.toOpenAiToolJson(),
             AiApiType.anthropic => tool.toAnthropicToolJson(),
           },
         )

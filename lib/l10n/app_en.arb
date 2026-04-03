@@ -475,6 +475,7 @@
   },
   "aiApiType": "API Type",
   "aiApiTypeOpenAI": "OpenAI Compatible",
+  "aiApiTypeOpenAIResponses": "OpenAI Responses",
   "aiApiTypeAnthropic": "Anthropic Claude",
   "aiTutorial": "Tutorial",
   "terminal": "Terminal",

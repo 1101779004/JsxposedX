@@ -890,6 +890,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiApiTypeOpenAI => 'OpenAI';
 
   @override
+  String get aiApiTypeOpenAIResponses => 'OpenAI Responses';
+
+  @override
   String get aiApiTypeAnthropic => 'Anthropic Claude';
 
   @override

@@ -905,6 +905,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiApiTypeOpenAI => 'OpenAI Compatible';
 
   @override
+  String get aiApiTypeOpenAIResponses => 'OpenAI Responses';
+
+  @override
   String get aiApiTypeAnthropic => 'Anthropic Claude';
 
   @override

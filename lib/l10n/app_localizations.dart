@@ -1808,6 +1808,12 @@ abstract class AppLocalizations {
   /// **'OpenAI'**
   String get aiApiTypeOpenAI;
 
+  /// No description provided for @aiApiTypeOpenAIResponses.
+  ///
+  /// In zh, this message translates to:
+  /// **'OpenAI Responses'**
+  String get aiApiTypeOpenAIResponses;
+
   /// No description provided for @aiApiTypeAnthropic.
   ///
   /// In zh, this message translates to:
