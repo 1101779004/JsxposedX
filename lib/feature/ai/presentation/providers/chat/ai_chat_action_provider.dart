@@ -226,7 +226,7 @@ class AiChatAction extends _$AiChatAction {
     state = state.copyWith(
       currentSessionId: sessionId,
       protocolMessages: List<AiMessage>.unmodifiable(
-        contextAssembly.sanitizedProtocolMessages,
+        contextAssembly.sanitizedProtocolMessages, // This sanitized version only cleans broken tools now, won't compact implicitly
       ),
       messages: List<AiMessage>.unmodifiable(displayMessages),
       visibleMessageCount: 10,
@@ -449,17 +449,14 @@ class AiChatAction extends _$AiChatAction {
       requestMessages: contextAssembly.requestMessages,
       toolsJson: toolsJson,
     );
-    if (_isDisposed) {
-      return;
-    }
+    if (_isDisposed) return;
+    if (_stopRequested) return;
 
-    if (_stopRequested || response.userStopped) {
-      await _finishStoppedAssistantTurn(
-        config: config,
-        protocolMessages: contextAssembly.sanitizedProtocolMessages,
-        placeholderId: placeholderId,
-        partialContent: response.content,
-      );
+    if (response.userStopped) {
+      // The user manually stopped the generation.
+      // `stopStreaming()` has ALREADY handled the partial persistence,
+      // history saving, and UI state cleanup perfectly to avoid race conditions.
+      // Do nothing else here.
       return;
     }
 
@@ -1179,19 +1176,31 @@ class AiChatAction extends _$AiChatAction {
     _stopRequested = true;
     final partialContent = _latestStreamingContent;
     final hasPendingToolPhase = state.sessionContext.hasPendingToolPhase;
+    // Immediately persist partial content so next turns won't lose it
+    var nextProtocolMessages = state.protocolMessages;
     if (!hasPendingToolPhase && partialContent.isNotEmpty) {
       _replaceLatestAssistantPlaceholder(
         content: partialContent,
         isError: false,
       );
+      nextProtocolMessages = List<AiMessage>.unmodifiable([
+        ...state.protocolMessages,
+        AiMessage(
+          id: const Uuid().v4(),
+          role: 'assistant',
+          content: partialContent,
+        ),
+      ]);
     } else if (!hasPendingToolPhase) {
       _removeLatestAssistantPlaceholder();
     }
     state = state.copyWith(
+      protocolMessages: nextProtocolMessages,
       isStreaming: false,
       error: null,
       lastResponseIssue: null,
     );
+    _saveChatHistory(); // CRITICAL: Save to persisted storage immediately!
     _activeRequestCancelToken?.cancel('user_stopped');
     _activeRequestCancelToken = null;
     _clearStreamingContent();
@@ -1337,13 +1346,9 @@ class AiChatAction extends _$AiChatAction {
       recoveryMode: recoveryMode,
     );
     state = state.copyWith(
-      protocolMessages: List<AiMessage>.unmodifiable(
-        contextAssembly.sanitizedProtocolMessages,
-      ),
+      protocolMessages: List<AiMessage>.unmodifiable(protocolMessages),
       messages: List<AiMessage>.unmodifiable([
-        ..._buildDisplayMessagesFromProtocol(
-          contextAssembly.sanitizedProtocolMessages,
-        ),
+        ..._buildDisplayMessagesFromProtocol(protocolMessages),
         placeholder,
       ]),
       isStreaming: true,
@@ -2031,49 +2036,7 @@ class AiChatAction extends _$AiChatAction {
     );
   }
 
-  Future<void> _finishStoppedAssistantTurn({
-    required AiConfig config,
-    required List<AiMessage> protocolMessages,
-    required String placeholderId,
-    required String partialContent,
-  }) async {
-    final normalizedContent = partialContent.trim();
-    final hasPendingToolPhase = state.sessionContext.hasPendingToolPhase;
-    var nextProtocolMessages = protocolMessages;
 
-    if (!hasPendingToolPhase && normalizedContent.isNotEmpty) {
-      _updateDisplayMessage(
-        placeholderId,
-        content: normalizedContent,
-        isError: false,
-      );
-      nextProtocolMessages = [
-        ...protocolMessages,
-        AiMessage(
-          id: const Uuid().v4(),
-          role: 'assistant',
-          content: normalizedContent,
-        ),
-      ];
-    } else if (!hasPendingToolPhase) {
-      _removeDisplayMessage(placeholderId);
-    }
-
-    state = state.copyWith(
-      protocolMessages: List<AiMessage>.unmodifiable(nextProtocolMessages),
-      isStreaming: false,
-      error: null,
-      lastResponseIssue: null,
-    );
-    _syncContextState(
-      protocolMessages: nextProtocolMessages,
-      config: config,
-      lastError: null,
-      recoveryMode: AiChatRecoveryMode.none,
-    );
-    _stopRequested = false;
-    await _saveChatHistory();
-  }
 
   Future<void> _finishStoppedToolPhase({
     required AiConfig config,
@@ -2199,9 +2162,7 @@ class AiChatAction extends _$AiChatAction {
       recoveryMode: recoveryMode,
     );
     final sanitizedMessages = assembly.sanitizedProtocolMessages;
-    final shouldCompactStoredProtocol =
-        forceCompact ||
-        _estimateProtocolSize(sanitizedMessages) > _contextTargetBudgetChars;
+    final shouldCompactStoredProtocol = forceCompact;
     if (!shouldCompactStoredProtocol) {
       return assembly;
     }
