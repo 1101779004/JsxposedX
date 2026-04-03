@@ -147,12 +147,26 @@ flutter build appbundle --flavor api100 --release
 flutter build appbundle --flavor api101 --release
 ```
 
+如果你需要 `api101` 的 release APK，可以直接运行：
+
+```powershell
+flutter build apk --flavor api101 --release
+```
+
+输出文件通常在：
+
+```text
+build/app/outputs/flutter-apk/app-api101-release.apk
+```
+
 如果要直接构建某个 Xposed 壳，建议优先使用 Gradle 任务：
 
 ```powershell
 cd android
 .\gradlew.bat :app:assembleApi100Debug
 .\gradlew.bat :app:assembleApi101Debug
+.\gradlew.bat :app:assembleApi100Release
+.\gradlew.bat :app:assembleApi101Release
 
 cd android
 .\gradlew.bat :app:bundleApi100Release
@@ -162,8 +176,10 @@ cd android
 
 两类命令的区别：
 
+- `flutter build apk --flavor api101 --release`：从 Flutter CLI 进入，最终生成对应 flavor 的 release APK，例如 `build/app/outputs/flutter-apk/app-api101-release.apk`
 - `flutter build appbundle --flavor api100 --release`：从 Flutter CLI 进入，先处理 Flutter/Dart 资源与插件，再调用对应的 Android Gradle 变体任务
 - `.\gradlew.bat :app:bundleApi100Release`：直接从 Android Gradle 进入，更适合排查 flavor、Xposed 壳、资源合并和原生构建问题
+- `.\gradlew.bat :app:assembleApi101Release`：直接从 Android Gradle 进入，适合只想拿对应 flavor 的 release APK
 - 对同一个 flavor 来说，这两种命令最终目标的 Android 产物是一致的，例如 `api100` 对应 `bundleApi100Release`
 
 `.buildScript/run_install_debug.ps1` 负责设备侧的安装、启动和 attach 流程。

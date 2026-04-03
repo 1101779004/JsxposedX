@@ -157,12 +157,26 @@ flutter build appbundle --flavor api101 --release
 
 ```
 
+If you need the release APK for `api101`, run:
+
+```powershell
+flutter build apk --flavor api101 --release
+```
+
+The output is usually:
+
+```text
+build/app/outputs/flutter-apk/app-api101-release.apk
+```
+
 If you want to build a specific Xposed shell directly, prefer the Gradle tasks:
 
 ```powershell
 cd android
 .\gradlew.bat :app:assembleApi100Debug
 .\gradlew.bat :app:assembleApi101Debug
+.\gradlew.bat :app:assembleApi100Release
+.\gradlew.bat :app:assembleApi101Release
 
 cd android
 .\gradlew.bat :app:bundleApi100Release
@@ -172,8 +186,10 @@ cd android
 
 Difference between the two command styles:
 
+- `flutter build apk --flavor api101 --release`: enters through the Flutter CLI and produces the matching flavor release APK, for example `build/app/outputs/flutter-apk/app-api101-release.apk`
 - `flutter build appbundle --flavor api100 --release`: enters through the Flutter CLI, prepares Flutter/Dart assets and plugins first, then invokes the matching Android Gradle variant task
 - `.\gradlew.bat :app:bundleApi100Release`: enters directly through Android Gradle, which is usually better for debugging flavors, Xposed shell resources, manifest/resource merging, and native build issues
+- `.\gradlew.bat :app:assembleApi101Release`: enters directly through Android Gradle when you specifically want the matching release APK
 - For the same flavor, both approaches target the same Android variant output, for example `api100` maps to `bundleApi100Release`
 
 `.buildScript/run_install_debug.ps1` handles the install, launch, and attach flow for device-side

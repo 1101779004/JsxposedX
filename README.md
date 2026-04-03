@@ -39,5 +39,7 @@ Install the `api101` shell explicitly with:
 Build/release note:
 
 - `flutter build appbundle --flavor api100 --release` goes through the Flutter CLI first, then calls the matching Android variant
+- `flutter build apk --flavor api101 --release` builds the corresponding release APK, for example `build/app/outputs/flutter-apk/app-api101-release.apk`
 - `.\gradlew.bat :app:bundleApi100Release` goes directly through Android Gradle
+- `.\gradlew.bat :app:assembleApi101Release` goes directly through Android Gradle for the matching release APK
 - for the same flavor, both commands target the same Android release variant output
