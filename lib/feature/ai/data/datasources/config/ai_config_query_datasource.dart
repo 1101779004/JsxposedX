@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:JsxposedX/core/providers/pinia_provider.dart';
 import 'package:JsxposedX/feature/ai/data/models/ai_config_dto.dart';
+import 'package:JsxposedX/feature/ai/domain/constants/builtin_ai_config.dart';
 import 'package:uuid/uuid.dart';
 
 /// AI 配置查询数据源
@@ -16,25 +17,51 @@ class AiConfigQueryDatasource {
     if (configStr.isNotEmpty) {
       try {
         final config = AiConfigDto.fromJson(jsonDecode(configStr));
+        if (config.id == builtinAiConfigId) {
+          return AiConfigDto(
+            id: builtinAiConfigId,
+            name: builtinAiConfigName,
+            apiUrl: builtinAiConfigBaseUrl,
+            moduleName: 'gpt-5.4',
+            maxToken: 4096,
+            temperature: 1.0,
+            memoryRounds: 6,
+            apiType: 'openaiResponses',
+          );
+        }
         // 如果配置没有 id，生成一个默认的
         if (config.id.isEmpty) {
-          return config.copyWith(
-            id: const Uuid().v4(),
-            name: config.name.isEmpty ? '默认配置' : config.name,
-          );
+          final hasCustomContent =
+              config.apiUrl.isNotEmpty ||
+              config.apiKey.isNotEmpty ||
+              config.moduleName.isNotEmpty ||
+              config.name.isNotEmpty;
+          if (hasCustomContent) {
+            return config.copyWith(
+              id: const Uuid().v4(),
+              name: config.name.isEmpty ? '迁移配置' : config.name,
+            );
+          }
+          return _builtinConfigDto();
         }
         return config;
       } catch (e) {
-        return AiConfigDto(
-          id: const Uuid().v4(),
-          name: '默认配置',
-        );
+        return _builtinConfigDto();
       }
     }
-    return AiConfigDto(
-      id: const Uuid().v4(),
-      name: '默认配置',
+    return _builtinConfigDto();
+  }
+
+  AiConfigDto _builtinConfigDto() {
+    return const AiConfigDto(
+      id: builtinAiConfigId,
+      name: builtinAiConfigName,
+      apiUrl: builtinAiConfigBaseUrl,
+      moduleName: 'gpt-5.4',
+      maxToken: 4096,
+      temperature: 1.0,
+      memoryRounds: 6,
+      apiType: 'openaiResponses',
     );
   }
 }
-

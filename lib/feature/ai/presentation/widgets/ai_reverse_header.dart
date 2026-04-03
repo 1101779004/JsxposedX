@@ -2,6 +2,7 @@ import 'package:JsxposedX/common/widgets/custom_dIalog.dart';
 import 'package:JsxposedX/core/extensions/context_extensions.dart';
 import 'package:JsxposedX/core/models/ai_session.dart';
 import 'package:JsxposedX/feature/ai/presentation/providers/chat/ai_chat_action_provider.dart';
+import 'package:JsxposedX/feature/ai/presentation/providers/config/ai_config_query_provider.dart';
 import 'package:JsxposedX/feature/app/presentation/providers/app_query_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -22,6 +23,7 @@ class AiReverseHeader extends HookConsumerWidget {
     final appInfoAsync = ref.watch(
       getAppByPackageNameProvider(packageName: packageName),
     );
+    final activeAiConfigMeta = ref.watch(activeAiConfigMetaProvider);
 
     return Container(
       padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 16.h),
@@ -117,6 +119,47 @@ class AiReverseHeader extends HookConsumerWidget {
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
+                    ),
+                    activeAiConfigMeta.when(
+                      data: (meta) => meta.isBuiltin
+                          ? Padding(
+                              padding: EdgeInsets.only(top: 4.h),
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 8.w,
+                                  vertical: 3.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(999.r),
+                                  border: Border.all(
+                                    color: Colors.orange.withValues(alpha: 0.22),
+                                  ),
+                                ),
+                                child: Text(
+                                  '帕帝接口',
+                                  style: TextStyle(
+                                    fontSize: 10.sp,
+                                    color: Colors.orange.shade700,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : Padding(
+                              padding: EdgeInsets.only(top: 4.h),
+                              child: Text(
+                                '当前接口：${meta.displayLabel}',
+                                style: TextStyle(
+                                  fontSize: 10.sp,
+                                  color: context.theme.hintColor,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                      error: (_, __) => const SizedBox.shrink(),
+                      loading: () => const SizedBox.shrink(),
                     ),
                   ],
                 ),

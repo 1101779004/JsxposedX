@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:JsxposedX/core/providers/pinia_provider.dart';
 import 'package:JsxposedX/feature/ai/data/models/ai_config_dto.dart';
+import 'package:JsxposedX/feature/ai/domain/constants/builtin_ai_config.dart';
 
 /// AI 配置操作数据源
 class AiConfigActionDatasource {
@@ -25,7 +26,10 @@ class AiConfigActionDatasource {
     }
     try {
       final List<dynamic> jsonList = jsonDecode(configListStr);
-      return jsonList.map((json) => AiConfigDto.fromJson(json)).toList();
+      return jsonList
+          .map((json) => AiConfigDto.fromJson(json))
+          .where((config) => config.id != builtinAiConfigId)
+          .toList();
     } catch (e) {
       return [];
     }
@@ -48,6 +52,10 @@ class AiConfigActionDatasource {
 
   /// 更新配置列表中的某个配置
   Future<void> updateConfig(AiConfigDto config) async {
+    if (config.id == builtinAiConfigId) {
+      await saveConfig(config);
+      return;
+    }
     final list = await getConfigList();
     final index = list.indexWhere((c) => c.id == config.id);
     if (index != -1) {
@@ -58,6 +66,9 @@ class AiConfigActionDatasource {
 
   /// 删除配置
   Future<void> deleteConfig(String id) async {
+    if (id == builtinAiConfigId) {
+      return;
+    }
     final list = await getConfigList();
     list.removeWhere((c) => c.id == id);
     await saveConfigList(list);
@@ -65,9 +76,23 @@ class AiConfigActionDatasource {
 
   /// 切换配置（将指定配置设为当前配置）
   Future<void> switchConfig(String id) async {
+    if (id == builtinAiConfigId) {
+      await saveConfig(
+        const AiConfigDto(
+          id: builtinAiConfigId,
+          name: builtinAiConfigName,
+          apiUrl: builtinAiConfigBaseUrl,
+          moduleName: 'gpt-5.4',
+          maxToken: 4096,
+          temperature: 1.0,
+          memoryRounds: 6,
+          apiType: 'openaiResponses',
+        ),
+      );
+      return;
+    }
     final list = await getConfigList();
     final config = list.firstWhere((c) => c.id == id);
     await saveConfig(config);
   }
 }
-
