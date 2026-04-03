@@ -720,6 +720,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiOneClickCopy => 'Copy Code';
 
   @override
+  String get aiBubbleActionsTitle => 'Bubble Actions';
+
+  @override
+  String get aiBubbleCopyCurrent => 'Copy current content';
+
+  @override
+  String get aiBubbleSelectText => 'Select text';
+
+  @override
+  String get aiBubbleUserTextTitle => 'User Message';
+
+  @override
+  String get aiBubbleAssistantTextTitle => 'AI Reply';
+
+  @override
+  String get aiBubbleThinkingTitle => 'Thinking';
+
+  @override
+  String get aiBubbleAnswerTitle => 'Answer';
+
+  @override
   String get aiAnalyzeManifest => 'Analyze Manifest';
 
   @override

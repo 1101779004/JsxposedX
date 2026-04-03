@@ -76,6 +76,7 @@ abstract class BaseBubbleContentPart {
             state,
             toolbarPart: toolbarPart,
             markdown: parsed.text,
+            actionTitle: context.l10n.aiBubbleUserTextTitle,
           ),
         for (final attachment in parsed.attachments) ...[
           if (parsed.hasText || attachment != parsed.attachments.first)
@@ -111,6 +112,9 @@ abstract class BaseBubbleContentPart {
       state,
       toolbarPart: toolbarPart,
       markdown: parts.answer,
+      actionTitle: state.isUser
+          ? context.l10n.aiBubbleUserTextTitle
+          : context.l10n.aiBubbleAssistantTextTitle,
     );
   }
 
@@ -162,9 +166,14 @@ abstract class BaseBubbleContentPart {
     BubbleState state, {
     required BaseBubbleToolbarPart toolbarPart,
     required String markdown,
+    String? actionTitle,
   }) {
     return GestureDetector(
-      onLongPress: () => toolbarPart.handleCopyToClipboard(context, markdown),
+      onLongPress: () => toolbarPart.showTextActionsSheet(
+        context,
+        title: actionTitle ?? context.l10n.aiBubbleAssistantTextTitle,
+        text: markdown,
+      ),
       child: MarkdownBody(
         data: markdown,
         styleSheet: buildMarkdownTheme(context, state),
@@ -255,9 +264,10 @@ class _ThinkingMarkdownContent extends HookWidget {
                   if (expanded.value) ...[
                     SizedBox(height: 10.h),
                     GestureDetector(
-                      onLongPress: () => toolbarPart.handleCopyToClipboard(
+                      onLongPress: () => toolbarPart.showTextActionsSheet(
                         context,
-                        thinkingContent,
+                        title: context.l10n.aiBubbleThinkingTitle,
+                        text: thinkingContent,
                       ),
                       child: MarkdownBody(
                         data: thinkingContent,
@@ -281,9 +291,10 @@ class _ThinkingMarkdownContent extends HookWidget {
         ),
         if (answerContent.isNotEmpty)
           GestureDetector(
-            onLongPress: () => toolbarPart.handleCopyToClipboard(
+            onLongPress: () => toolbarPart.showTextActionsSheet(
               context,
-              answerContent,
+              title: context.l10n.aiBubbleAnswerTitle,
+              text: answerContent,
             ),
             child: MarkdownBody(
               data: answerContent,

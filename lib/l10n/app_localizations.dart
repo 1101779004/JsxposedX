@@ -1472,6 +1472,48 @@ abstract class AppLocalizations {
   /// **'一键复制'**
   String get aiOneClickCopy;
 
+  /// No description provided for @aiBubbleActionsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'气泡操作'**
+  String get aiBubbleActionsTitle;
+
+  /// No description provided for @aiBubbleCopyCurrent.
+  ///
+  /// In zh, this message translates to:
+  /// **'复制当前内容'**
+  String get aiBubbleCopyCurrent;
+
+  /// No description provided for @aiBubbleSelectText.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择文本'**
+  String get aiBubbleSelectText;
+
+  /// No description provided for @aiBubbleUserTextTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'用户消息'**
+  String get aiBubbleUserTextTitle;
+
+  /// No description provided for @aiBubbleAssistantTextTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'AI 回复'**
+  String get aiBubbleAssistantTextTitle;
+
+  /// No description provided for @aiBubbleThinkingTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'思考过程'**
+  String get aiBubbleThinkingTitle;
+
+  /// No description provided for @aiBubbleAnswerTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'回答内容'**
+  String get aiBubbleAnswerTitle;
+
   /// No description provided for @aiAnalyzeManifest.
   ///
   /// In zh, this message translates to:

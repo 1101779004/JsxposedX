@@ -706,6 +706,27 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiOneClickCopy => '一键复制';
 
   @override
+  String get aiBubbleActionsTitle => '气泡操作';
+
+  @override
+  String get aiBubbleCopyCurrent => '复制当前内容';
+
+  @override
+  String get aiBubbleSelectText => '选择文本';
+
+  @override
+  String get aiBubbleUserTextTitle => '用户消息';
+
+  @override
+  String get aiBubbleAssistantTextTitle => 'AI 回复';
+
+  @override
+  String get aiBubbleThinkingTitle => '思考过程';
+
+  @override
+  String get aiBubbleAnswerTitle => '回答内容';
+
+  @override
   String get aiAnalyzeManifest => '分析 Manifest';
 
   @override
