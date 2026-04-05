@@ -15,7 +15,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-const String _repositoryTutorialUrl = 'https://jsxposed.org';
+const String _repositoryTutorialUrl = 'https://www.yuque.com/ababa-haoqq/hake3e/mfz6382mb4gt4gyu?singleDoc';
 
 /// 仓库 Tab
 class RepositoryTab extends HookConsumerWidget {

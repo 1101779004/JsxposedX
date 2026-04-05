@@ -80,6 +80,14 @@
   "@repositoryVipInactive": {
     "description": "Repository user VIP inactive status"
   },
+  "repositoryFavoriteLoginRequired": "Login Required",
+  "@repositoryFavoriteLoginRequired": {
+    "description": "Repository favorites page login required title"
+  },
+  "repositoryFavoriteLoginHint": "Log in to view your favorites",
+  "@repositoryFavoriteLoginHint": {
+    "description": "Repository favorites page login required hint"
+  },
   "settings": "Settings",
   "@settings": {
     "description": "Settings page"

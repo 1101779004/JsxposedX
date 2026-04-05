@@ -66,3 +66,65 @@ abstract class _$NewPostsInfinite extends $Notifier<PostState> {
     element.handleValue(ref, created);
   }
 }
+
+/// 收藏帖子无限滚动
+///
+/// Copied from [FavoritePostsInfinite].
+@ProviderFor(FavoritePostsInfinite)
+const favoritePostsInfiniteProvider = FavoritePostsInfiniteProvider._();
+
+/// 收藏帖子无限滚动
+final class FavoritePostsInfiniteProvider
+    extends $NotifierProvider<FavoritePostsInfinite, PostState> {
+  /// 收藏帖子无限滚动
+  const FavoritePostsInfiniteProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'favoritePostsInfiniteProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$favoritePostsInfiniteHash();
+
+  @$internal
+  @override
+  FavoritePostsInfinite create() => FavoritePostsInfinite();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(PostState value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<PostState>(value),
+    );
+  }
+}
+
+String _$favoritePostsInfiniteHash() =>
+    r'0f3d96b1d1bfeb92ba33bc5a4f6be546e1d39741';
+
+/// 收藏帖子无限滚动
+///
+/// Copied from [FavoritePostsInfinite].
+abstract class _$FavoritePostsInfinite extends $Notifier<PostState> {
+  PostState build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<PostState, PostState>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<PostState, PostState>,
+              PostState,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}

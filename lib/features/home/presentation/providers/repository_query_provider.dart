@@ -1,4 +1,5 @@
 import 'package:JsxposedX/core/models/page_result.dart';
+import 'package:JsxposedX/core/services/app_storage.dart';
 import 'package:JsxposedX/features/home/domain/models/post.dart';
 import 'package:JsxposedX/features/home/domain/models/post_detail.dart';
 import 'package:JsxposedX/features/home/domain/models/user_detail.dart';
@@ -13,7 +14,13 @@ part 'repository_query_provider.g.dart';
 @riverpod
 RepositoryQueryRepository repositoryQueryRepository(Ref ref) {
   final httpService = ref.watch(httpServiceProvider);
-  final dataSource = RepositoryQueryDatasource(httpService: httpService);
+  final appStorage = ref.watch(appStorageProvider.notifier);
+  final storageReady = ref.watch(sharedPreferencesProvider.future);
+  final dataSource = RepositoryQueryDatasource(
+    httpService: httpService,
+    appStorage: appStorage,
+    storageReady: storageReady,
+  );
   return RepositoryQueryRepositoryImpl(dataSource: dataSource);
 }
 

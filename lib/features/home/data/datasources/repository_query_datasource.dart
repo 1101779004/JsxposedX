@@ -1,15 +1,26 @@
 import 'package:JsxposedX/core/networks/http_service.dart';
+import 'package:JsxposedX/core/services/app_storage.dart';
 import 'package:JsxposedX/features/home/data/models/post_detail_dto.dart';
 import 'package:JsxposedX/features/home/data/models/post_dto.dart';
 import 'package:JsxposedX/features/home/data/models/user_detail_dto.dart';
 import 'package:JsxposedX/features/home/domain/models/page_result_dto.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dio/dio.dart';
 
 class RepositoryQueryDatasource {
   final HttpService _httpService;
+  final AppStorage _appStorage;
+  final Future<SharedPreferences> _storageReady;
 
-  RepositoryQueryDatasource({required HttpService httpService})
-    : _httpService = httpService;
+  static const String _repositoryLoginTokenStorageKey = 'repository_login_token';
+
+  RepositoryQueryDatasource({
+    required HttpService httpService,
+    required AppStorage appStorage,
+    required Future<SharedPreferences> storageReady,
+  }) : _httpService = httpService,
+       _appStorage = appStorage,
+       _storageReady = storageReady;
   final String _postApi =
       "https://apiv2.muxue.pro/api/public/post/category/tag/470/posts";
 
@@ -29,6 +40,7 @@ class RepositoryQueryDatasource {
       final result = await _httpService.get(
         _postApi,
         queryParameters: {'limit': limit, 'offset': offset},
+        options: await _authorizedOptions(),
       );
       return PageResultDto.fromJson(
         result.data,
@@ -47,6 +59,7 @@ class RepositoryQueryDatasource {
       final result = await _httpService.get(
         _favoritePostApi,
         queryParameters: {'limit': limit, 'offset': offset},
+        options: await _authorizedOptions(),
       );
       return PageResultDto.fromJson(
         result.data,
@@ -59,7 +72,10 @@ class RepositoryQueryDatasource {
 
   Future<PostDetailDto> getScriptDetail({required int id}) async {
     try {
-      final result = await _httpService.get(_postDetailApi(postId: id));
+      final result = await _httpService.get(
+        _postDetailApi(postId: id),
+        options: await _authorizedOptions(),
+      );
       return PostDetailDto.fromJson(result.data["data"]);
     } catch (e) {
       throw Exception(e);
@@ -69,7 +85,7 @@ class RepositoryQueryDatasource {
   Future<UserDetailDto> getMyUserDetail({required String token}) async {
     final result = await _httpService.get(
       _myUserDetailApi,
-      options: Options(headers: {"Authorization": "Bearer $token"}),
+      options: await _authorizedOptions(token: token),
     );
     if (result.statusCode != 200) {
       throw RepositoryLoginStatusException(result.statusCode);
@@ -81,6 +97,35 @@ class RepositoryQueryDatasource {
     }
 
     return UserDetailDto.fromJson(payload['data'] as Map<String, dynamic>);
+  }
+
+  Future<Options?> _authorizedOptions({String? token, Options? options}) async {
+    final resolvedToken = await _resolveToken(token);
+    if (resolvedToken == null) {
+      return options;
+    }
+
+    final headers = <String, dynamic>{
+      ...?options?.headers,
+      "Authorization": "Bearer $resolvedToken",
+    };
+
+    return (options ?? Options()).copyWith(headers: headers);
+  }
+
+  Future<String?> _resolveToken(String? token) async {
+    final normalizedToken = token?.trim() ?? '';
+    if (normalizedToken.isNotEmpty) {
+      return normalizedToken;
+    }
+
+    await _storageReady;
+    final localToken =
+        _appStorage.getString(_repositoryLoginTokenStorageKey)?.trim() ?? '';
+    if (localToken.isEmpty) {
+      return null;
+    }
+    return localToken;
   }
 }
 

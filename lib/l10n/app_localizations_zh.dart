@@ -69,6 +69,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get repositoryVipInactive => '未开通';
 
   @override
+  String get repositoryFavoriteLoginRequired => '请先登录';
+
+  @override
+  String get repositoryFavoriteLoginHint => '登录后才能查看收藏内容';
+
+  @override
   String get settings => '设置';
 
   @override

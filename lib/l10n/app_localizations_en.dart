@@ -70,6 +70,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get repositoryVipInactive => 'Inactive';
 
   @override
+  String get repositoryFavoriteLoginRequired => 'Login Required';
+
+  @override
+  String get repositoryFavoriteLoginHint => 'Log in to view your favorites';
+
+  @override
   String get settings => 'Settings';
 
   @override

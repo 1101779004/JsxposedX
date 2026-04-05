@@ -80,6 +80,14 @@
   "@repositoryVipInactive": {
     "description": "仓库用户 VIP 未开通状态"
   },
+  "repositoryFavoriteLoginRequired": "请先登录",
+  "@repositoryFavoriteLoginRequired": {
+    "description": "仓库收藏页未登录提示标题"
+  },
+  "repositoryFavoriteLoginHint": "登录后才能查看收藏内容",
+  "@repositoryFavoriteLoginHint": {
+    "description": "仓库收藏页未登录提示说明"
+  },
   "settings": "设置",
   "@settings": {
     "description": "设置页面"

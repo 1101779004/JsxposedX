@@ -218,6 +218,18 @@ abstract class AppLocalizations {
   /// **'未开通'**
   String get repositoryVipInactive;
 
+  /// 仓库收藏页未登录提示标题
+  ///
+  /// In zh, this message translates to:
+  /// **'请先登录'**
+  String get repositoryFavoriteLoginRequired;
+
+  /// 仓库收藏页未登录提示说明
+  ///
+  /// In zh, this message translates to:
+  /// **'登录后才能查看收藏内容'**
+  String get repositoryFavoriteLoginHint;
+
   /// 设置页面
   ///
   /// In zh, this message translates to:
