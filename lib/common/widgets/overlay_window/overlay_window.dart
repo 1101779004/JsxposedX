@@ -26,15 +26,11 @@ class OverlayWindow extends StatelessWidget {
 
   static Future<OverlayWindowStatus> show(
     BuildContext context, {
-    OverlayWindowPresentation presentation =
-        const OverlayWindowPresentation(),
+    OverlayWindowPresentation presentation = const OverlayWindowPresentation(),
   }) {
     return OverlayWindowScope.of(
       context,
-    ).show(
-      context,
-      presentation: presentation,
-    );
+    ).show(context, presentation: presentation);
   }
 
   static Future<OverlayWindowStatus> dismiss(BuildContext context) {
@@ -78,8 +74,7 @@ class OverlayWindow extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     if (hasHeader) resolvedHeader,
-                    if (hasHeader)
-                      const SizedBox(height: 12),
+                    if (hasHeader) const SizedBox(height: 12),
                     child,
                     if (footer != null) ...<Widget>[
                       const SizedBox(height: 12),
