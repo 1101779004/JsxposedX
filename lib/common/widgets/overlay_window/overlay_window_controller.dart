@@ -94,6 +94,8 @@ class OverlayWindowController extends ChangeNotifier {
       overlayTitle: notificationTitle,
       overlayContent: notificationContent,
     );
+    await _waitUntilOverlayIsActive();
+    await Future<void>.delayed(const Duration(milliseconds: 32));
     await FlutterOverlayWindow.shareData(scene);
     return refresh();
   }
@@ -112,6 +114,15 @@ class OverlayWindowController extends ChangeNotifier {
 
     final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
     return (logicalSize * devicePixelRatio).round();
+  }
+
+  Future<void> _waitUntilOverlayIsActive() async {
+    for (var attempt = 0; attempt < 10; attempt++) {
+      if (await FlutterOverlayWindow.isActive()) {
+        return;
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 16));
+    }
   }
 
   bool get _isSupportedPlatform => !kIsWeb && Platform.isAndroid;

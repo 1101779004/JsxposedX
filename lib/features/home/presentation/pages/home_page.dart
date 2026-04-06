@@ -1,6 +1,8 @@
 import 'package:JsxposedX/common/pages/toast.dart';
 import 'package:JsxposedX/common/widgets/app_bottom_sheet.dart';
 import 'package:JsxposedX/common/widgets/loading.dart';
+import 'package:JsxposedX/common/widgets/overlay_window/overlay_scene.dart';
+import 'package:JsxposedX/common/widgets/overlay_window/overlay_window.dart';
 import 'package:JsxposedX/core/extensions/context_extensions.dart';
 import 'package:JsxposedX/core/providers/theme_provider.dart';
 import 'package:JsxposedX/core/utils/procedure_utils.dart';
@@ -127,7 +129,9 @@ class HomePage extends HookConsumerWidget {
       floatingActionButton: HomeCenterDockButton(
         colorScheme: colorScheme,
         size: fabSize,
-        onPressed: () {},
+        onPressed: () {
+          OverlayWindow.show(context, scene: OverlaySceneEnum.memoryTool);
+        },
       ),
       appBar: AppBar(
         title: Text(tabTitles[currentIndex.value]),

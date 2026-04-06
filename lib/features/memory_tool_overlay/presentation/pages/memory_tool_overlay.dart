@@ -6,6 +6,9 @@ class MemoryToolOverlay extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Scaffold(body: Text("data"));
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(onPressed: (){}, child: const Text("1312")),
+    );
   }
 }
