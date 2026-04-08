@@ -1,15 +1,16 @@
 import 'dart:io';
 
+import 'package:JsxposedX/common/widgets/overlay_window/overlay_scene.dart';
 import 'package:JsxposedX/core/extensions/context_extensions.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_overlay_window/flutter_overlay_window.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class OverlayWindowController extends ChangeNotifier {
   OverlayWindowController._();
 
   static final OverlayWindowController instance = OverlayWindowController._();
+  static const double defaultBubbleSize = 144;
 
   OverlayWindowStatus _status = const OverlayWindowStatus(
     isSupported: true,
@@ -59,21 +60,12 @@ class OverlayWindowController extends ChangeNotifier {
   Future<OverlayWindowStatus> show(
     BuildContext context, {
     required int scene,
-    OverlayWindowPresentation presentation =
-        const OverlayWindowPresentation(),
+    OverlayWindowPresentation presentation = const OverlayWindowPresentation(),
   }) async {
     if (!_isSupportedPlatform) {
       return refresh();
     }
 
-    final overlayWidth = _resolveOverlayDimension(
-      context,
-      presentation.width ?? 320.w,
-    );
-    final overlayHeight = _resolveOverlayDimension(
-      context,
-      presentation.height ?? 220.h,
-    );
     final notificationTitle =
         presentation.notificationTitle ?? context.l10n.appName;
     final notificationContent =
@@ -83,19 +75,66 @@ class OverlayWindowController extends ChangeNotifier {
       return status;
     }
 
-    await FlutterOverlayWindow.showOverlay(
-      width: overlayWidth,
-      height: overlayHeight,
-      alignment: OverlayAlignment.centerRight,
-      positionGravity: PositionGravity.auto,
-      enableDrag: presentation.enableDrag,
-      flag: OverlayFlag.defaultFlag,
-      visibility: NotificationVisibility.visibilityPublic,
-      overlayTitle: notificationTitle,
-      overlayContent: notificationContent,
+    final currentStatus = await refresh();
+    if (!currentStatus.isActive) {
+      await _showOverlayHost(
+        notificationTitle: notificationTitle,
+        notificationContent: notificationContent,
+      );
+    }
+    await _sharePayload(
+      OverlayWindowPayload(
+        scene: scene,
+        displayMode: OverlayWindowDisplayMode.bubble,
+      ),
     );
-    await FlutterOverlayWindow.shareData(scene);
     return refresh();
+  }
+
+  Future<void> expand(
+    BuildContext context, {
+    required int scene,
+    OverlayWindowPresentation presentation = const OverlayWindowPresentation(),
+  }) async {
+    if (!_isSupportedPlatform) {
+      return;
+    }
+
+    final currentStatus = await refresh();
+    if (!currentStatus.isActive) {
+      return;
+    }
+
+    await _sharePayload(
+      OverlayWindowPayload(
+        scene: scene,
+        displayMode: OverlayWindowDisplayMode.panel,
+      ),
+    );
+    await refresh();
+  }
+
+  Future<void> collapse(
+    BuildContext context, {
+    required int scene,
+    OverlayWindowPresentation presentation = const OverlayWindowPresentation(),
+  }) async {
+    if (!_isSupportedPlatform) {
+      return;
+    }
+
+    final currentStatus = await refresh();
+    if (!currentStatus.isActive) {
+      return;
+    }
+
+    await _sharePayload(
+      OverlayWindowPayload(
+        scene: scene,
+        displayMode: OverlayWindowDisplayMode.bubble,
+      ),
+    );
+    await refresh();
   }
 
   Future<OverlayWindowStatus> hide() async {
@@ -105,21 +144,35 @@ class OverlayWindowController extends ChangeNotifier {
     return refresh();
   }
 
-  int _resolveOverlayDimension(BuildContext context, double logicalSize) {
-    if (logicalSize <= 0) {
-      return logicalSize.round();
-    }
-
-    final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
-    return (logicalSize * devicePixelRatio).round();
-  }
   bool get _isSupportedPlatform => !kIsWeb && Platform.isAndroid;
+
+  Future<void> _sharePayload(OverlayWindowPayload payload) {
+    return FlutterOverlayWindow.shareData(payload.toMap());
+  }
+
+  Future<void> _showOverlayHost({
+    required String notificationTitle,
+    required String notificationContent,
+  }) {
+    return FlutterOverlayWindow.showOverlay(
+      width: WindowSize.matchParent,
+      height: WindowSize.fullCover,
+      alignment: OverlayAlignment.center,
+      positionGravity: PositionGravity.none,
+      enableDrag: false,
+      flag: OverlayFlag.focusPointer,
+      visibility: NotificationVisibility.visibilityPublic,
+      overlayTitle: notificationTitle,
+      overlayContent: notificationContent,
+    );
+  }
 }
 
 class OverlayWindowPresentation {
   const OverlayWindowPresentation({
     this.width,
     this.height,
+    this.bubbleSize = OverlayWindowController.defaultBubbleSize,
     this.enableDrag = true,
     this.notificationTitle,
     this.notificationContent,
@@ -127,6 +180,7 @@ class OverlayWindowPresentation {
 
   final double? width;
   final double? height;
+  final double bubbleSize;
   final bool enableDrag;
   final String? notificationTitle;
   final String? notificationContent;

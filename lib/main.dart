@@ -6,17 +6,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(ProviderScope(child: OverlayWindowScope(child: const MainApp())));
 }
 
 @pragma('vm:entry-point')
-void overlayMain() {
+Future<void> overlayMain() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(
-    ProviderScope(child: OverlayWindowScope(child: const OverlayApp())),
-  );
+  runApp(ProviderScope(child: OverlayWindowScope(child: const OverlayApp())));
 }
 
 class MainApp extends ConsumerWidget {
@@ -53,24 +51,18 @@ class OverlayApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppBootstrap(
-      builder: (context, locale, lightTheme, darkTheme, themeMode) {
-        return MaterialApp(
-          title: 'JsxposedX',
-          locale: locale,
-          localizationsDelegates: AppBootstrap.localizationsDelegates,
-          supportedLocales: AppBootstrap.supportedLocales,
-          localeResolutionCallback: (deviceLocale, supportedLocales) {
-            return locale;
-          },
-          theme: lightTheme,
-          darkTheme: darkTheme,
-          themeMode: themeMode,
-          debugShowCheckedModeBanner: false,
-          home: const OverlayWindowRenderer(),
-          builder: FlutterSmartDialog.init(),
-        );
-      },
+    return MaterialApp(
+      title: 'JsxposedX Overlay',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF5B8CFF)),
+        scaffoldBackgroundColor: Colors.transparent,
+        canvasColor: Colors.transparent,
+        cardColor: Colors.transparent,
+        dialogTheme: const DialogThemeData(backgroundColor: Colors.transparent),
+      ),
+      home: const OverlayWindowRenderer(),
     );
   }
 }

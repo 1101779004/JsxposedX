@@ -63,6 +63,7 @@ dependencies:
   external_app_launcher: ^4.0.3
   flutter_floating: ^2.0.2
   flutter_overlay_window: ^0.5.0
+  liquid_glass_widgets: ^0.5.0
 
 
 
