@@ -157,13 +157,14 @@ class OverlayWindowController extends ChangeNotifier {
     return FlutterOverlayWindow.showOverlay(
       width: WindowSize.matchParent,
       height: WindowSize.fullCover,
-      alignment: OverlayAlignment.center,
+      alignment: OverlayAlignment.topLeft,
       positionGravity: PositionGravity.none,
       enableDrag: false,
       flag: OverlayFlag.focusPointer,
       visibility: NotificationVisibility.visibilityPublic,
       overlayTitle: notificationTitle,
       overlayContent: notificationContent,
+      startPosition: const OverlayPosition(0, 0),
     );
   }
 }

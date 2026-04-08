@@ -17,6 +17,7 @@ class OverlayWindowRenderer extends StatefulWidget {
 
 class _OverlayWindowRendererState extends State<OverlayWindowRenderer> {
   static const double _bubbleEdgePadding = 16;
+  static const double _bubbleHostPadding = 16;
   static const double _panelMaxWidth = 560;
   static const double _panelMaxHeight = 720;
 
@@ -24,16 +25,17 @@ class _OverlayWindowRendererState extends State<OverlayWindowRenderer> {
   OverlayWindowPayload _payload = const OverlayWindowPayload(
     scene: OverlaySceneEnum.memoryTool,
   );
-  Offset? _bubbleOffset;
+  _OverlayViewport? _fullViewport;
+  Offset? _bubbleVisualOffset;
   Offset? _dragStartGlobal;
   Offset? _dragOrigin;
   bool _dragging = false;
+  bool _needsBubbleHostSync = true;
 
   @override
   void initState() {
     super.initState();
     _subscription = FlutterOverlayWindow.overlayListener.listen(_handlePayload);
-    unawaited(_syncOverlayFlag(_payload.displayMode));
   }
 
   @override
@@ -44,68 +46,77 @@ class _OverlayWindowRendererState extends State<OverlayWindowRenderer> {
 
   @override
   Widget build(BuildContext context) {
-    final safePadding = MediaQuery.of(context).viewPadding;
-    final bubbleSize = _bubbleSizeForScene(_payload.scene);
-
     return Material(
       color: Colors.transparent,
       child: LayoutBuilder(
         builder: (context, constraints) {
+          final safePadding = MediaQuery.of(context).viewPadding;
+          final bubbleSize = _bubbleSizeForScene(_payload.scene);
           final hostSize = Size(constraints.maxWidth, constraints.maxHeight);
-          final resolvedBubbleOffset = _resolvedBubbleOffset(
+          _captureViewport(
             hostSize: hostSize,
             safePadding: safePadding,
             bubbleSize: bubbleSize,
           );
 
-          return Stack(
-            fit: StackFit.expand,
-            children: <Widget>[
-              if (_payload.isPanel)
-                OverlayWindow(
-                  title: _resolveTitle(_payload.scene),
-                  subtitle: 'Floating tool window',
-                  onBackdropTap: () =>
-                      _setDisplayMode(OverlayWindowDisplayMode.bubble),
-                  onMinimize: () =>
-                      _setDisplayMode(OverlayWindowDisplayMode.bubble),
-                  onClose: () {
-                    unawaited(OverlayWindowScope.of(context).hide());
-                  },
-                  maxWidth: _panelMaxWidth,
-                  maxHeight: _panelMaxHeight,
-                  child: _buildScene(_payload.scene),
-                )
-              else
-                Positioned(
-                  left: resolvedBubbleOffset.dx,
-                  top: resolvedBubbleOffset.dy,
-                  child: _OverlayBubble(
-                    size: bubbleSize,
-                    dragging: _dragging,
-                    onTap: () =>
-                        _setDisplayMode(OverlayWindowDisplayMode.panel),
-                    onPanStart: (details) =>
-                        _handlePanStart(details, resolvedBubbleOffset),
-                    onPanUpdate: (details) => _handlePanUpdate(
-                      details,
-                      hostSize: hostSize,
-                      safePadding: safePadding,
-                      bubbleSize: bubbleSize,
-                    ),
-                    onPanEnd: (_) => _handlePanEnd(
-                      hostSize: hostSize,
-                      safePadding: safePadding,
-                      bubbleSize: bubbleSize,
-                    ),
-                    onPanCancel: () => _handlePanEnd(
-                      hostSize: hostSize,
-                      safePadding: safePadding,
-                      bubbleSize: bubbleSize,
-                    ),
-                  ),
+          final viewport = _resolvedViewport(
+            hostSize: hostSize,
+            safePadding: safePadding,
+          );
+          final resolvedBubbleVisualOffset = _resolvedBubbleVisualOffset(
+            viewport: viewport,
+            bubbleSize: bubbleSize,
+          );
+
+          if (_payload.isBubble &&
+              _needsBubbleHostSync &&
+              _fullViewport != null &&
+              !_dragging) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted || !_payload.isBubble || !_needsBubbleHostSync) {
+                return;
+              }
+              unawaited(_syncOverlayHost());
+            });
+          }
+
+          if (_payload.isPanel) {
+            return OverlayWindow(
+              title: _resolveTitle(_payload.scene),
+              subtitle: 'Floating tool window',
+              onBackdropTap: () =>
+                  _setDisplayMode(OverlayWindowDisplayMode.bubble),
+              onMinimize: () =>
+                  _setDisplayMode(OverlayWindowDisplayMode.bubble),
+              onClose: () {
+                unawaited(OverlayWindowScope.of(context).hide());
+              },
+              maxWidth: _panelMaxWidth,
+              maxHeight: _panelMaxHeight,
+              child: _buildScene(_payload.scene),
+            );
+          }
+
+          return SizedBox.expand(
+            child: Padding(
+              padding: const EdgeInsets.all(_bubbleHostPadding),
+              child: _OverlayBubble(
+                size: bubbleSize,
+                dragging: _dragging,
+                onTap: () => _setDisplayMode(OverlayWindowDisplayMode.panel),
+                onPanStart: (details) =>
+                    _handlePanStart(details, resolvedBubbleVisualOffset),
+                onPanUpdate: (details) => _handlePanUpdate(
+                  details,
+                  viewport: viewport,
+                  bubbleSize: bubbleSize,
                 ),
-            ],
+                onPanEnd: (_) =>
+                    _handlePanEnd(viewport: viewport, bubbleSize: bubbleSize),
+                onPanCancel: () =>
+                    _handlePanEnd(viewport: viewport, bubbleSize: bubbleSize),
+              ),
+            ),
           );
         },
       ),
@@ -124,10 +135,12 @@ class _OverlayWindowRendererState extends State<OverlayWindowRenderer> {
         _dragging = false;
         _dragStartGlobal = null;
         _dragOrigin = null;
+      } else {
+        _needsBubbleHostSync = true;
       }
     });
 
-    unawaited(_syncOverlayFlag(nextPayload.displayMode));
+    unawaited(_syncOverlayHost());
   }
 
   Future<void> _setDisplayMode(String displayMode) async {
@@ -142,31 +155,69 @@ class _OverlayWindowRendererState extends State<OverlayWindowRenderer> {
         _dragging = false;
         _dragStartGlobal = null;
         _dragOrigin = null;
+      } else {
+        _needsBubbleHostSync = true;
       }
     });
 
-    await _syncOverlayFlag(displayMode);
+    await _syncOverlayHost();
   }
 
-  Future<void> _syncOverlayFlag(String displayMode) async {
-    final overlayFlag = displayMode == OverlayWindowDisplayMode.panel
+  Future<void> _syncOverlayHost() async {
+    final overlayFlag = _payload.isPanel
         ? OverlayFlag.defaultFlag
         : OverlayFlag.focusPointer;
+
+    if (_payload.isPanel) {
+      await FlutterOverlayWindow.resizeOverlay(
+        WindowSize.matchParent,
+        WindowSize.fullCover,
+        false,
+      );
+      await FlutterOverlayWindow.moveOverlay(const OverlayPosition(0, 0));
+      await FlutterOverlayWindow.updateFlag(overlayFlag);
+      return;
+    }
+
+    final viewport = _fullViewport;
+    if (viewport == null) {
+      _needsBubbleHostSync = true;
+      await FlutterOverlayWindow.updateFlag(overlayFlag);
+      return;
+    }
+
+    final bubbleSize = _bubbleSizeForScene(_payload.scene);
+    final bubbleVisualOffset = _resolvedBubbleVisualOffset(
+      viewport: viewport,
+      bubbleSize: bubbleSize,
+    );
+    final hostExtent = _bubbleHostExtent(bubbleSize);
+    _bubbleVisualOffset = bubbleVisualOffset;
+    _needsBubbleHostSync = false;
+
+    await FlutterOverlayWindow.resizeOverlay(
+      hostExtent.round(),
+      hostExtent.round(),
+      false,
+    );
+    await _moveBubbleHostToVisualOffset(bubbleVisualOffset);
     await FlutterOverlayWindow.updateFlag(overlayFlag);
   }
 
-  void _handlePanStart(DragStartDetails details, Offset resolvedBubbleOffset) {
+  void _handlePanStart(
+    DragStartDetails details,
+    Offset resolvedBubbleVisualOffset,
+  ) {
     setState(() {
       _dragging = true;
       _dragStartGlobal = details.globalPosition;
-      _dragOrigin = resolvedBubbleOffset;
+      _dragOrigin = resolvedBubbleVisualOffset;
     });
   }
 
   void _handlePanUpdate(
     DragUpdateDetails details, {
-    required Size hostSize,
-    required EdgeInsets safePadding,
+    required _OverlayViewport viewport,
     required double bubbleSize,
   }) {
     final dragStartGlobal = _dragStartGlobal;
@@ -176,104 +227,130 @@ class _OverlayWindowRendererState extends State<OverlayWindowRenderer> {
     }
 
     final delta = details.globalPosition - dragStartGlobal;
+    final nextVisualOffset = _clampBubbleVisualOffset(
+      dragOrigin + delta,
+      viewport: viewport,
+      bubbleSize: bubbleSize,
+    );
     setState(() {
-      _bubbleOffset = _clampBubbleOffset(
-        dragOrigin + delta,
-        hostSize: hostSize,
-        safePadding: safePadding,
-        bubbleSize: bubbleSize,
-      );
+      _bubbleVisualOffset = nextVisualOffset;
     });
+    unawaited(_moveBubbleHostToVisualOffset(nextVisualOffset));
   }
 
   void _handlePanEnd({
-    required Size hostSize,
-    required EdgeInsets safePadding,
+    required _OverlayViewport viewport,
     required double bubbleSize,
   }) {
-    final currentOffset = _resolvedBubbleOffset(
-      hostSize: hostSize,
-      safePadding: safePadding,
+    final currentVisualOffset = _resolvedBubbleVisualOffset(
+      viewport: viewport,
+      bubbleSize: bubbleSize,
+    );
+    final snappedVisualOffset = _snapBubbleVisualOffset(
+      currentVisualOffset,
+      viewport: viewport,
       bubbleSize: bubbleSize,
     );
 
     setState(() {
-      _bubbleOffset = _snapBubbleOffset(
-        currentOffset,
-        hostSize: hostSize,
-        safePadding: safePadding,
-        bubbleSize: bubbleSize,
-      );
+      _bubbleVisualOffset = snappedVisualOffset;
       _dragging = false;
       _dragStartGlobal = null;
       _dragOrigin = null;
     });
+    unawaited(_moveBubbleHostToVisualOffset(snappedVisualOffset));
   }
 
-  Offset _resolvedBubbleOffset({
+  _OverlayViewport _resolvedViewport({
     required Size hostSize,
     required EdgeInsets safePadding,
+  }) {
+    return _fullViewport ??
+        _OverlayViewport(size: hostSize, safePadding: safePadding);
+  }
+
+  void _captureViewport({
+    required Size hostSize,
+    required EdgeInsets safePadding,
+    required double bubbleSize,
+  }) {
+    final bubbleExtent = _bubbleHostExtent(bubbleSize);
+    final isFullscreenHost =
+        hostSize.width > bubbleExtent + 1 || hostSize.height > bubbleExtent + 1;
+    if (!isFullscreenHost) {
+      return;
+    }
+
+    final nextViewport = _OverlayViewport(
+      size: hostSize,
+      safePadding: safePadding,
+    );
+    if (_fullViewport == nextViewport) {
+      return;
+    }
+
+    _fullViewport = nextViewport;
+    if (_payload.isBubble) {
+      _needsBubbleHostSync = true;
+    }
+  }
+
+  double _bubbleHostExtent(double bubbleSize) {
+    return bubbleSize + (_bubbleHostPadding * 2);
+  }
+
+  Future<void> _moveBubbleHostToVisualOffset(Offset bubbleVisualOffset) async {
+    await FlutterOverlayWindow.moveOverlay(
+      OverlayPosition(
+        bubbleVisualOffset.dx - _bubbleHostPadding,
+        bubbleVisualOffset.dy - _bubbleHostPadding,
+      ),
+    );
+  }
+
+  Offset _resolvedBubbleVisualOffset({
+    required _OverlayViewport viewport,
     required double bubbleSize,
   }) {
     final currentOffset =
-        _bubbleOffset ??
-        _defaultBubbleOffset(
-          hostSize: hostSize,
-          safePadding: safePadding,
-          bubbleSize: bubbleSize,
-        );
-    return _clampBubbleOffset(
+        _bubbleVisualOffset ??
+        _defaultBubbleVisualOffset(viewport: viewport, bubbleSize: bubbleSize);
+    return _clampBubbleVisualOffset(
       currentOffset,
-      hostSize: hostSize,
-      safePadding: safePadding,
+      viewport: viewport,
       bubbleSize: bubbleSize,
     );
   }
 
-  Offset _defaultBubbleOffset({
-    required Size hostSize,
-    required EdgeInsets safePadding,
+  Offset _defaultBubbleVisualOffset({
+    required _OverlayViewport viewport,
     required double bubbleSize,
   }) {
-    final bounds = _bubbleBounds(
-      hostSize: hostSize,
-      safePadding: safePadding,
-      bubbleSize: bubbleSize,
-    );
+    final bounds = _bubbleBounds(viewport: viewport, bubbleSize: bubbleSize);
     final centerY = bounds.top + (bounds.height / 2);
     return Offset(bounds.right, centerY);
   }
 
-  Offset _clampBubbleOffset(
+  Offset _clampBubbleVisualOffset(
     Offset offset, {
-    required Size hostSize,
-    required EdgeInsets safePadding,
+    required _OverlayViewport viewport,
     required double bubbleSize,
   }) {
-    final bounds = _bubbleBounds(
-      hostSize: hostSize,
-      safePadding: safePadding,
-      bubbleSize: bubbleSize,
-    );
+    final bounds = _bubbleBounds(viewport: viewport, bubbleSize: bubbleSize);
     return Offset(
       offset.dx.clamp(bounds.left, bounds.right).toDouble(),
       offset.dy.clamp(bounds.top, bounds.bottom).toDouble(),
     );
   }
 
-  Offset _snapBubbleOffset(
+  Offset _snapBubbleVisualOffset(
     Offset offset, {
-    required Size hostSize,
-    required EdgeInsets safePadding,
+    required _OverlayViewport viewport,
     required double bubbleSize,
   }) {
-    final bounds = _bubbleBounds(
-      hostSize: hostSize,
-      safePadding: safePadding,
-      bubbleSize: bubbleSize,
-    );
+    final bounds = _bubbleBounds(viewport: viewport, bubbleSize: bubbleSize);
     final bubbleCenterX = offset.dx + (bubbleSize / 2);
-    final targetX = bubbleCenterX < (hostSize.width / 2)
+    final targetX = bubbleCenterX < (viewport.size.width / 2)
         ? bounds.left
         : bounds.right;
     return Offset(
@@ -283,18 +360,23 @@ class _OverlayWindowRendererState extends State<OverlayWindowRenderer> {
   }
 
   _BubbleBounds _bubbleBounds({
-    required Size hostSize,
-    required EdgeInsets safePadding,
+    required _OverlayViewport viewport,
     required double bubbleSize,
   }) {
-    final left = safePadding.left + _bubbleEdgePadding;
-    final top = safePadding.top + _bubbleEdgePadding;
+    final left = viewport.safePadding.left + _bubbleEdgePadding;
+    final top = viewport.safePadding.top + _bubbleEdgePadding;
     final right =
-        (hostSize.width - bubbleSize - safePadding.right - _bubbleEdgePadding)
+        (viewport.size.width -
+                bubbleSize -
+                viewport.safePadding.right -
+                _bubbleEdgePadding)
             .clamp(left, double.infinity)
             .toDouble();
     final bottom =
-        (hostSize.height - bubbleSize - safePadding.bottom - _bubbleEdgePadding)
+        (viewport.size.height -
+                bubbleSize -
+                viewport.safePadding.bottom -
+                _bubbleEdgePadding)
             .clamp(top, double.infinity)
             .toDouble();
     return _BubbleBounds(left: left, top: top, right: right, bottom: bottom);
@@ -412,4 +494,24 @@ class _BubbleBounds {
   final double bottom;
 
   double get height => bottom - top;
+}
+
+class _OverlayViewport {
+  const _OverlayViewport({required this.size, required this.safePadding});
+
+  final Size size;
+  final EdgeInsets safePadding;
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    return other is _OverlayViewport &&
+        other.size == size &&
+        other.safePadding == safePadding;
+  }
+
+  @override
+  int get hashCode => Object.hash(size, safePadding);
 }

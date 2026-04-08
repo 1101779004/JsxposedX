@@ -103,6 +103,10 @@ flutter_launcher_icons:
   ios: false
   image_path: assets/images/logo.png
 
+dependency_overrides:
+  flutter_overlay_window:
+    path: third_party/flutter_overlay_window
+
 
 # Pigeon 配置已迁移至外部文件 pigeon.yaml
 # 使用以下命令运行更新：
