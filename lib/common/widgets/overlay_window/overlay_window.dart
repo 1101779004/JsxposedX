@@ -49,6 +49,8 @@ class OverlayWindow extends StatelessWidget {
     this.backdrop,
     this.decoration,
     this.contentDecoration,
+    this.borderRadius,
+    this.clipBehavior = Clip.antiAlias,
     this.padding,
     this.contentPadding,
   });
@@ -63,6 +65,8 @@ class OverlayWindow extends StatelessWidget {
   final Widget? backdrop;
   final Decoration? decoration;
   final Decoration? contentDecoration;
+  final BorderRadiusGeometry? borderRadius;
+  final Clip clipBehavior;
   final EdgeInsetsGeometry? padding;
   final EdgeInsetsGeometry? contentPadding;
 
@@ -86,6 +90,38 @@ class OverlayWindow extends StatelessWidget {
               ? constraints.maxHeight
               : math.min(maxHeight!, constraints.maxHeight);
 
+          Widget panel = DecoratedBox(
+            decoration: decoration ?? const BoxDecoration(),
+            child: Padding(
+              padding: resolvedPadding,
+              child: Column(
+                mainAxisSize: MainAxisSize.max,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  if (hasHeader) header!,
+                  Expanded(
+                    child: DecoratedBox(
+                      decoration: contentDecoration ?? const BoxDecoration(),
+                      child: Padding(
+                        padding: resolvedContentPadding,
+                        child: child,
+                      ),
+                    ),
+                  ),
+                  if (footer != null) footer!,
+                ],
+              ),
+            ),
+          );
+
+          if (borderRadius != null) {
+            panel = ClipRRect(
+              borderRadius: borderRadius!,
+              clipBehavior: clipBehavior,
+              child: panel,
+            );
+          }
+
           return Stack(
             fit: StackFit.expand,
             children: <Widget>[
@@ -106,31 +142,7 @@ class OverlayWindow extends StatelessWidget {
                         minHeight: shouldFillHeight ? resolvedMaxHeight : 0,
                         maxHeight: resolvedMaxHeight,
                       ),
-                      child: DecoratedBox(
-                        decoration: decoration ?? const BoxDecoration(),
-                        child: Padding(
-                          padding: resolvedPadding,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.max,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              if (hasHeader) header!,
-                              Expanded(
-                                child: DecoratedBox(
-                                  decoration:
-                                      contentDecoration ??
-                                      const BoxDecoration(),
-                                  child: Padding(
-                                    padding: resolvedContentPadding,
-                                    child: child,
-                                  ),
-                                ),
-                              ),
-                              if (footer != null) footer!,
-                            ],
-                          ),
-                        ),
-                      ),
+                      child: panel,
                     ),
                   ),
                 ),
@@ -151,6 +163,7 @@ class OverlayWindowScaffold extends StatelessWidget {
     this.overlayBar,
     this.bottomBar,
     this.backgroundColor,
+    this.borderRadius,
     this.onBackdropTap,
     this.margin,
     this.maxWidth,
@@ -176,6 +189,7 @@ class OverlayWindowScaffold extends StatelessWidget {
   @Deprecated('Use body instead.')
   final Widget? child;
   final Color? backgroundColor;
+  final BorderRadiusGeometry? borderRadius;
   final VoidCallback? onBackdropTap;
   final EdgeInsetsGeometry? margin;
   final double? maxWidth;
@@ -217,7 +231,12 @@ class OverlayWindowScaffold extends StatelessWidget {
     final resolvedBackdrop = backdrop ?? const SizedBox.expand();
     final resolvedBackgroundColor =
         backgroundColor ?? Theme.of(context).colorScheme.surface;
-    final resolvedDecoration = decoration;
+    final resolvedDecoration =
+        decoration ??
+        BoxDecoration(
+          color: resolvedBackgroundColor,
+          borderRadius: borderRadius,
+        );
     final resolvedContentDecoration = contentDecoration;
 
     return OverlayWindow(
@@ -229,9 +248,8 @@ class OverlayWindowScaffold extends StatelessWidget {
       maxHeight: maxHeight,
       backdrop: resolvedBackdrop,
       decoration: resolvedDecoration,
-      contentDecoration:
-          resolvedContentDecoration ??
-          BoxDecoration(color: resolvedBackgroundColor),
+      contentDecoration: resolvedContentDecoration,
+      borderRadius: borderRadius,
       padding: padding ?? EdgeInsets.zero,
       contentPadding: contentPadding ?? EdgeInsets.zero,
       child: resolvedBody,

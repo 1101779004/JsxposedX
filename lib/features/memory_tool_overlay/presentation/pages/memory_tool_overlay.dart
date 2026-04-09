@@ -23,7 +23,9 @@ class MemoryToolOverlay extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return OverlayWindowScaffold(
       overlayConfig: overlayConfig,
+      borderRadius: BorderRadius.circular(8.r),
       overlayBar: OverlayWindowBar(
+        backgroundColor: context.colorScheme.surface.withValues(alpha: 0.3),
         title: Text(
           context.l10n.overlayMemoryToolTitle,
           style: TextStyle(fontWeight: FontWeight.bold),
@@ -35,6 +37,7 @@ class MemoryToolOverlay extends HookConsumerWidget {
         showMinimizeAction: true,
         showCloseAction: false,
       ),
+      backgroundColor: context.colorScheme.surface.withValues(alpha: 0.6),
       margin: EdgeInsets.all(8.r),
       body: Column(
         children: <Widget>[
