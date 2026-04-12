@@ -1,5 +1,6 @@
 import 'package:JsxposedX/features/memory_tool_overlay/data/datasources/memory_query_datasource.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/domain/repositories/memory_query_repository.dart';
+import 'package:JsxposedX/generated/memory_tool.g.dart';
 
 class MemoryQueryRepositoryImpl implements MemoryQueryRepository {
   final MemoryQueryDatasource dataSource;
@@ -9,5 +10,13 @@ class MemoryQueryRepositoryImpl implements MemoryQueryRepository {
   @override
   Future<int> getPid({required String packageName}) async {
     return await dataSource.getPid(packageName: packageName);
+  }
+
+  @override
+  Future<List<ProcessInfo>> getProcessInfo({
+    required int offset,
+    required int limit,
+  }) async {
+    return await dataSource.getProcessInfo(offset: offset, limit: limit);
   }
 }

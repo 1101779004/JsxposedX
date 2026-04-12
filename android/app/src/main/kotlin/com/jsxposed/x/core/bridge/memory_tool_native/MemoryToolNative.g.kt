@@ -34,6 +34,35 @@ private object MemoryToolNativePigeonUtils {
       )
     }
   }
+  fun deepEquals(a: Any?, b: Any?): Boolean {
+    if (a is ByteArray && b is ByteArray) {
+      return a.contentEquals(b)
+    }
+    if (a is IntArray && b is IntArray) {
+      return a.contentEquals(b)
+    }
+    if (a is LongArray && b is LongArray) {
+      return a.contentEquals(b)
+    }
+    if (a is DoubleArray && b is DoubleArray) {
+      return a.contentEquals(b)
+    }
+    if (a is Array<*> && b is Array<*>) {
+      return a.size == b.size &&
+          a.indices.all { deepEquals(a[it], b[it]) }
+    }
+    if (a is List<*> && b is List<*>) {
+      return a.size == b.size &&
+          a.indices.all { deepEquals(a[it], b[it]) }
+    }
+    if (a is Map<*, *> && b is Map<*, *>) {
+      return a.size == b.size && a.all {
+        (b as Map<Any?, Any?>).contains(it.key) &&
+            deepEquals(it.value, b[it.key])
+      }
+    }
+    return a == b
+  }
 }
 
 /**
@@ -47,12 +76,62 @@ class FlutterError (
   override val message: String? = null,
   val details: Any? = null
 ) : Throwable()
+
+data class ProcessInfo (
+  val pid: Long,
+  val name: String,
+  val packageName: String,
+  val icon: ByteArray? = null
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): ProcessInfo {
+      val pid = pigeonVar_list[0] as Long
+      val name = pigeonVar_list[1] as String
+      val packageName = pigeonVar_list[2] as String
+      val icon = pigeonVar_list[3] as ByteArray?
+      return ProcessInfo(pid, name, packageName, icon)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      pid,
+      name,
+      packageName,
+      icon,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other !is ProcessInfo) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    return MemoryToolNativePigeonUtils.deepEquals(toList(), other.toList())
+  }
+
+  override fun hashCode(): Int = toList().hashCode()
+}
 private open class MemoryToolNativePigeonCodec : StandardMessageCodec() {
   override fun readValueOfType(type: Byte, buffer: ByteBuffer): Any? {
-    return     super.readValueOfType(type, buffer)
+    return when (type) {
+      129.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          ProcessInfo.fromList(it)
+        }
+      }
+      else -> super.readValueOfType(type, buffer)
+    }
   }
   override fun writeValue(stream: ByteArrayOutputStream, value: Any?)   {
-    super.writeValue(stream, value)
+    when (value) {
+      is ProcessInfo -> {
+        stream.write(129)
+        writeValue(stream, value.toList())
+      }
+      else -> super.writeValue(stream, value)
+    }
   }
 }
 
@@ -60,6 +139,7 @@ private open class MemoryToolNativePigeonCodec : StandardMessageCodec() {
 /** Generated interface from Pigeon that represents a handler of messages from Flutter. */
 interface MemoryToolNative {
   fun getPid(packageName: String, callback: (Result<Long>) -> Unit)
+  fun getProcessInfo(offset: Long, limit: Long, callback: (Result<List<ProcessInfo>>) -> Unit)
 
   companion object {
     /** The codec used by MemoryToolNative. */
@@ -77,6 +157,27 @@ interface MemoryToolNative {
             val args = message as List<Any?>
             val packageNameArg = args[0] as String
             api.getPid(packageNameArg) { result: Result<Long> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(MemoryToolNativePigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(MemoryToolNativePigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.JsxposedX.MemoryToolNative.getProcessInfo$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val offsetArg = args[0] as Long
+            val limitArg = args[1] as Long
+            api.getProcessInfo(offsetArg, limitArg) { result: Result<List<ProcessInfo>> ->
               val error = result.exceptionOrNull()
               if (error != null) {
                 reply.reply(MemoryToolNativePigeonUtils.wrapError(error))
