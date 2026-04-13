@@ -29,3 +29,19 @@ Future<List<ProcessInfo>> getProcessInfo(
       .watch(memoryQueryRepositoryProvider)
       .getProcessInfo(offset: offset, limit: limit);
 }
+
+@Riverpod(keepAlive: true)
+class MemoryToolSelectedProcess extends _$MemoryToolSelectedProcess {
+  @override
+  ProcessInfo? build() {
+    return null;
+  }
+
+  void select(ProcessInfo process) {
+    state = process;
+  }
+
+  void clear() {
+    state = null;
+  }
+}

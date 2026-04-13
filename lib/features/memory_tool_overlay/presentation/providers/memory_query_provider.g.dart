@@ -209,3 +209,57 @@ final class GetProcessInfoFamily extends $Family
   @override
   String toString() => r'getProcessInfoProvider';
 }
+
+@ProviderFor(MemoryToolSelectedProcess)
+const memoryToolSelectedProcessProvider = MemoryToolSelectedProcessProvider._();
+
+final class MemoryToolSelectedProcessProvider
+    extends $NotifierProvider<MemoryToolSelectedProcess, ProcessInfo?> {
+  const MemoryToolSelectedProcessProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'memoryToolSelectedProcessProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$memoryToolSelectedProcessHash();
+
+  @$internal
+  @override
+  MemoryToolSelectedProcess create() => MemoryToolSelectedProcess();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ProcessInfo? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ProcessInfo?>(value),
+    );
+  }
+}
+
+String _$memoryToolSelectedProcessHash() =>
+    r'3c0f000a0a3c10181da1e32f3c98673589c17eae';
+
+abstract class _$MemoryToolSelectedProcess extends $Notifier<ProcessInfo?> {
+  ProcessInfo? build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<ProcessInfo?, ProcessInfo?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<ProcessInfo?, ProcessInfo?>,
+              ProcessInfo?,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}
