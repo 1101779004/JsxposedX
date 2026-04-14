@@ -3,6 +3,7 @@ import 'package:JsxposedX/common/widgets/ref_error.dart';
 import 'package:JsxposedX/core/extensions/context_extensions.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_query_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_tool_search_provider.dart';
+import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_result_badge.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_result_selection_dialog.dart';
 import 'package:JsxposedX/generated/memory_tool.g.dart';
 import 'package:flutter/material.dart';
@@ -463,68 +464,83 @@ class _MemoryToolSearchResultTile extends StatelessWidget {
               ),
               SizedBox(width: 4.r),
               Expanded(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: <Widget>[
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          Text(
-                            result.displayValue,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: context.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w900,
-                              color: context.colorScheme.primary,
-                            ),
-                          ),
-                          SizedBox(height: 2.r),
-                          Text(
-                            _typeLabel(result.type),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: context.textTheme.labelMedium?.copyWith(
-                              color: context.colorScheme.onSurface.withValues(
-                                alpha: 0.62,
-                              ),
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(width: 10.r),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      mainAxisSize: MainAxisSize.min,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final valueMaxWidth = constraints.maxWidth * 0.58;
+
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: <Widget>[
-                        Text(
-                          _formatHex(result.address),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.right,
-                          style: context.textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
+                        ConstrainedBox(
+                          constraints: BoxConstraints(maxWidth: valueMaxWidth),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              Text(
+                                result.displayValue,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                softWrap: false,
+                                style: context.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w900,
+                                  color: context.colorScheme.primary,
+                                ),
+                              ),
+                              SizedBox(height: 2.r),
+                              MemoryToolResultBadge(
+                                label: _typeLabel(result.type),
+                                backgroundColor: _typeBadgeBackground(
+                                  context,
+                                  result.type,
+                                ),
+                                foregroundColor: _typeBadgeForeground(
+                                  context,
+                                  result.type,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        SizedBox(height: 2.r),
-                        Text(
-                          _regionTypeLabel(context, result.regionTypeKey),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.right,
-                          style: context.textTheme.labelMedium?.copyWith(
-                            color: context.colorScheme.onSurface.withValues(
-                              alpha: 0.62,
-                            ),
-                            fontWeight: FontWeight.w600,
+                        SizedBox(width: 10.r),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              Text(
+                                _formatHex(result.address),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.right,
+                                style: context.textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              SizedBox(height: 2.r),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: MemoryToolResultBadge(
+                                  label: _regionTypeLabel(
+                                    context,
+                                    result.regionTypeKey,
+                                  ),
+                                  backgroundColor: _regionBadgeBackground(
+                                    context,
+                                    result.regionTypeKey,
+                                  ),
+                                  foregroundColor: _regionBadgeForeground(
+                                    context,
+                                    result.regionTypeKey,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
-                    ),
-                  ],
+                    );
+                  },
                 ),
               ),
             ],
@@ -566,6 +582,54 @@ class _MemoryToolSearchResultTile extends StatelessWidget {
       'bad' => context.l10n.memoryToolRangeSectionBad,
       'other' => context.l10n.memoryToolRangeSectionOther,
       _ => context.l10n.memoryToolRangeSectionOther,
+    };
+  }
+
+  Color _typeBadgeBackground(BuildContext context, SearchValueType type) {
+    return switch (type) {
+      SearchValueType.i8 || SearchValueType.i16 || SearchValueType.i32 =>
+        const Color(0xFFE8F4FF),
+      SearchValueType.i64 => const Color(0xFFEAF2FF),
+      SearchValueType.f32 || SearchValueType.f64 => const Color(0xFFEAFBF1),
+      SearchValueType.bytes => const Color(0xFFFFF1E4),
+    };
+  }
+
+  Color _typeBadgeForeground(BuildContext context, SearchValueType type) {
+    return switch (type) {
+      SearchValueType.i8 || SearchValueType.i16 || SearchValueType.i32 =>
+        const Color(0xFF1E6FD9),
+      SearchValueType.i64 => const Color(0xFF3157C8),
+      SearchValueType.f32 || SearchValueType.f64 => const Color(0xFF1F8A4D),
+      SearchValueType.bytes => const Color(0xFFB56816),
+    };
+  }
+
+  Color _regionBadgeBackground(BuildContext context, String regionTypeKey) {
+    return switch (regionTypeKey) {
+      'anonymous' => const Color(0xFFF2F3F7),
+      'java' || 'javaHeap' => const Color(0xFFFFF3D9),
+      'cAlloc' || 'cHeap' || 'cData' || 'cBss' => const Color(0xFFE9F7EC),
+      'codeApp' || 'codeSys' => const Color(0xFFECEBFF),
+      'stack' => const Color(0xFFFFE9EE),
+      'ashmem' => const Color(0xFFE9F8F7),
+      'bad' => const Color(0xFFFFE5E5),
+      'other' => const Color(0xFFF4F1FF),
+      _ => const Color(0xFFF4F1FF),
+    };
+  }
+
+  Color _regionBadgeForeground(BuildContext context, String regionTypeKey) {
+    return switch (regionTypeKey) {
+      'anonymous' => const Color(0xFF5F6675),
+      'java' || 'javaHeap' => const Color(0xFF9A6A00),
+      'cAlloc' || 'cHeap' || 'cData' || 'cBss' => const Color(0xFF2C8A52),
+      'codeApp' || 'codeSys' => const Color(0xFF5A46CC),
+      'stack' => const Color(0xFFC14568),
+      'ashmem' => const Color(0xFF1E8C84),
+      'bad' => const Color(0xFFC13F3F),
+      'other' => const Color(0xFF6E56CF),
+      _ => const Color(0xFF6E56CF),
     };
   }
 }
