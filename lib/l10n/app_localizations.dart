@@ -3374,6 +3374,90 @@ abstract class AppLocalizations {
   /// **'保留给首次扫描、继续筛选和读取操作。'**
   String get memoryToolActionPanelSubtitle;
 
+  /// No description provided for @memoryToolFieldValue.
+  ///
+  /// In zh, this message translates to:
+  /// **'数值'**
+  String get memoryToolFieldValue;
+
+  /// No description provided for @memoryToolFieldValuePlaceholder.
+  ///
+  /// In zh, this message translates to:
+  /// **'100.0'**
+  String get memoryToolFieldValuePlaceholder;
+
+  /// No description provided for @memoryToolFieldValueHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'输入要搜索的值'**
+  String get memoryToolFieldValueHint;
+
+  /// No description provided for @memoryToolFieldType.
+  ///
+  /// In zh, this message translates to:
+  /// **'类型'**
+  String get memoryToolFieldType;
+
+  /// No description provided for @memoryToolFieldTypePlaceholder.
+  ///
+  /// In zh, this message translates to:
+  /// **'Int32'**
+  String get memoryToolFieldTypePlaceholder;
+
+  /// No description provided for @memoryToolFieldScope.
+  ///
+  /// In zh, this message translates to:
+  /// **'范围'**
+  String get memoryToolFieldScope;
+
+  /// No description provided for @memoryToolFieldScopePlaceholder.
+  ///
+  /// In zh, this message translates to:
+  /// **'全部内存'**
+  String get memoryToolFieldScopePlaceholder;
+
+  /// No description provided for @memoryToolSearchExact.
+  ///
+  /// In zh, this message translates to:
+  /// **'精确搜索'**
+  String get memoryToolSearchExact;
+
+  /// No description provided for @memoryToolSearchBytesHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'例如 12 34 AB CD'**
+  String get memoryToolSearchBytesHint;
+
+  /// No description provided for @memoryToolEndianLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'小端序'**
+  String get memoryToolEndianLabel;
+
+  /// No description provided for @memoryToolActionFirstScan.
+  ///
+  /// In zh, this message translates to:
+  /// **'首次扫描'**
+  String get memoryToolActionFirstScan;
+
+  /// No description provided for @memoryToolActionNextScan.
+  ///
+  /// In zh, this message translates to:
+  /// **'继续筛选'**
+  String get memoryToolActionNextScan;
+
+  /// No description provided for @memoryToolActionRead.
+  ///
+  /// In zh, this message translates to:
+  /// **'读取'**
+  String get memoryToolActionRead;
+
+  /// No description provided for @memoryToolActionReset.
+  ///
+  /// In zh, this message translates to:
+  /// **'重置会话'**
+  String get memoryToolActionReset;
+
   /// No description provided for @memoryToolEditTabTitle.
   ///
   /// In zh, this message translates to:
@@ -3445,6 +3529,108 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'这里适合展示常驻监视值和冻结状态。'**
   String get memoryToolWatchTabSubtitle;
+
+  /// No description provided for @memoryToolSessionTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'搜索会话'**
+  String get memoryToolSessionTitle;
+
+  /// No description provided for @memoryToolSessionEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前还没有活动会话，先执行一次首次扫描。'**
+  String get memoryToolSessionEmpty;
+
+  /// No description provided for @memoryToolSessionMismatch.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前会话不属于这个进程，请重新执行首次扫描。'**
+  String get memoryToolSessionMismatch;
+
+  /// No description provided for @memoryToolSessionPid.
+  ///
+  /// In zh, this message translates to:
+  /// **'会话 PID'**
+  String get memoryToolSessionPid;
+
+  /// No description provided for @memoryToolSessionRegionCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'区段数'**
+  String get memoryToolSessionRegionCount;
+
+  /// No description provided for @memoryToolSessionResultCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'结果数'**
+  String get memoryToolSessionResultCount;
+
+  /// No description provided for @memoryToolSessionBoundToCurrent.
+  ///
+  /// In zh, this message translates to:
+  /// **'已绑定当前进程'**
+  String get memoryToolSessionBoundToCurrent;
+
+  /// No description provided for @memoryToolResultTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'命中结果'**
+  String get memoryToolResultTitle;
+
+  /// No description provided for @memoryToolResultEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前没有命中结果。'**
+  String get memoryToolResultEmpty;
+
+  /// No description provided for @memoryToolResultInactiveHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'执行首次扫描后，这里会显示命中地址。'**
+  String get memoryToolResultInactiveHint;
+
+  /// No description provided for @memoryToolResultAddress.
+  ///
+  /// In zh, this message translates to:
+  /// **'地址'**
+  String get memoryToolResultAddress;
+
+  /// No description provided for @memoryToolResultRegion.
+  ///
+  /// In zh, this message translates to:
+  /// **'区段'**
+  String get memoryToolResultRegion;
+
+  /// No description provided for @memoryToolResultType.
+  ///
+  /// In zh, this message translates to:
+  /// **'类型'**
+  String get memoryToolResultType;
+
+  /// No description provided for @memoryToolResultValue.
+  ///
+  /// In zh, this message translates to:
+  /// **'值'**
+  String get memoryToolResultValue;
+
+  /// No description provided for @memoryToolTargetProcess.
+  ///
+  /// In zh, this message translates to:
+  /// **'目标进程'**
+  String get memoryToolTargetProcess;
+
+  /// No description provided for @memoryToolValidationValueRequired.
+  ///
+  /// In zh, this message translates to:
+  /// **'请先输入搜索值。'**
+  String get memoryToolValidationValueRequired;
+
+  /// No description provided for @memoryToolValidationBytesInvalid.
+  ///
+  /// In zh, this message translates to:
+  /// **'字节数组格式不正确，请输入偶数位十六进制，例如 12 34 AB。'**
+  String get memoryToolValidationBytesInvalid;
 }
 
 class _AppLocalizationsDelegate

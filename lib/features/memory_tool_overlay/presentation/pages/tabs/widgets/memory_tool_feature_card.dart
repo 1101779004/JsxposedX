@@ -1,42 +1,10 @@
 import 'package:JsxposedX/core/extensions/context_extensions.dart';
-import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_overlay_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-class MemoryToolEditTab extends StatelessWidget {
-  const MemoryToolEditTab({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      padding: EdgeInsets.all(12.r),
-      children: <Widget>[
-        _EditCard(
-          title: context.l10n.memoryToolEditTabTitle,
-          subtitle: context.l10n.memoryToolEditTabSubtitle,
-          items: <String>[
-            context.l10n.memoryToolEditActionWriteValue,
-            context.l10n.memoryToolEditActionFreezeValue,
-            context.l10n.memoryToolEditActionBatchWrite,
-          ],
-        ),
-        SizedBox(height: 12.r),
-        _EditCard(
-          title: context.l10n.memoryToolPatchTabTitle,
-          subtitle: context.l10n.memoryToolPatchTabSubtitle,
-          items: <String>[
-            context.l10n.memoryToolPatchActionHex,
-            context.l10n.memoryToolPatchActionAsm,
-            context.l10n.memoryToolPatchActionRestore,
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _EditCard extends StatelessWidget {
-  const _EditCard({
+class MemoryToolFeatureCard extends StatelessWidget {
+  const MemoryToolFeatureCard({
+    super.key,
     required this.title,
     required this.subtitle,
     required this.items,
@@ -75,7 +43,7 @@ class _EditCard extends StatelessWidget {
             ),
             SizedBox(height: 12.r),
             for (final item in items) ...<Widget>[
-              _BulletRow(label: item),
+              _MemoryToolFeatureItem(label: item),
               SizedBox(height: 8.r),
             ],
           ],
@@ -85,8 +53,8 @@ class _EditCard extends StatelessWidget {
   }
 }
 
-class _BulletRow extends StatelessWidget {
-  const _BulletRow({required this.label});
+class _MemoryToolFeatureItem extends StatelessWidget {
+  const _MemoryToolFeatureItem({required this.label});
 
   final String label;
 

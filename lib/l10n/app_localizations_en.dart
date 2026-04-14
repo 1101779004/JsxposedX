@@ -1736,6 +1736,48 @@ class AppLocalizationsEn extends AppLocalizations {
       'Reserved for first scan, next scan, and read operations.';
 
   @override
+  String get memoryToolFieldValue => 'Value';
+
+  @override
+  String get memoryToolFieldValuePlaceholder => '100.0';
+
+  @override
+  String get memoryToolFieldValueHint => 'Enter the value to search';
+
+  @override
+  String get memoryToolFieldType => 'Type';
+
+  @override
+  String get memoryToolFieldTypePlaceholder => 'Int32';
+
+  @override
+  String get memoryToolFieldScope => 'Scope';
+
+  @override
+  String get memoryToolFieldScopePlaceholder => 'All memory';
+
+  @override
+  String get memoryToolSearchExact => 'Exact Scan';
+
+  @override
+  String get memoryToolSearchBytesHint => 'Example: 12 34 AB CD';
+
+  @override
+  String get memoryToolEndianLabel => 'Little Endian';
+
+  @override
+  String get memoryToolActionFirstScan => 'First Scan';
+
+  @override
+  String get memoryToolActionNextScan => 'Next Scan';
+
+  @override
+  String get memoryToolActionRead => 'Read';
+
+  @override
+  String get memoryToolActionReset => 'Reset Session';
+
+  @override
   String get memoryToolEditTabTitle => 'Edit Workspace';
 
   @override
@@ -1777,4 +1819,59 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get memoryToolWatchTabSubtitle =>
       'Use this tab for persistent watch values and freeze states.';
+
+  @override
+  String get memoryToolSessionTitle => 'Search Session';
+
+  @override
+  String get memoryToolSessionEmpty =>
+      'No active session yet. Start with a first scan.';
+
+  @override
+  String get memoryToolSessionMismatch =>
+      'The current session belongs to another process. Run first scan again.';
+
+  @override
+  String get memoryToolSessionPid => 'Session PID';
+
+  @override
+  String get memoryToolSessionRegionCount => 'Regions';
+
+  @override
+  String get memoryToolSessionResultCount => 'Results';
+
+  @override
+  String get memoryToolSessionBoundToCurrent => 'Bound to current process';
+
+  @override
+  String get memoryToolResultTitle => 'Matched Results';
+
+  @override
+  String get memoryToolResultEmpty => 'There are no matched results yet.';
+
+  @override
+  String get memoryToolResultInactiveHint =>
+      'Run a first scan and matched addresses will appear here.';
+
+  @override
+  String get memoryToolResultAddress => 'Address';
+
+  @override
+  String get memoryToolResultRegion => 'Region';
+
+  @override
+  String get memoryToolResultType => 'Type';
+
+  @override
+  String get memoryToolResultValue => 'Value';
+
+  @override
+  String get memoryToolTargetProcess => 'Target Process';
+
+  @override
+  String get memoryToolValidationValueRequired => 'Enter a search value first.';
+
+  @override
+  String get memoryToolValidationBytesInvalid =>
+      'Invalid byte pattern. Use even-length hex such as 12 34 AB.';
 }

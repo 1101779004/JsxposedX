@@ -51,6 +51,6 @@ class MemorySearchAction extends _$MemorySearchAction {
 
   void _invalidateSearchQueries() {
     ref.invalidate(getSearchSessionStateProvider);
-    ref.invalidate(getSearchResultsProvider(offset: 0, limit: 50));
+    ref.invalidate(getSearchResultsProvider);
   }
 }

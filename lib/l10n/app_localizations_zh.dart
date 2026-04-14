@@ -1709,6 +1709,48 @@ class AppLocalizationsZh extends AppLocalizations {
   String get memoryToolActionPanelSubtitle => '保留给首次扫描、继续筛选和读取操作。';
 
   @override
+  String get memoryToolFieldValue => '数值';
+
+  @override
+  String get memoryToolFieldValuePlaceholder => '100.0';
+
+  @override
+  String get memoryToolFieldValueHint => '输入要搜索的值';
+
+  @override
+  String get memoryToolFieldType => '类型';
+
+  @override
+  String get memoryToolFieldTypePlaceholder => 'Int32';
+
+  @override
+  String get memoryToolFieldScope => '范围';
+
+  @override
+  String get memoryToolFieldScopePlaceholder => '全部内存';
+
+  @override
+  String get memoryToolSearchExact => '精确搜索';
+
+  @override
+  String get memoryToolSearchBytesHint => '例如 12 34 AB CD';
+
+  @override
+  String get memoryToolEndianLabel => '小端序';
+
+  @override
+  String get memoryToolActionFirstScan => '首次扫描';
+
+  @override
+  String get memoryToolActionNextScan => '继续筛选';
+
+  @override
+  String get memoryToolActionRead => '读取';
+
+  @override
+  String get memoryToolActionReset => '重置会话';
+
+  @override
   String get memoryToolEditTabTitle => '修改工作区';
 
   @override
@@ -1743,4 +1785,56 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get memoryToolWatchTabSubtitle => '这里适合展示常驻监视值和冻结状态。';
+
+  @override
+  String get memoryToolSessionTitle => '搜索会话';
+
+  @override
+  String get memoryToolSessionEmpty => '当前还没有活动会话，先执行一次首次扫描。';
+
+  @override
+  String get memoryToolSessionMismatch => '当前会话不属于这个进程，请重新执行首次扫描。';
+
+  @override
+  String get memoryToolSessionPid => '会话 PID';
+
+  @override
+  String get memoryToolSessionRegionCount => '区段数';
+
+  @override
+  String get memoryToolSessionResultCount => '结果数';
+
+  @override
+  String get memoryToolSessionBoundToCurrent => '已绑定当前进程';
+
+  @override
+  String get memoryToolResultTitle => '命中结果';
+
+  @override
+  String get memoryToolResultEmpty => '当前没有命中结果。';
+
+  @override
+  String get memoryToolResultInactiveHint => '执行首次扫描后，这里会显示命中地址。';
+
+  @override
+  String get memoryToolResultAddress => '地址';
+
+  @override
+  String get memoryToolResultRegion => '区段';
+
+  @override
+  String get memoryToolResultType => '类型';
+
+  @override
+  String get memoryToolResultValue => '值';
+
+  @override
+  String get memoryToolTargetProcess => '目标进程';
+
+  @override
+  String get memoryToolValidationValueRequired => '请先输入搜索值。';
+
+  @override
+  String get memoryToolValidationBytesInvalid =>
+      '字节数组格式不正确，请输入偶数位十六进制，例如 12 34 AB。';
 }

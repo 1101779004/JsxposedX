@@ -1,32 +1,10 @@
 import 'package:JsxposedX/core/extensions/context_extensions.dart';
-import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_overlay_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-class MemoryToolWatchTab extends StatelessWidget {
-  const MemoryToolWatchTab({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      padding: EdgeInsets.all(12.r),
-      children: <Widget>[
-        _WatchCard(
-          title: context.l10n.memoryToolWatchTabTitle,
-          subtitle: context.l10n.memoryToolWatchTabSubtitle,
-          rows: <_WatchRowData>[
-            _WatchRowData('HP', '100.0', 'Float'),
-            _WatchRowData('Coins', '289', 'Dword'),
-            _WatchRowData('Speed', '1.000', 'Double'),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _WatchCard extends StatelessWidget {
-  const _WatchCard({
+class MemoryToolWatchPreviewCard extends StatelessWidget {
+  const MemoryToolWatchPreviewCard({
+    super.key,
     required this.title,
     required this.subtitle,
     required this.rows,
@@ -34,7 +12,7 @@ class _WatchCard extends StatelessWidget {
 
   final String title;
   final String subtitle;
-  final List<_WatchRowData> rows;
+  final List<MemoryToolWatchPreviewRowData> rows;
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +43,7 @@ class _WatchCard extends StatelessWidget {
             ),
             SizedBox(height: 12.r),
             for (final row in rows) ...<Widget>[
-              _WatchRow(row: row),
+              _MemoryToolWatchPreviewRow(row: row),
               SizedBox(height: 8.r),
             ],
           ],
@@ -75,18 +53,22 @@ class _WatchCard extends StatelessWidget {
   }
 }
 
-class _WatchRowData {
-  const _WatchRowData(this.label, this.value, this.type);
+class MemoryToolWatchPreviewRowData {
+  const MemoryToolWatchPreviewRowData({
+    required this.label,
+    required this.value,
+    required this.type,
+  });
 
   final String label;
   final String value;
   final String type;
 }
 
-class _WatchRow extends StatelessWidget {
-  const _WatchRow({required this.row});
+class _MemoryToolWatchPreviewRow extends StatelessWidget {
+  const _MemoryToolWatchPreviewRow({required this.row});
 
-  final _WatchRowData row;
+  final MemoryToolWatchPreviewRowData row;
 
   @override
   Widget build(BuildContext context) {

@@ -64,9 +64,9 @@ private class MemoryToolDaemonServer(
 
     private fun handleClient(client: LocalSocket) {
         client.use { socket ->
-            val requestText = socket.inputStream.bufferedReader().use { reader ->
-                reader.readLine()
-            } ?: return
+            val reader = socket.inputStream.bufferedReader()
+            val writer = socket.outputStream.bufferedWriter()
+            val requestText = reader.readLine() ?: return
             lastRequestAt = SystemClock.elapsedRealtime()
 
             val response = try {
@@ -78,11 +78,9 @@ private class MemoryToolDaemonServer(
                 }
             }
 
-            socket.outputStream.bufferedWriter().use { writer ->
-                writer.write(response.toString())
-                writer.newLine()
-                writer.flush()
-            }
+            writer.write(response.toString())
+            writer.newLine()
+            writer.flush()
         }
     }
 

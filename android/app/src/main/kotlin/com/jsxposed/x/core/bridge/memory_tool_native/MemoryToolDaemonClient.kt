@@ -35,21 +35,20 @@ class MemoryToolDaemonClient(
             val socket = LocalSocket()
             socket.connect(LocalSocketAddress(socketName, LocalSocketAddress.Namespace.ABSTRACT))
             socket.use { localSocket ->
-                localSocket.outputStream.bufferedWriter().use { writer ->
-                    val request = JSONObject().apply {
-                        put("method", method)
-                        if (params != null) {
-                            put("params", params)
-                        }
+                val writer = localSocket.outputStream.bufferedWriter()
+                val reader = localSocket.inputStream.bufferedReader()
+                val request = JSONObject().apply {
+                    put("method", method)
+                    if (params != null) {
+                        put("params", params)
                     }
-                    writer.write(request.toString())
-                    writer.newLine()
-                    writer.flush()
                 }
+                writer.write(request.toString())
+                writer.newLine()
+                writer.flush()
 
-                val responseText = localSocket.inputStream.bufferedReader().use { reader ->
-                    reader.readLine()
-                } ?: throw IllegalStateException("Empty response from memory helper.")
+                val responseText = reader.readLine()
+                    ?: throw IllegalStateException("Empty response from memory helper.")
                 return JSONObject(responseText)
             }
         }
@@ -109,7 +108,7 @@ class MemoryToolDaemonClient(
             return SearchSessionState(
                 hasActiveSession = false,
                 pid = 0,
-                type = SearchValueType.i32,
+                type = SearchValueType.I32,
                 regionCount = 0,
                 resultCount = 0,
                 exactMode = true
