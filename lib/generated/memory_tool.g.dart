@@ -300,6 +300,7 @@ class FirstScanRequest {
     required this.pid,
     required this.value,
     required this.matchMode,
+    required this.rangeSectionKeys,
     required this.scanAllReadableRegions,
   });
 
@@ -309,6 +310,8 @@ class FirstScanRequest {
 
   SearchMatchMode matchMode;
 
+  List<String> rangeSectionKeys;
+
   bool scanAllReadableRegions;
 
   List<Object?> _toList() {
@@ -316,6 +319,7 @@ class FirstScanRequest {
       pid,
       value,
       matchMode,
+      rangeSectionKeys,
       scanAllReadableRegions,
     ];
   }
@@ -329,7 +333,8 @@ class FirstScanRequest {
       pid: result[0]! as int,
       value: result[1]! as SearchValue,
       matchMode: result[2]! as SearchMatchMode,
-      scanAllReadableRegions: result[3]! as bool,
+      rangeSectionKeys: (result[3] as List<Object?>?)!.cast<String>(),
+      scanAllReadableRegions: result[4]! as bool,
     );
   }
 
@@ -401,6 +406,7 @@ class SearchResult {
   SearchResult({
     required this.address,
     required this.regionStart,
+    required this.regionTypeKey,
     required this.type,
     required this.rawBytes,
     required this.displayValue,
@@ -409,6 +415,8 @@ class SearchResult {
   int address;
 
   int regionStart;
+
+  String regionTypeKey;
 
   SearchValueType type;
 
@@ -420,6 +428,7 @@ class SearchResult {
     return <Object?>[
       address,
       regionStart,
+      regionTypeKey,
       type,
       rawBytes,
       displayValue,
@@ -434,9 +443,10 @@ class SearchResult {
     return SearchResult(
       address: result[0]! as int,
       regionStart: result[1]! as int,
-      type: result[2]! as SearchValueType,
-      rawBytes: result[3]! as Uint8List,
-      displayValue: result[4]! as String,
+      regionTypeKey: result[2]! as String,
+      type: result[3]! as SearchValueType,
+      rawBytes: result[4]! as Uint8List,
+      displayValue: result[5]! as String,
     );
   }
 

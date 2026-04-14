@@ -183,6 +183,7 @@ class MemoryToolDaemonClient(
             SearchResult(
                 address = item.getLong("address"),
                 regionStart = item.getLong("regionStart"),
+                regionTypeKey = item.optString("regionTypeKey", "other"),
                 type = SearchValueType.entries[item.getInt("type")],
                 rawBytes = decodeHex(item.optString("rawBytesHex")),
                 displayValue = item.getString("displayValue")
@@ -235,6 +236,12 @@ class MemoryToolDaemonClient(
                 put("pid", request.pid)
                 put("value", buildSearchValueJson(request.value))
                 put("matchMode", request.matchMode.ordinal)
+                put(
+                    "rangeSectionKeys",
+                    JSONArray().apply {
+                        request.rangeSectionKeys.forEach(::put)
+                    }
+                )
                 put("scanAllReadableRegions", request.scanAllReadableRegions)
             }
         )

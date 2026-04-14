@@ -29,6 +29,7 @@ object MemoryToolHelperNativeBridge {
         bytesValue: ByteArray?,
         littleEndian: Boolean,
         matchMode: Int,
+        rangeSectionKeys: Array<String>,
         scanAllReadableRegions: Boolean
     )
 

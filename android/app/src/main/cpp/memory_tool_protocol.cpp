@@ -87,6 +87,7 @@ std::string SerializeSearchResults(const std::vector<SearchResultView>& results)
         stream << '{'
                << "\"address\":" << result.address << ','
                << "\"regionStart\":" << result.region_start << ','
+               << "\"regionTypeKey\":\"" << utils::JsonEscape(result.region_type_key) << "\","
                << "\"type\":" << ToRawType(result.type) << ','
                << "\"rawBytesHex\":\"" << utils::HexEncode(result.raw_bytes) << "\","
                << "\"displayValue\":\"" << utils::JsonEscape(result.display_value) << "\""

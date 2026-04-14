@@ -9,6 +9,7 @@ import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/me
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_query_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/states/memory_tool_result_selection_state.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/states/memory_tool_search_state.dart';
+import 'package:JsxposedX/features/memory_tool_overlay/presentation/utils/memory_tool_search_range_key_mapper.dart';
 import 'package:JsxposedX/generated/memory_tool.g.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -225,7 +226,11 @@ class MemoryToolSearchForm extends _$MemoryToolSearchForm {
       pid: selectedProcess.pid,
       value: _buildSearchValue(),
       matchMode: SearchMatchMode.exact,
-      scanAllReadableRegions: true,
+      rangeSectionKeys: state.effectiveRangeSections
+          .map(mapMemorySearchRangeSectionKey)
+          .toList(),
+      scanAllReadableRegions:
+          state.selectedRangePreset == MemorySearchRangePresetEnum.all,
     );
 
     state = state.copyWith(validationError: null);

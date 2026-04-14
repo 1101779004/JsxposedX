@@ -121,12 +121,16 @@ void MemoryToolJniBridge::FirstScan(JNIEnv* env,
                                     jbyteArray bytes_value,
                                     jboolean little_endian,
                                     jint match_mode,
+                                    jobjectArray range_section_keys,
                                     jboolean scan_all_readable_regions) {
     const SearchValue value =
         BuildSearchValue(env, type, text_value, bytes_value, little_endian);
+    const std::vector<std::string> region_type_keys =
+        JObjectArrayToStringVector(env, range_section_keys);
     MemoryToolEngine::Instance().FirstScan(static_cast<int>(pid),
                                            value,
                                            ToSearchMatchMode(match_mode),
+                                           region_type_keys,
                                            scan_all_readable_regions == JNI_TRUE);
 }
 
@@ -219,6 +223,23 @@ std::vector<uint8_t> MemoryToolJniBridge::JByteArrayToVector(JNIEnv* env, jbyteA
     std::vector<uint8_t> bytes(static_cast<size_t>(length));
     env->GetByteArrayRegion(value, 0, length, reinterpret_cast<jbyte*>(bytes.data()));
     return bytes;
+}
+
+std::vector<std::string> MemoryToolJniBridge::JObjectArrayToStringVector(JNIEnv* env,
+                                                                         jobjectArray value) {
+    if (value == nullptr) {
+        return {};
+    }
+
+    const jsize length = env->GetArrayLength(value);
+    std::vector<std::string> strings;
+    strings.reserve(static_cast<size_t>(length));
+    for (jsize index = 0; index < length; ++index) {
+        auto* item = static_cast<jstring>(env->GetObjectArrayElement(value, index));
+        strings.push_back(JStringToUtf8(env, item));
+        env->DeleteLocalRef(item);
+    }
+    return strings;
 }
 
 }  // namespace memory_tool
@@ -319,6 +340,7 @@ Java_com_jsxposed_x_core_bridge_memory_1tool_1native_MemoryToolHelperNativeBridg
         jbyteArray bytes_value,
         jboolean little_endian,
         jint match_mode,
+        jobjectArray range_section_keys,
         jboolean scan_all_readable_regions) {
     try {
         memory_tool::MemoryToolJniBridge::FirstScan(
@@ -329,6 +351,7 @@ Java_com_jsxposed_x_core_bridge_memory_1tool_1native_MemoryToolHelperNativeBridg
             bytes_value,
             little_endian,
             match_mode,
+            range_section_keys,
             scan_all_readable_regions);
     } catch (const std::exception& exception) {
         memory_tool::ThrowRuntimeException(env, exception.what());

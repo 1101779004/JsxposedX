@@ -3,7 +3,6 @@ import 'package:JsxposedX/common/widgets/ref_error.dart';
 import 'package:JsxposedX/core/extensions/context_extensions.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_query_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_tool_search_provider.dart';
-import 'package:JsxposedX/features/memory_tool_overlay/presentation/states/memory_tool_result_selection_state.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_result_selection_dialog.dart';
 import 'package:JsxposedX/generated/memory_tool.g.dart';
 import 'package:flutter/material.dart';
@@ -28,6 +27,7 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
     final visibleLimit = useState(memoryToolSearchResultPageLimit);
     final scrollController = useScrollController();
     final isSettingsVisible = useState(false);
+    final cachedResults = useState<List<SearchResult>>(const <SearchResult>[]);
     final selectionState = ref.watch(memoryToolResultSelectionProvider);
     final selectionNotifier = ref.read(
       memoryToolResultSelectionProvider.notifier,
@@ -35,6 +35,7 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
 
     useEffect(() {
       visibleLimit.value = memoryToolSearchResultPageLimit;
+      cachedResults.value = const <SearchResult>[];
       return null;
     }, [hasMatchingSession]);
 
@@ -43,6 +44,13 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
             getSearchResultsProvider(offset: 0, limit: visibleLimit.value),
           )
         : const AsyncValue.data(<SearchResult>[]);
+
+    useEffect(() {
+      resultsAsync.whenData((results) {
+        cachedResults.value = results;
+      });
+      return null;
+    }, [resultsAsync]);
 
     useEffect(
       () {
@@ -90,6 +98,12 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
       ],
     );
 
+    final displayedResults = resultsAsync.maybeWhen(
+      data: (results) => results,
+      orElse: () => cachedResults.value,
+    );
+    final isLoadingMore = resultsAsync.isLoading && displayedResults.isNotEmpty;
+
     return Stack(
       children: <Widget>[
         Padding(
@@ -107,8 +121,8 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
                   ),
                 )
               : resultsAsync.when(
-                  data: (results) {
-                    if (results.isEmpty) {
+                  data: (_) {
+                    if (displayedResults.isEmpty) {
                       return Center(
                         child: Text(
                           context.l10n.noData,
@@ -124,18 +138,18 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
 
                     final totalCount = sessionStateAsync.maybeWhen(
                       data: (state) => state.resultCount,
-                      orElse: () => results.length,
+                      orElse: () => displayedResults.length,
                     );
-                    final hasMore = results.length < totalCount;
+                    final hasMore = displayedResults.length < totalCount;
 
                     return Column(
                       children: <Widget>[
                         _MemoryToolResultSelectionBar(
                           onSelectAll: () {
-                            selectionNotifier.selectVisible(results);
+                            selectionNotifier.selectVisible(displayedResults);
                           },
                           onInvert: () {
-                            selectionNotifier.invertVisible(results);
+                            selectionNotifier.invertVisible(displayedResults);
                           },
                           onClear: selectionNotifier.clear,
                           onOpenSettings: () {
@@ -147,19 +161,30 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
                           child: ListView.separated(
                             controller: scrollController,
                             padding: EdgeInsets.zero,
-                            itemCount: results.length + (hasMore ? 1 : 0),
+                            itemCount:
+                                displayedResults.length +
+                                ((hasMore || isLoadingMore) ? 1 : 0),
                             separatorBuilder: (_, index) => SizedBox(
-                              height: index == results.length - 1 && hasMore
+                              height:
+                                  index == displayedResults.length - 1 &&
+                                      (hasMore || isLoadingMore)
                                   ? 6.r
                                   : 4.r,
                             ),
                             itemBuilder: (BuildContext context, int index) {
-                              if (index >= results.length) {
+                              if (index >= displayedResults.length) {
+                                if (isLoadingMore) {
+                                  return Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 8.r),
+                                    child: const Center(child: Loading()),
+                                  );
+                                }
+
                                 return Padding(
                                   padding: EdgeInsets.symmetric(vertical: 4.r),
                                   child: Center(
                                     child: Text(
-                                      '${results.length}/$totalCount',
+                                      '${displayedResults.length}/$totalCount',
                                       style: context.textTheme.labelMedium
                                           ?.copyWith(
                                             color: context.colorScheme.onSurface
@@ -171,7 +196,7 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
                                 );
                               }
 
-                              final result = results[index];
+                              final result = displayedResults[index];
                               return _MemoryToolSearchResultTile(
                                 result: result,
                                 isSelected: selectionState.contains(
@@ -188,7 +213,70 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
                     );
                   },
                   error: (error, _) => RefError(onRetry: onRetry, error: error),
-                  loading: () => const Loading(),
+                  loading: () {
+                    if (displayedResults.isNotEmpty) {
+                      final totalCount = sessionStateAsync.maybeWhen(
+                        data: (state) => state.resultCount,
+                        orElse: () => displayedResults.length,
+                      );
+                      final hasMore = displayedResults.length < totalCount;
+
+                      return Column(
+                        children: <Widget>[
+                          _MemoryToolResultSelectionBar(
+                            onSelectAll: () {
+                              selectionNotifier.selectVisible(displayedResults);
+                            },
+                            onInvert: () {
+                              selectionNotifier.invertVisible(displayedResults);
+                            },
+                            onClear: selectionNotifier.clear,
+                            onOpenSettings: () {
+                              isSettingsVisible.value = true;
+                            },
+                          ),
+                          SizedBox(height: 1.r),
+                          Expanded(
+                            child: ListView.separated(
+                              controller: scrollController,
+                              padding: EdgeInsets.zero,
+                              itemCount:
+                                  displayedResults.length +
+                                  ((hasMore || isLoadingMore) ? 1 : 0),
+                              separatorBuilder: (_, index) => SizedBox(
+                                height:
+                                    index == displayedResults.length - 1 &&
+                                        (hasMore || isLoadingMore)
+                                    ? 6.r
+                                    : 4.r,
+                              ),
+                              itemBuilder: (BuildContext context, int index) {
+                                if (index >= displayedResults.length) {
+                                  return Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 8.r),
+                                    child: const Center(child: Loading()),
+                                  );
+                                }
+
+                                final result = displayedResults[index];
+                                return _MemoryToolSearchResultTile(
+                                  result: result,
+                                  isSelected: selectionState.contains(
+                                    result.address,
+                                  ),
+                                  onTap: () {
+                                    selectionNotifier.toggle(result);
+                                  },
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      );
+                    }
+
+                    return const Loading();
+                  },
                 ),
         ),
         if (isSettingsVisible.value)
@@ -423,7 +511,7 @@ class _MemoryToolSearchResultTile extends StatelessWidget {
                         ),
                         SizedBox(height: 2.r),
                         Text(
-                          _formatHex(result.regionStart),
+                          _regionTypeLabel(context, result.regionTypeKey),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           textAlign: TextAlign.right,
@@ -459,6 +547,25 @@ class _MemoryToolSearchResultTile extends StatelessWidget {
       SearchValueType.f32 => 'F32',
       SearchValueType.f64 => 'F64',
       SearchValueType.bytes => 'AOB',
+    };
+  }
+
+  String _regionTypeLabel(BuildContext context, String regionTypeKey) {
+    return switch (regionTypeKey) {
+      'anonymous' => context.l10n.memoryToolRangeSectionAnonymous,
+      'java' => context.l10n.memoryToolRangeSectionJava,
+      'javaHeap' => context.l10n.memoryToolRangeSectionJavaHeap,
+      'cAlloc' => context.l10n.memoryToolRangeSectionCAlloc,
+      'cHeap' => context.l10n.memoryToolRangeSectionCHeap,
+      'cData' => context.l10n.memoryToolRangeSectionCData,
+      'cBss' => context.l10n.memoryToolRangeSectionCBss,
+      'codeApp' => context.l10n.memoryToolRangeSectionCodeApp,
+      'codeSys' => context.l10n.memoryToolRangeSectionCodeSys,
+      'stack' => context.l10n.memoryToolRangeSectionStack,
+      'ashmem' => context.l10n.memoryToolRangeSectionAshmem,
+      'bad' => context.l10n.memoryToolRangeSectionBad,
+      'other' => context.l10n.memoryToolRangeSectionOther,
+      _ => context.l10n.memoryToolRangeSectionOther,
     };
   }
 }

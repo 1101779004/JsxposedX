@@ -74,12 +74,14 @@ class FirstScanRequest {
   final int pid;
   final SearchValue value;
   final SearchMatchMode matchMode;
+  final List<String> rangeSectionKeys;
   final bool scanAllReadableRegions;
 
   const FirstScanRequest({
     required this.pid,
     required this.value,
     required this.matchMode,
+    required this.rangeSectionKeys,
     required this.scanAllReadableRegions,
   });
 }
@@ -94,6 +96,7 @@ class NextScanRequest {
 class SearchResult {
   final int address;
   final int regionStart;
+  final String regionTypeKey;
   final SearchValueType type;
   final Uint8List rawBytes;
   final String displayValue;
@@ -101,6 +104,7 @@ class SearchResult {
   const SearchResult({
     required this.address,
     required this.regionStart,
+    required this.regionTypeKey,
     required this.type,
     required this.rawBytes,
     required this.displayValue,

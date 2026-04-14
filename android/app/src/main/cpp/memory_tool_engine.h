@@ -5,6 +5,7 @@
 #include <chrono>
 #include <memory>
 #include <mutex>
+#include <string>
 #include <vector>
 
 #include "memory_tool_scanner.h"
@@ -34,6 +35,7 @@ public:
     void FirstScan(int pid,
                    const SearchValue& value,
                    SearchMatchMode match_mode,
+                   const std::vector<std::string>& range_section_keys,
                    bool scan_all_readable_regions);
 
     void NextScan(const SearchValue& value, SearchMatchMode match_mode);

@@ -55,6 +55,7 @@ struct SearchResultEntry {
 struct SearchResultView {
     uint64_t address = 0;
     uint64_t region_start = 0;
+    std::string region_type_key;
     SearchValueType type = SearchValueType::kI32;
     std::vector<uint8_t> raw_bytes;
     std::string display_value;

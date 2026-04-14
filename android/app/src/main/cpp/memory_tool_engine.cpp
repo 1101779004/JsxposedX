@@ -22,6 +22,34 @@ uint64_t ElapsedMilliseconds(const std::chrono::steady_clock::time_point& starte
                                      .count());
 }
 
+const MemoryRegion* FindRegionByStart(const std::vector<MemoryRegion>& regions,
+                                      uint64_t region_start) {
+    const auto iterator = std::find_if(regions.begin(), regions.end(), [region_start](const MemoryRegion& region) {
+        return region.start_address == region_start;
+    });
+    if (iterator == regions.end()) {
+        return nullptr;
+    }
+    return &(*iterator);
+}
+
+std::vector<MemoryRegion> FilterRegionsByTypeKeys(const std::vector<MemoryRegion>& regions,
+                                                  const std::vector<std::string>& allowed_keys) {
+    if (allowed_keys.empty()) {
+        return regions;
+    }
+
+    std::vector<MemoryRegion> filtered;
+    filtered.reserve(regions.size());
+    for (const MemoryRegion& region : regions) {
+        const std::string region_key = ClassifyMemoryRegion(region);
+        if (std::find(allowed_keys.begin(), allowed_keys.end(), region_key) != allowed_keys.end()) {
+            filtered.push_back(region);
+        }
+    }
+    return filtered;
+}
+
 }  // namespace
 
 MemoryToolEngine& MemoryToolEngine::Instance() {
@@ -111,7 +139,8 @@ std::vector<MemoryValuePreview> MemoryToolEngine::ReadMemoryValues(
 void MemoryToolEngine::FirstScan(int pid,
                                  const SearchValue& value,
                                  SearchMatchMode match_mode,
-                                 bool /*scan_all_readable_regions*/) {
+                                 const std::vector<std::string>& range_section_keys,
+                                 bool scan_all_readable_regions) {
     if (match_mode != SearchMatchMode::kExact) {
         throw std::runtime_error("Only exact scan is supported.");
     }
@@ -130,13 +159,23 @@ void MemoryToolEngine::FirstScan(int pid,
         return StartTaskLocked(true, pid);
     }();
 
-    std::thread([this, generation, pid, pattern = std::move(pattern), value_type, little_endian]() {
+    std::thread([this,
+                 generation,
+                 pid,
+                 pattern = std::move(pattern),
+                 value_type,
+                 little_endian,
+                 range_section_keys,
+                 scan_all_readable_regions]() {
         try {
             if (!IsProcessAlive(pid)) {
                 throw std::runtime_error("Target process is no longer available.");
             }
 
             std::vector<MemoryRegion> regions = ReadProcessRegions(pid, true, true, true);
+            if (!scan_all_readable_regions) {
+                regions = FilterRegionsByTypeKeys(regions, range_section_keys);
+            }
             ProcessMemoryReader reader(pid);
             std::vector<SearchResultEntry> results = ::memory_tool::FirstScan(
                 &reader,
@@ -271,6 +310,12 @@ SearchResultView MemoryToolEngine::BuildSearchResultViewLocked(const SearchResul
     SearchResultView view;
     view.address = entry.address;
     view.region_start = entry.region_start;
+    if (const MemoryRegion* region = FindRegionByStart(session_.regions, entry.region_start);
+        region != nullptr) {
+        view.region_type_key = ClassifyMemoryRegion(*region);
+    } else {
+        view.region_type_key = "other";
+    }
     view.type = session_.type;
     view.raw_bytes = entry.raw_bytes;
     view.display_value =

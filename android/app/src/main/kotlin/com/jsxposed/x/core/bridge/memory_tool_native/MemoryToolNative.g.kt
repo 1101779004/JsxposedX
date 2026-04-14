@@ -283,6 +283,7 @@ data class FirstScanRequest (
   val pid: Long,
   val value: SearchValue,
   val matchMode: SearchMatchMode,
+  val rangeSectionKeys: List<String>,
   val scanAllReadableRegions: Boolean
 )
  {
@@ -291,8 +292,9 @@ data class FirstScanRequest (
       val pid = pigeonVar_list[0] as Long
       val value = pigeonVar_list[1] as SearchValue
       val matchMode = pigeonVar_list[2] as SearchMatchMode
-      val scanAllReadableRegions = pigeonVar_list[3] as Boolean
-      return FirstScanRequest(pid, value, matchMode, scanAllReadableRegions)
+      val rangeSectionKeys = pigeonVar_list[3] as List<String>
+      val scanAllReadableRegions = pigeonVar_list[4] as Boolean
+      return FirstScanRequest(pid, value, matchMode, rangeSectionKeys, scanAllReadableRegions)
     }
   }
   fun toList(): List<Any?> {
@@ -300,6 +302,7 @@ data class FirstScanRequest (
       pid,
       value,
       matchMode,
+      rangeSectionKeys,
       scanAllReadableRegions,
     )
   }
@@ -350,6 +353,7 @@ data class NextScanRequest (
 data class SearchResult (
   val address: Long,
   val regionStart: Long,
+  val regionTypeKey: String,
   val type: SearchValueType,
   val rawBytes: ByteArray,
   val displayValue: String
@@ -359,16 +363,18 @@ data class SearchResult (
     fun fromList(pigeonVar_list: List<Any?>): SearchResult {
       val address = pigeonVar_list[0] as Long
       val regionStart = pigeonVar_list[1] as Long
-      val type = pigeonVar_list[2] as SearchValueType
-      val rawBytes = pigeonVar_list[3] as ByteArray
-      val displayValue = pigeonVar_list[4] as String
-      return SearchResult(address, regionStart, type, rawBytes, displayValue)
+      val regionTypeKey = pigeonVar_list[2] as String
+      val type = pigeonVar_list[3] as SearchValueType
+      val rawBytes = pigeonVar_list[4] as ByteArray
+      val displayValue = pigeonVar_list[5] as String
+      return SearchResult(address, regionStart, regionTypeKey, type, rawBytes, displayValue)
     }
   }
   fun toList(): List<Any?> {
     return listOf(
       address,
       regionStart,
+      regionTypeKey,
       type,
       rawBytes,
       displayValue,

@@ -41,6 +41,7 @@ public:
                           jbyteArray bytes_value,
                           jboolean little_endian,
                           jint match_mode,
+                          jobjectArray range_section_keys,
                           jboolean scan_all_readable_regions);
 
     static void NextScan(JNIEnv* env,
@@ -65,6 +66,8 @@ private:
                                                             jlongArray addresses,
                                                             jintArray types,
                                                             jintArray lengths);
+
+    static std::vector<std::string> JObjectArrayToStringVector(JNIEnv* env, jobjectArray value);
 
     static std::string JStringToUtf8(JNIEnv* env, jstring value);
 

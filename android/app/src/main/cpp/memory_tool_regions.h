@@ -12,6 +12,8 @@ std::vector<MemoryRegion> ReadProcessRegions(int pid,
                                              bool include_anonymous,
                                              bool include_file_backed);
 
+std::string ClassifyMemoryRegion(const MemoryRegion& region);
+
 }  // namespace memory_tool
 
 #endif  // JSXPOSEDX_MEMORY_TOOL_REGIONS_H

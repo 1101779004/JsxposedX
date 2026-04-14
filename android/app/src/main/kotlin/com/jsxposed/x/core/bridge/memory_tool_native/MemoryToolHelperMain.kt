@@ -109,6 +109,7 @@ private class MemoryToolDaemonServer(
                     bytesValue = decodeHex(value.optString("bytesHex")),
                     littleEndian = value.optBoolean("littleEndian", true),
                     matchMode = params.getInt("matchMode"),
+                    rangeSectionKeys = extractStringArray(params.optJSONArray("rangeSectionKeys")),
                     scanAllReadableRegions = params.optBoolean("scanAllReadableRegions", true)
                 )
                 JSONObject.NULL
@@ -166,6 +167,16 @@ private class MemoryToolDaemonServer(
         require(normalized.length % 2 == 0) { "Invalid hex length." }
         return ByteArray(normalized.length / 2) { index ->
             normalized.substring(index * 2, index * 2 + 2).toInt(16).toByte()
+        }
+    }
+
+    private fun extractStringArray(items: JSONArray?): Array<String> {
+        if (items == null) {
+            return emptyArray()
+        }
+
+        return Array(items.length()) { index ->
+            items.getString(index)
         }
     }
 }
