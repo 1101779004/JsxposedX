@@ -1730,13 +1730,133 @@ class AppLocalizationsZh extends AppLocalizations {
   String get memoryToolFieldScopePlaceholder => '全部内存';
 
   @override
+  String get memoryToolFieldValueCategory => '搜索类型';
+
+  @override
+  String get memoryToolFieldValueTypeOption => '搜索格式';
+
+  @override
+  String get memoryToolFieldRangeSection => '自定义区段';
+
+  @override
   String get memoryToolSearchExact => '精确搜索';
 
   @override
   String get memoryToolSearchBytesHint => '例如 12 34 AB CD';
 
   @override
+  String get memoryToolSearchTextHint => '输入要搜索的文本';
+
+  @override
+  String get memoryToolSearchTypePendingHint => '当前搜索类型尚未接入扫描内核。';
+
+  @override
+  String get memoryToolRangePresetPendingHint => '当前版本仍按全部可读内存扫描，范围预设暂未下发生效。';
+
+  @override
   String get memoryToolEndianLabel => '小端序';
+
+  @override
+  String get memoryToolValueCategoryInteger => '整数';
+
+  @override
+  String get memoryToolValueCategoryDecimal => '小数';
+
+  @override
+  String get memoryToolValueCategoryBytes => '字节';
+
+  @override
+  String get memoryToolValueCategoryText => '文本';
+
+  @override
+  String get memoryToolValueCategoryAdvanced => '高级';
+
+  @override
+  String get memoryToolValueTypeI8 => 'I8';
+
+  @override
+  String get memoryToolValueTypeI16 => 'I16';
+
+  @override
+  String get memoryToolValueTypeI32 => 'I32';
+
+  @override
+  String get memoryToolValueTypeI64 => 'I64';
+
+  @override
+  String get memoryToolValueTypeF32 => 'F32';
+
+  @override
+  String get memoryToolValueTypeF64 => 'F64';
+
+  @override
+  String get memoryToolValueTypeBytes => 'AOB';
+
+  @override
+  String get memoryToolValueTypeXor => 'XOR';
+
+  @override
+  String get memoryToolValueTypeAuto => 'AUTO';
+
+  @override
+  String get memoryToolValueTypeText => 'TEXT';
+
+  @override
+  String get memoryToolRangePresetCommon => '常用';
+
+  @override
+  String get memoryToolRangePresetJava => 'Java';
+
+  @override
+  String get memoryToolRangePresetNative => 'Native';
+
+  @override
+  String get memoryToolRangePresetCode => '代码';
+
+  @override
+  String get memoryToolRangePresetAll => '全部';
+
+  @override
+  String get memoryToolRangePresetCustom => '自定义';
+
+  @override
+  String get memoryToolRangeSectionAnonymous => '匿名';
+
+  @override
+  String get memoryToolRangeSectionJava => 'Java';
+
+  @override
+  String get memoryToolRangeSectionJavaHeap => 'Java Heap';
+
+  @override
+  String get memoryToolRangeSectionCAlloc => 'C Alloc';
+
+  @override
+  String get memoryToolRangeSectionCHeap => 'C Heap';
+
+  @override
+  String get memoryToolRangeSectionCData => 'C Data';
+
+  @override
+  String get memoryToolRangeSectionCBss => 'C Bss';
+
+  @override
+  String get memoryToolRangeSectionCodeApp => '应用代码';
+
+  @override
+  String get memoryToolRangeSectionCodeSys => '系统代码';
+
+  @override
+  String get memoryToolRangeSectionStack => '栈';
+
+  @override
+  String get memoryToolRangeSectionAshmem => 'Ashmem';
+
+  @override
+  String get memoryToolRangeSectionOther => '其他';
+
+  @override
+  String get memoryToolRangeSectionBad => 'Bad';
 
   @override
   String get memoryToolActionFirstScan => '首次扫描';
@@ -1870,4 +1990,7 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get memoryToolValidationBytesInvalid =>
       '字节数组格式不正确，请输入偶数位十六进制，例如 12 34 AB。';
+
+  @override
+  String get memoryToolValidationTypeUnsupported => '当前搜索类型尚未接入扫描内核。';
 }

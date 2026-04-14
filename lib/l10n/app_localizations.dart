@@ -3416,6 +3416,24 @@ abstract class AppLocalizations {
   /// **'全部内存'**
   String get memoryToolFieldScopePlaceholder;
 
+  /// No description provided for @memoryToolFieldValueCategory.
+  ///
+  /// In zh, this message translates to:
+  /// **'搜索类型'**
+  String get memoryToolFieldValueCategory;
+
+  /// No description provided for @memoryToolFieldValueTypeOption.
+  ///
+  /// In zh, this message translates to:
+  /// **'搜索格式'**
+  String get memoryToolFieldValueTypeOption;
+
+  /// No description provided for @memoryToolFieldRangeSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'自定义区段'**
+  String get memoryToolFieldRangeSection;
+
   /// No description provided for @memoryToolSearchExact.
   ///
   /// In zh, this message translates to:
@@ -3428,11 +3446,233 @@ abstract class AppLocalizations {
   /// **'例如 12 34 AB CD'**
   String get memoryToolSearchBytesHint;
 
+  /// No description provided for @memoryToolSearchTextHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'输入要搜索的文本'**
+  String get memoryToolSearchTextHint;
+
+  /// No description provided for @memoryToolSearchTypePendingHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前搜索类型尚未接入扫描内核。'**
+  String get memoryToolSearchTypePendingHint;
+
+  /// No description provided for @memoryToolRangePresetPendingHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前版本仍按全部可读内存扫描，范围预设暂未下发生效。'**
+  String get memoryToolRangePresetPendingHint;
+
   /// No description provided for @memoryToolEndianLabel.
   ///
   /// In zh, this message translates to:
   /// **'小端序'**
   String get memoryToolEndianLabel;
+
+  /// No description provided for @memoryToolValueCategoryInteger.
+  ///
+  /// In zh, this message translates to:
+  /// **'整数'**
+  String get memoryToolValueCategoryInteger;
+
+  /// No description provided for @memoryToolValueCategoryDecimal.
+  ///
+  /// In zh, this message translates to:
+  /// **'小数'**
+  String get memoryToolValueCategoryDecimal;
+
+  /// No description provided for @memoryToolValueCategoryBytes.
+  ///
+  /// In zh, this message translates to:
+  /// **'字节'**
+  String get memoryToolValueCategoryBytes;
+
+  /// No description provided for @memoryToolValueCategoryText.
+  ///
+  /// In zh, this message translates to:
+  /// **'文本'**
+  String get memoryToolValueCategoryText;
+
+  /// No description provided for @memoryToolValueCategoryAdvanced.
+  ///
+  /// In zh, this message translates to:
+  /// **'高级'**
+  String get memoryToolValueCategoryAdvanced;
+
+  /// No description provided for @memoryToolValueTypeI8.
+  ///
+  /// In zh, this message translates to:
+  /// **'I8'**
+  String get memoryToolValueTypeI8;
+
+  /// No description provided for @memoryToolValueTypeI16.
+  ///
+  /// In zh, this message translates to:
+  /// **'I16'**
+  String get memoryToolValueTypeI16;
+
+  /// No description provided for @memoryToolValueTypeI32.
+  ///
+  /// In zh, this message translates to:
+  /// **'I32'**
+  String get memoryToolValueTypeI32;
+
+  /// No description provided for @memoryToolValueTypeI64.
+  ///
+  /// In zh, this message translates to:
+  /// **'I64'**
+  String get memoryToolValueTypeI64;
+
+  /// No description provided for @memoryToolValueTypeF32.
+  ///
+  /// In zh, this message translates to:
+  /// **'F32'**
+  String get memoryToolValueTypeF32;
+
+  /// No description provided for @memoryToolValueTypeF64.
+  ///
+  /// In zh, this message translates to:
+  /// **'F64'**
+  String get memoryToolValueTypeF64;
+
+  /// No description provided for @memoryToolValueTypeBytes.
+  ///
+  /// In zh, this message translates to:
+  /// **'AOB'**
+  String get memoryToolValueTypeBytes;
+
+  /// No description provided for @memoryToolValueTypeXor.
+  ///
+  /// In zh, this message translates to:
+  /// **'XOR'**
+  String get memoryToolValueTypeXor;
+
+  /// No description provided for @memoryToolValueTypeAuto.
+  ///
+  /// In zh, this message translates to:
+  /// **'AUTO'**
+  String get memoryToolValueTypeAuto;
+
+  /// No description provided for @memoryToolValueTypeText.
+  ///
+  /// In zh, this message translates to:
+  /// **'TEXT'**
+  String get memoryToolValueTypeText;
+
+  /// No description provided for @memoryToolRangePresetCommon.
+  ///
+  /// In zh, this message translates to:
+  /// **'常用'**
+  String get memoryToolRangePresetCommon;
+
+  /// No description provided for @memoryToolRangePresetJava.
+  ///
+  /// In zh, this message translates to:
+  /// **'Java'**
+  String get memoryToolRangePresetJava;
+
+  /// No description provided for @memoryToolRangePresetNative.
+  ///
+  /// In zh, this message translates to:
+  /// **'Native'**
+  String get memoryToolRangePresetNative;
+
+  /// No description provided for @memoryToolRangePresetCode.
+  ///
+  /// In zh, this message translates to:
+  /// **'代码'**
+  String get memoryToolRangePresetCode;
+
+  /// No description provided for @memoryToolRangePresetAll.
+  ///
+  /// In zh, this message translates to:
+  /// **'全部'**
+  String get memoryToolRangePresetAll;
+
+  /// No description provided for @memoryToolRangePresetCustom.
+  ///
+  /// In zh, this message translates to:
+  /// **'自定义'**
+  String get memoryToolRangePresetCustom;
+
+  /// No description provided for @memoryToolRangeSectionAnonymous.
+  ///
+  /// In zh, this message translates to:
+  /// **'匿名'**
+  String get memoryToolRangeSectionAnonymous;
+
+  /// No description provided for @memoryToolRangeSectionJava.
+  ///
+  /// In zh, this message translates to:
+  /// **'Java'**
+  String get memoryToolRangeSectionJava;
+
+  /// No description provided for @memoryToolRangeSectionJavaHeap.
+  ///
+  /// In zh, this message translates to:
+  /// **'Java Heap'**
+  String get memoryToolRangeSectionJavaHeap;
+
+  /// No description provided for @memoryToolRangeSectionCAlloc.
+  ///
+  /// In zh, this message translates to:
+  /// **'C Alloc'**
+  String get memoryToolRangeSectionCAlloc;
+
+  /// No description provided for @memoryToolRangeSectionCHeap.
+  ///
+  /// In zh, this message translates to:
+  /// **'C Heap'**
+  String get memoryToolRangeSectionCHeap;
+
+  /// No description provided for @memoryToolRangeSectionCData.
+  ///
+  /// In zh, this message translates to:
+  /// **'C Data'**
+  String get memoryToolRangeSectionCData;
+
+  /// No description provided for @memoryToolRangeSectionCBss.
+  ///
+  /// In zh, this message translates to:
+  /// **'C Bss'**
+  String get memoryToolRangeSectionCBss;
+
+  /// No description provided for @memoryToolRangeSectionCodeApp.
+  ///
+  /// In zh, this message translates to:
+  /// **'应用代码'**
+  String get memoryToolRangeSectionCodeApp;
+
+  /// No description provided for @memoryToolRangeSectionCodeSys.
+  ///
+  /// In zh, this message translates to:
+  /// **'系统代码'**
+  String get memoryToolRangeSectionCodeSys;
+
+  /// No description provided for @memoryToolRangeSectionStack.
+  ///
+  /// In zh, this message translates to:
+  /// **'栈'**
+  String get memoryToolRangeSectionStack;
+
+  /// No description provided for @memoryToolRangeSectionAshmem.
+  ///
+  /// In zh, this message translates to:
+  /// **'Ashmem'**
+  String get memoryToolRangeSectionAshmem;
+
+  /// No description provided for @memoryToolRangeSectionOther.
+  ///
+  /// In zh, this message translates to:
+  /// **'其他'**
+  String get memoryToolRangeSectionOther;
+
+  /// No description provided for @memoryToolRangeSectionBad.
+  ///
+  /// In zh, this message translates to:
+  /// **'Bad'**
+  String get memoryToolRangeSectionBad;
 
   /// No description provided for @memoryToolActionFirstScan.
   ///
@@ -3697,6 +3937,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'字节数组格式不正确，请输入偶数位十六进制，例如 12 34 AB。'**
   String get memoryToolValidationBytesInvalid;
+
+  /// No description provided for @memoryToolValidationTypeUnsupported.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前搜索类型尚未接入扫描内核。'**
+  String get memoryToolValidationTypeUnsupported;
 }
 
 class _AppLocalizationsDelegate

@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$MemoryToolSearchState {
 
- String get value; SearchValueType get selectedType; bool get isLittleEndian; MemoryToolSearchValidationError? get validationError;
+ String get value; MemorySearchValueCategoryEnum get selectedValueCategory; MemorySearchValueTypeOptionEnum get selectedValueTypeOption; MemorySearchRangePresetEnum get selectedRangePreset; List<MemorySearchRangeSectionEnum> get customRangeSections; bool get isLittleEndian; MemoryToolSearchValidationError? get validationError;
 /// Create a copy of MemoryToolSearchState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $MemoryToolSearchStateCopyWith<MemoryToolSearchState> get copyWith => _$MemoryTo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is MemoryToolSearchState&&(identical(other.value, value) || other.value == value)&&(identical(other.selectedType, selectedType) || other.selectedType == selectedType)&&(identical(other.isLittleEndian, isLittleEndian) || other.isLittleEndian == isLittleEndian)&&(identical(other.validationError, validationError) || other.validationError == validationError));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MemoryToolSearchState&&(identical(other.value, value) || other.value == value)&&(identical(other.selectedValueCategory, selectedValueCategory) || other.selectedValueCategory == selectedValueCategory)&&(identical(other.selectedValueTypeOption, selectedValueTypeOption) || other.selectedValueTypeOption == selectedValueTypeOption)&&(identical(other.selectedRangePreset, selectedRangePreset) || other.selectedRangePreset == selectedRangePreset)&&const DeepCollectionEquality().equals(other.customRangeSections, customRangeSections)&&(identical(other.isLittleEndian, isLittleEndian) || other.isLittleEndian == isLittleEndian)&&(identical(other.validationError, validationError) || other.validationError == validationError));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,value,selectedType,isLittleEndian,validationError);
+int get hashCode => Object.hash(runtimeType,value,selectedValueCategory,selectedValueTypeOption,selectedRangePreset,const DeepCollectionEquality().hash(customRangeSections),isLittleEndian,validationError);
 
 @override
 String toString() {
-  return 'MemoryToolSearchState(value: $value, selectedType: $selectedType, isLittleEndian: $isLittleEndian, validationError: $validationError)';
+  return 'MemoryToolSearchState(value: $value, selectedValueCategory: $selectedValueCategory, selectedValueTypeOption: $selectedValueTypeOption, selectedRangePreset: $selectedRangePreset, customRangeSections: $customRangeSections, isLittleEndian: $isLittleEndian, validationError: $validationError)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $MemoryToolSearchStateCopyWith<$Res>  {
   factory $MemoryToolSearchStateCopyWith(MemoryToolSearchState value, $Res Function(MemoryToolSearchState) _then) = _$MemoryToolSearchStateCopyWithImpl;
 @useResult
 $Res call({
- String value, SearchValueType selectedType, bool isLittleEndian, MemoryToolSearchValidationError? validationError
+ String value, MemorySearchValueCategoryEnum selectedValueCategory, MemorySearchValueTypeOptionEnum selectedValueTypeOption, MemorySearchRangePresetEnum selectedRangePreset, List<MemorySearchRangeSectionEnum> customRangeSections, bool isLittleEndian, MemoryToolSearchValidationError? validationError
 });
 
 
@@ -62,11 +62,14 @@ class _$MemoryToolSearchStateCopyWithImpl<$Res>
 
 /// Create a copy of MemoryToolSearchState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? value = null,Object? selectedType = null,Object? isLittleEndian = null,Object? validationError = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? value = null,Object? selectedValueCategory = null,Object? selectedValueTypeOption = null,Object? selectedRangePreset = null,Object? customRangeSections = null,Object? isLittleEndian = null,Object? validationError = freezed,}) {
   return _then(_self.copyWith(
 value: null == value ? _self.value : value // ignore: cast_nullable_to_non_nullable
-as String,selectedType: null == selectedType ? _self.selectedType : selectedType // ignore: cast_nullable_to_non_nullable
-as SearchValueType,isLittleEndian: null == isLittleEndian ? _self.isLittleEndian : isLittleEndian // ignore: cast_nullable_to_non_nullable
+as String,selectedValueCategory: null == selectedValueCategory ? _self.selectedValueCategory : selectedValueCategory // ignore: cast_nullable_to_non_nullable
+as MemorySearchValueCategoryEnum,selectedValueTypeOption: null == selectedValueTypeOption ? _self.selectedValueTypeOption : selectedValueTypeOption // ignore: cast_nullable_to_non_nullable
+as MemorySearchValueTypeOptionEnum,selectedRangePreset: null == selectedRangePreset ? _self.selectedRangePreset : selectedRangePreset // ignore: cast_nullable_to_non_nullable
+as MemorySearchRangePresetEnum,customRangeSections: null == customRangeSections ? _self.customRangeSections : customRangeSections // ignore: cast_nullable_to_non_nullable
+as List<MemorySearchRangeSectionEnum>,isLittleEndian: null == isLittleEndian ? _self.isLittleEndian : isLittleEndian // ignore: cast_nullable_to_non_nullable
 as bool,validationError: freezed == validationError ? _self.validationError : validationError // ignore: cast_nullable_to_non_nullable
 as MemoryToolSearchValidationError?,
   ));
@@ -153,10 +156,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String value,  SearchValueType selectedType,  bool isLittleEndian,  MemoryToolSearchValidationError? validationError)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String value,  MemorySearchValueCategoryEnum selectedValueCategory,  MemorySearchValueTypeOptionEnum selectedValueTypeOption,  MemorySearchRangePresetEnum selectedRangePreset,  List<MemorySearchRangeSectionEnum> customRangeSections,  bool isLittleEndian,  MemoryToolSearchValidationError? validationError)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _MemoryToolSearchState() when $default != null:
-return $default(_that.value,_that.selectedType,_that.isLittleEndian,_that.validationError);case _:
+return $default(_that.value,_that.selectedValueCategory,_that.selectedValueTypeOption,_that.selectedRangePreset,_that.customRangeSections,_that.isLittleEndian,_that.validationError);case _:
   return orElse();
 
 }
@@ -174,10 +177,10 @@ return $default(_that.value,_that.selectedType,_that.isLittleEndian,_that.valida
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String value,  SearchValueType selectedType,  bool isLittleEndian,  MemoryToolSearchValidationError? validationError)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String value,  MemorySearchValueCategoryEnum selectedValueCategory,  MemorySearchValueTypeOptionEnum selectedValueTypeOption,  MemorySearchRangePresetEnum selectedRangePreset,  List<MemorySearchRangeSectionEnum> customRangeSections,  bool isLittleEndian,  MemoryToolSearchValidationError? validationError)  $default,) {final _that = this;
 switch (_that) {
 case _MemoryToolSearchState():
-return $default(_that.value,_that.selectedType,_that.isLittleEndian,_that.validationError);case _:
+return $default(_that.value,_that.selectedValueCategory,_that.selectedValueTypeOption,_that.selectedRangePreset,_that.customRangeSections,_that.isLittleEndian,_that.validationError);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -194,10 +197,10 @@ return $default(_that.value,_that.selectedType,_that.isLittleEndian,_that.valida
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String value,  SearchValueType selectedType,  bool isLittleEndian,  MemoryToolSearchValidationError? validationError)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String value,  MemorySearchValueCategoryEnum selectedValueCategory,  MemorySearchValueTypeOptionEnum selectedValueTypeOption,  MemorySearchRangePresetEnum selectedRangePreset,  List<MemorySearchRangeSectionEnum> customRangeSections,  bool isLittleEndian,  MemoryToolSearchValidationError? validationError)?  $default,) {final _that = this;
 switch (_that) {
 case _MemoryToolSearchState() when $default != null:
-return $default(_that.value,_that.selectedType,_that.isLittleEndian,_that.validationError);case _:
+return $default(_that.value,_that.selectedValueCategory,_that.selectedValueTypeOption,_that.selectedRangePreset,_that.customRangeSections,_that.isLittleEndian,_that.validationError);case _:
   return null;
 
 }
@@ -208,12 +211,21 @@ return $default(_that.value,_that.selectedType,_that.isLittleEndian,_that.valida
 /// @nodoc
 
 
-class _MemoryToolSearchState implements MemoryToolSearchState {
-  const _MemoryToolSearchState({this.value = '', this.selectedType = SearchValueType.i32, this.isLittleEndian = true, this.validationError});
+class _MemoryToolSearchState extends MemoryToolSearchState {
+  const _MemoryToolSearchState({this.value = '', this.selectedValueCategory = MemorySearchValueCategoryEnum.integer, this.selectedValueTypeOption = MemorySearchValueTypeOptionEnum.i32, this.selectedRangePreset = MemorySearchRangePresetEnum.all, final  List<MemorySearchRangeSectionEnum> customRangeSections = const <MemorySearchRangeSectionEnum>[], this.isLittleEndian = true, this.validationError}): _customRangeSections = customRangeSections,super._();
   
 
 @override@JsonKey() final  String value;
-@override@JsonKey() final  SearchValueType selectedType;
+@override@JsonKey() final  MemorySearchValueCategoryEnum selectedValueCategory;
+@override@JsonKey() final  MemorySearchValueTypeOptionEnum selectedValueTypeOption;
+@override@JsonKey() final  MemorySearchRangePresetEnum selectedRangePreset;
+ final  List<MemorySearchRangeSectionEnum> _customRangeSections;
+@override@JsonKey() List<MemorySearchRangeSectionEnum> get customRangeSections {
+  if (_customRangeSections is EqualUnmodifiableListView) return _customRangeSections;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_customRangeSections);
+}
+
 @override@JsonKey() final  bool isLittleEndian;
 @override final  MemoryToolSearchValidationError? validationError;
 
@@ -227,16 +239,16 @@ _$MemoryToolSearchStateCopyWith<_MemoryToolSearchState> get copyWith => __$Memor
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _MemoryToolSearchState&&(identical(other.value, value) || other.value == value)&&(identical(other.selectedType, selectedType) || other.selectedType == selectedType)&&(identical(other.isLittleEndian, isLittleEndian) || other.isLittleEndian == isLittleEndian)&&(identical(other.validationError, validationError) || other.validationError == validationError));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _MemoryToolSearchState&&(identical(other.value, value) || other.value == value)&&(identical(other.selectedValueCategory, selectedValueCategory) || other.selectedValueCategory == selectedValueCategory)&&(identical(other.selectedValueTypeOption, selectedValueTypeOption) || other.selectedValueTypeOption == selectedValueTypeOption)&&(identical(other.selectedRangePreset, selectedRangePreset) || other.selectedRangePreset == selectedRangePreset)&&const DeepCollectionEquality().equals(other._customRangeSections, _customRangeSections)&&(identical(other.isLittleEndian, isLittleEndian) || other.isLittleEndian == isLittleEndian)&&(identical(other.validationError, validationError) || other.validationError == validationError));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,value,selectedType,isLittleEndian,validationError);
+int get hashCode => Object.hash(runtimeType,value,selectedValueCategory,selectedValueTypeOption,selectedRangePreset,const DeepCollectionEquality().hash(_customRangeSections),isLittleEndian,validationError);
 
 @override
 String toString() {
-  return 'MemoryToolSearchState(value: $value, selectedType: $selectedType, isLittleEndian: $isLittleEndian, validationError: $validationError)';
+  return 'MemoryToolSearchState(value: $value, selectedValueCategory: $selectedValueCategory, selectedValueTypeOption: $selectedValueTypeOption, selectedRangePreset: $selectedRangePreset, customRangeSections: $customRangeSections, isLittleEndian: $isLittleEndian, validationError: $validationError)';
 }
 
 
@@ -247,7 +259,7 @@ abstract mixin class _$MemoryToolSearchStateCopyWith<$Res> implements $MemoryToo
   factory _$MemoryToolSearchStateCopyWith(_MemoryToolSearchState value, $Res Function(_MemoryToolSearchState) _then) = __$MemoryToolSearchStateCopyWithImpl;
 @override @useResult
 $Res call({
- String value, SearchValueType selectedType, bool isLittleEndian, MemoryToolSearchValidationError? validationError
+ String value, MemorySearchValueCategoryEnum selectedValueCategory, MemorySearchValueTypeOptionEnum selectedValueTypeOption, MemorySearchRangePresetEnum selectedRangePreset, List<MemorySearchRangeSectionEnum> customRangeSections, bool isLittleEndian, MemoryToolSearchValidationError? validationError
 });
 
 
@@ -264,11 +276,14 @@ class __$MemoryToolSearchStateCopyWithImpl<$Res>
 
 /// Create a copy of MemoryToolSearchState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? value = null,Object? selectedType = null,Object? isLittleEndian = null,Object? validationError = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? value = null,Object? selectedValueCategory = null,Object? selectedValueTypeOption = null,Object? selectedRangePreset = null,Object? customRangeSections = null,Object? isLittleEndian = null,Object? validationError = freezed,}) {
   return _then(_MemoryToolSearchState(
 value: null == value ? _self.value : value // ignore: cast_nullable_to_non_nullable
-as String,selectedType: null == selectedType ? _self.selectedType : selectedType // ignore: cast_nullable_to_non_nullable
-as SearchValueType,isLittleEndian: null == isLittleEndian ? _self.isLittleEndian : isLittleEndian // ignore: cast_nullable_to_non_nullable
+as String,selectedValueCategory: null == selectedValueCategory ? _self.selectedValueCategory : selectedValueCategory // ignore: cast_nullable_to_non_nullable
+as MemorySearchValueCategoryEnum,selectedValueTypeOption: null == selectedValueTypeOption ? _self.selectedValueTypeOption : selectedValueTypeOption // ignore: cast_nullable_to_non_nullable
+as MemorySearchValueTypeOptionEnum,selectedRangePreset: null == selectedRangePreset ? _self.selectedRangePreset : selectedRangePreset // ignore: cast_nullable_to_non_nullable
+as MemorySearchRangePresetEnum,customRangeSections: null == customRangeSections ? _self._customRangeSections : customRangeSections // ignore: cast_nullable_to_non_nullable
+as List<MemorySearchRangeSectionEnum>,isLittleEndian: null == isLittleEndian ? _self.isLittleEndian : isLittleEndian // ignore: cast_nullable_to_non_nullable
 as bool,validationError: freezed == validationError ? _self.validationError : validationError // ignore: cast_nullable_to_non_nullable
 as MemoryToolSearchValidationError?,
   ));

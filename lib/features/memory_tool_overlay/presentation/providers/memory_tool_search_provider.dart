@@ -1,5 +1,10 @@
 import 'dart:typed_data';
 
+import 'package:JsxposedX/features/memory_tool_overlay/presentation/enums/memory_search_preset_maps.dart';
+import 'package:JsxposedX/features/memory_tool_overlay/presentation/enums/memory_search_range_preset_enum.dart';
+import 'package:JsxposedX/features/memory_tool_overlay/presentation/enums/memory_search_range_section_enum.dart';
+import 'package:JsxposedX/features/memory_tool_overlay/presentation/enums/memory_search_value_category_enum.dart';
+import 'package:JsxposedX/features/memory_tool_overlay/presentation/enums/memory_search_value_type_option_enum.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_action_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_query_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/states/memory_tool_result_selection_state.dart';
@@ -137,8 +142,64 @@ class MemoryToolSearchForm extends _$MemoryToolSearchForm {
     state = state.copyWith(value: value, validationError: null);
   }
 
-  void updateType(SearchValueType type) {
-    state = state.copyWith(selectedType: type, validationError: null);
+  void updateValueCategory(MemorySearchValueCategoryEnum category) {
+    final defaultOption = memorySearchCategoryDefaults[category];
+    final advancedOptions =
+        memorySearchAdvancedValueOptions[MemorySearchValueCategoryEnum.advanced] ??
+        const <MemorySearchValueTypeOptionEnum>[];
+
+    final nextTypeOption = switch (category) {
+      MemorySearchValueCategoryEnum.advanced =>
+        advancedOptions.contains(state.selectedValueTypeOption)
+            ? state.selectedValueTypeOption
+            : MemorySearchValueTypeOptionEnum.i8,
+      _ => defaultOption ?? state.selectedValueTypeOption,
+    };
+
+    state = state.copyWith(
+      selectedValueCategory: category,
+      selectedValueTypeOption: nextTypeOption,
+      validationError: null,
+    );
+  }
+
+  void updateValueTypeOption(MemorySearchValueTypeOptionEnum option) {
+    state = state.copyWith(
+      selectedValueTypeOption: option,
+      validationError: null,
+    );
+  }
+
+  void updateRangePreset(MemorySearchRangePresetEnum preset) {
+    final shouldSeedCustomSections =
+        preset == MemorySearchRangePresetEnum.custom &&
+        state.customRangeSections.isEmpty;
+
+    state = state.copyWith(
+      selectedRangePreset: preset,
+      customRangeSections: shouldSeedCustomSections
+          ? _defaultCustomRangeSections()
+          : state.customRangeSections,
+      validationError: null,
+    );
+  }
+
+  void toggleCustomRangeSection(MemorySearchRangeSectionEnum section) {
+    final nextSections = List<MemorySearchRangeSectionEnum>.from(
+      state.customRangeSections,
+    );
+
+    if (nextSections.contains(section)) {
+      nextSections.remove(section);
+    } else {
+      nextSections.add(section);
+      nextSections.sort((left, right) => left.index.compareTo(right.index));
+    }
+
+    state = state.copyWith(
+      customRangeSections: nextSections,
+      validationError: null,
+    );
   }
 
   void updateEndian(bool isLittleEndian) {
@@ -152,7 +213,7 @@ class MemoryToolSearchForm extends _$MemoryToolSearchForm {
     }
 
     final validationError = _validateValue(
-      type: state.selectedType,
+      type: state.nativeSearchValueType,
       rawValue: state.value,
     );
     if (validationError != null) {
@@ -180,7 +241,7 @@ class MemoryToolSearchForm extends _$MemoryToolSearchForm {
     }
 
     final validationError = _validateValue(
-      type: state.selectedType,
+      type: state.nativeSearchValueType,
       rawValue: state.value,
     );
     if (validationError != null) {
@@ -215,12 +276,16 @@ class MemoryToolSearchForm extends _$MemoryToolSearchForm {
   }
 
   MemoryToolSearchValidationError? _validateValue({
-    required SearchValueType type,
+    required SearchValueType? type,
     required String rawValue,
   }) {
     final trimmedValue = rawValue.trim();
     if (trimmedValue.isEmpty) {
       return MemoryToolSearchValidationError.valueRequired;
+    }
+
+    if (type == null) {
+      return MemoryToolSearchValidationError.unsupportedType;
     }
 
     if (type == SearchValueType.bytes && _parseBytes(trimmedValue) == null) {
@@ -232,17 +297,34 @@ class MemoryToolSearchForm extends _$MemoryToolSearchForm {
 
   SearchValue _buildSearchValue() {
     final trimmedValue = state.value.trim();
-    final bytesValue = state.selectedType == SearchValueType.bytes
+    final nativeType = state.nativeSearchValueType!;
+    final bytesValue = nativeType == SearchValueType.bytes
         ? _parseBytes(trimmedValue)
         : null;
 
     return SearchValue(
-      type: state.selectedType,
-      textValue: state.selectedType == SearchValueType.bytes
-          ? null
-          : trimmedValue,
+      type: nativeType,
+      textValue: nativeType == SearchValueType.bytes ? null : trimmedValue,
       bytesValue: bytesValue,
       littleEndian: state.isLittleEndian,
+    );
+  }
+
+  List<MemorySearchRangeSectionEnum> _defaultCustomRangeSections() {
+    final sourcePreset = switch (state.selectedRangePreset) {
+      MemorySearchRangePresetEnum.all ||
+      MemorySearchRangePresetEnum.custom => MemorySearchRangePresetEnum.common,
+      _ => state.selectedRangePreset,
+    };
+    final presetSections = memorySearchRangePresetSections[sourcePreset];
+    if (presetSections != null && presetSections.isNotEmpty) {
+      return List<MemorySearchRangeSectionEnum>.from(presetSections);
+    }
+
+    final allSections =
+        memorySearchRangePresetSections[MemorySearchRangePresetEnum.all];
+    return List<MemorySearchRangeSectionEnum>.from(
+      allSections ?? const <MemorySearchRangeSectionEnum>[],
     );
   }
 

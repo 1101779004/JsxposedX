@@ -1757,13 +1757,135 @@ class AppLocalizationsEn extends AppLocalizations {
   String get memoryToolFieldScopePlaceholder => 'All memory';
 
   @override
+  String get memoryToolFieldValueCategory => 'Search Type';
+
+  @override
+  String get memoryToolFieldValueTypeOption => 'Search Format';
+
+  @override
+  String get memoryToolFieldRangeSection => 'Custom Sections';
+
+  @override
   String get memoryToolSearchExact => 'Exact Scan';
 
   @override
   String get memoryToolSearchBytesHint => 'Example: 12 34 AB CD';
 
   @override
+  String get memoryToolSearchTextHint => 'Enter the text to search';
+
+  @override
+  String get memoryToolSearchTypePendingHint =>
+      'This search type is not wired to the scan core yet.';
+
+  @override
+  String get memoryToolRangePresetPendingHint =>
+      'Current scans still use all readable memory. Range presets are UI-only for now.';
+
+  @override
   String get memoryToolEndianLabel => 'Little Endian';
+
+  @override
+  String get memoryToolValueCategoryInteger => 'Integer';
+
+  @override
+  String get memoryToolValueCategoryDecimal => 'Decimal';
+
+  @override
+  String get memoryToolValueCategoryBytes => 'Bytes';
+
+  @override
+  String get memoryToolValueCategoryText => 'Text';
+
+  @override
+  String get memoryToolValueCategoryAdvanced => 'Advanced';
+
+  @override
+  String get memoryToolValueTypeI8 => 'I8';
+
+  @override
+  String get memoryToolValueTypeI16 => 'I16';
+
+  @override
+  String get memoryToolValueTypeI32 => 'I32';
+
+  @override
+  String get memoryToolValueTypeI64 => 'I64';
+
+  @override
+  String get memoryToolValueTypeF32 => 'F32';
+
+  @override
+  String get memoryToolValueTypeF64 => 'F64';
+
+  @override
+  String get memoryToolValueTypeBytes => 'AOB';
+
+  @override
+  String get memoryToolValueTypeXor => 'XOR';
+
+  @override
+  String get memoryToolValueTypeAuto => 'AUTO';
+
+  @override
+  String get memoryToolValueTypeText => 'TEXT';
+
+  @override
+  String get memoryToolRangePresetCommon => 'Common';
+
+  @override
+  String get memoryToolRangePresetJava => 'Java';
+
+  @override
+  String get memoryToolRangePresetNative => 'Native';
+
+  @override
+  String get memoryToolRangePresetCode => 'Code';
+
+  @override
+  String get memoryToolRangePresetAll => 'All';
+
+  @override
+  String get memoryToolRangePresetCustom => 'Custom';
+
+  @override
+  String get memoryToolRangeSectionAnonymous => 'Anonymous';
+
+  @override
+  String get memoryToolRangeSectionJava => 'Java';
+
+  @override
+  String get memoryToolRangeSectionJavaHeap => 'Java Heap';
+
+  @override
+  String get memoryToolRangeSectionCAlloc => 'C Alloc';
+
+  @override
+  String get memoryToolRangeSectionCHeap => 'C Heap';
+
+  @override
+  String get memoryToolRangeSectionCData => 'C Data';
+
+  @override
+  String get memoryToolRangeSectionCBss => 'C Bss';
+
+  @override
+  String get memoryToolRangeSectionCodeApp => 'App Code';
+
+  @override
+  String get memoryToolRangeSectionCodeSys => 'System Code';
+
+  @override
+  String get memoryToolRangeSectionStack => 'Stack';
+
+  @override
+  String get memoryToolRangeSectionAshmem => 'Ashmem';
+
+  @override
+  String get memoryToolRangeSectionOther => 'Other';
+
+  @override
+  String get memoryToolRangeSectionBad => 'Bad';
 
   @override
   String get memoryToolActionFirstScan => 'First Scan';
@@ -1908,4 +2030,8 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get memoryToolValidationBytesInvalid =>
       'Invalid byte pattern. Use even-length hex such as 12 34 AB.';
+
+  @override
+  String get memoryToolValidationTypeUnsupported =>
+      'This search type is not wired to the scan core yet.';
 }

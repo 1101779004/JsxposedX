@@ -27,6 +27,7 @@ class MemoryToolSearchDialog extends HookConsumerWidget {
     final sessionStateAsync = ref.watch(getSearchSessionStateProvider);
     final hasMatchingSession = ref.watch(hasMatchingSearchSessionProvider);
     final hasRunningTask = ref.watch(hasRunningSearchTaskProvider);
+    final searchFormNotifier = ref.read(memoryToolSearchFormProvider.notifier);
     final valueController = useTextEditingController(text: searchFormState.value);
 
     useEffect(() {
@@ -83,7 +84,7 @@ class MemoryToolSearchDialog extends HookConsumerWidget {
                 .clamp(0.0, double.infinity)
                 .toDouble();
             final dialogWidthCap = isLandscapeDialog ? 560.0 : 388.0;
-            final dialogHeightCap = isLandscapeDialog ? 360.0 : 460.0;
+            final dialogHeightCap = isLandscapeDialog ? 420.0 : 520.0;
             final dialogWidth = availableWidth < dialogWidthCap
                 ? availableWidth
                 : dialogWidthCap;
@@ -116,11 +117,11 @@ class MemoryToolSearchDialog extends HookConsumerWidget {
                         width: dialogWidth,
                         child: SingleChildScrollView(
                           padding: EdgeInsets.all(14.r),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            if (selectedProcess != null) ...<Widget>[
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              if (selectedProcess != null) ...<Widget>[
                                 MemoryToolSearchSessionCard(
                                   sessionStateAsync: sessionStateAsync,
                                   selectedPid: selectedProcess.pid,
@@ -133,29 +134,24 @@ class MemoryToolSearchDialog extends HookConsumerWidget {
                                 actionState: searchActionState,
                                 hasRunningTask: hasRunningTask,
                                 canRunNextScan: hasMatchingSession,
-                                onValueChanged: ref
-                                    .read(memoryToolSearchFormProvider.notifier)
-                                    .updateValue,
-                                onTypeChanged: ref
-                                    .read(memoryToolSearchFormProvider.notifier)
-                                    .updateType,
-                                onEndianChanged: ref
-                                    .read(memoryToolSearchFormProvider.notifier)
-                                    .updateEndian,
+                                onValueChanged: searchFormNotifier.updateValue,
+                                onValueCategoryChanged:
+                                    searchFormNotifier.updateValueCategory,
+                                onValueTypeOptionChanged:
+                                    searchFormNotifier.updateValueTypeOption,
+                                onRangePresetChanged:
+                                    searchFormNotifier.updateRangePreset,
+                                onCustomRangeSectionToggled:
+                                    searchFormNotifier.toggleCustomRangeSection,
+                                onEndianChanged: searchFormNotifier.updateEndian,
                                 onFirstScan: () => runAndClose(
-                                  ref
-                                      .read(memoryToolSearchFormProvider.notifier)
-                                      .firstScan,
+                                  searchFormNotifier.firstScan,
                                 ),
                                 onNextScan: () => runAndClose(
-                                  ref
-                                      .read(memoryToolSearchFormProvider.notifier)
-                                      .nextScan,
+                                  searchFormNotifier.nextScan,
                                 ),
                                 onReset: () => runAndClose(
-                                  ref
-                                      .read(memoryToolSearchFormProvider.notifier)
-                                      .resetSearchSession,
+                                  searchFormNotifier.resetSearchSession,
                                 ),
                                 taskStatus: MemoryToolSearchTaskFeedback(
                                   taskStateAsync: taskStateAsync,
