@@ -352,6 +352,56 @@ class MemoryToolSearchForm extends _$MemoryToolSearchForm {
       return MemoryToolSearchValidationError.invalidBytes;
     }
 
+    switch (type) {
+      case SearchValueType.i8:
+      case SearchValueType.i16:
+      case SearchValueType.i32:
+      case SearchValueType.i64:
+        return _validateIntegerValue(type: type, rawValue: trimmedValue);
+      case SearchValueType.f32:
+      case SearchValueType.f64:
+        return _validateDecimalValue(trimmedValue);
+      case SearchValueType.bytes:
+        return null;
+    }
+
+    return null;
+  }
+
+  MemoryToolSearchValidationError? _validateIntegerValue({
+    required SearchValueType type,
+    required String rawValue,
+  }) {
+    final parsedValue = BigInt.tryParse(rawValue);
+    if (parsedValue == null) {
+      return MemoryToolSearchValidationError.invalidInteger;
+    }
+
+    final (min, max) = switch (type) {
+      SearchValueType.i8 => (BigInt.from(-128), BigInt.from(127)),
+      SearchValueType.i16 => (BigInt.from(-32768), BigInt.from(32767)),
+      SearchValueType.i32 =>
+        (BigInt.from(-2147483648), BigInt.from(2147483647)),
+      SearchValueType.i64 => (
+        BigInt.parse('-9223372036854775808'),
+        BigInt.parse('9223372036854775807'),
+      ),
+      _ => (BigInt.zero, BigInt.zero),
+    };
+
+    if (parsedValue < min || parsedValue > max) {
+      return MemoryToolSearchValidationError.integerOutOfRange;
+    }
+
+    return null;
+  }
+
+  MemoryToolSearchValidationError? _validateDecimalValue(String rawValue) {
+    final parsedValue = double.tryParse(rawValue);
+    if (parsedValue == null || !parsedValue.isFinite) {
+      return MemoryToolSearchValidationError.invalidDecimal;
+    }
+
     return null;
   }
 

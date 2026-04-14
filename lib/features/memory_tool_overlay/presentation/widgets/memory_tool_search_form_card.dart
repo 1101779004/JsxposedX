@@ -19,16 +19,12 @@ class MemoryToolSearchFormCard extends StatelessWidget {
     required this.state,
     required this.actionState,
     required this.hasRunningTask,
-    required this.canRunNextScan,
     required this.onValueChanged,
     required this.onValueCategoryChanged,
     required this.onValueTypeOptionChanged,
     required this.onRangePresetChanged,
     required this.onCustomRangeSectionToggled,
     required this.onEndianChanged,
-    required this.onFirstScan,
-    required this.onNextScan,
-    required this.onReset,
     this.taskStatus,
   });
 
@@ -36,16 +32,12 @@ class MemoryToolSearchFormCard extends StatelessWidget {
   final MemoryToolSearchState state;
   final AsyncValue<void> actionState;
   final bool hasRunningTask;
-  final bool canRunNextScan;
   final ValueChanged<String> onValueChanged;
   final ValueChanged<MemorySearchValueCategoryEnum> onValueCategoryChanged;
   final ValueChanged<MemorySearchValueTypeOptionEnum> onValueTypeOptionChanged;
   final ValueChanged<MemorySearchRangePresetEnum> onRangePresetChanged;
   final ValueChanged<MemorySearchRangeSectionEnum> onCustomRangeSectionToggled;
   final ValueChanged<bool> onEndianChanged;
-  final Future<void> Function() onFirstScan;
-  final Future<void> Function() onNextScan;
-  final Future<void> Function() onReset;
   final Widget? taskStatus;
 
   @override
@@ -194,44 +186,6 @@ class MemoryToolSearchFormCard extends StatelessWidget {
             ),
           ),
         ],
-        SizedBox(height: 12.r),
-        Row(
-          children: <Widget>[
-            Expanded(
-              child: FilledButton(
-                onPressed: isRunning || !isTypeSupported
-                    ? null
-                    : () async {
-                        await onFirstScan();
-                      },
-                child: Text(context.l10n.memoryToolActionFirstScan),
-              ),
-            ),
-            SizedBox(width: 10.r),
-            Expanded(
-              child: FilledButton.tonal(
-                onPressed: isRunning || !canRunNextScan || !isTypeSupported
-                    ? null
-                    : () async {
-                        await onNextScan();
-                      },
-                child: Text(context.l10n.memoryToolActionNextScan),
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: 10.r),
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton(
-            onPressed: isRunning
-                ? null
-                : () async {
-                    await onReset();
-                  },
-            child: Text(context.l10n.memoryToolActionReset),
-          ),
-        ),
       ],
     );
   }
@@ -245,6 +199,12 @@ class MemoryToolSearchFormCard extends StatelessWidget {
         context.l10n.memoryToolValidationValueRequired,
       MemoryToolSearchValidationError.invalidBytes =>
         context.l10n.memoryToolValidationBytesInvalid,
+      MemoryToolSearchValidationError.invalidInteger =>
+        context.l10n.memoryToolValidationIntegerInvalid,
+      MemoryToolSearchValidationError.integerOutOfRange =>
+        context.l10n.memoryToolValidationIntegerOutOfRange,
+      MemoryToolSearchValidationError.invalidDecimal =>
+        context.l10n.memoryToolValidationDecimalInvalid,
       MemoryToolSearchValidationError.unsupportedType =>
         context.l10n.memoryToolValidationTypeUnsupported,
     };

@@ -1972,6 +1972,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get memoryToolSessionResultCount => 'Results';
 
   @override
+  String get memoryToolSessionSelectedCount => 'Selected';
+
+  @override
+  String get memoryToolSessionPageCount => 'Pages';
+
+  @override
+  String get memoryToolSessionRenderedCount => 'Rendered';
+
+  @override
   String get memoryToolSessionBoundToCurrent => 'Bound to current process';
 
   @override
@@ -2039,6 +2048,18 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get memoryToolValidationBytesInvalid =>
       'Invalid byte pattern. Use even-length hex such as 12 34 AB.';
+
+  @override
+  String get memoryToolValidationIntegerInvalid =>
+      'Integer types only accept whole numbers.';
+
+  @override
+  String get memoryToolValidationIntegerOutOfRange =>
+      'The integer value is outside the supported range for this type.';
+
+  @override
+  String get memoryToolValidationDecimalInvalid =>
+      'Enter a valid decimal number for this type.';
 
   @override
   String get memoryToolValidationTypeUnsupported =>

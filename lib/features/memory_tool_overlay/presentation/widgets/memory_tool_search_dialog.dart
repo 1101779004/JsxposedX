@@ -5,6 +5,7 @@ import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/me
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_search_form_card.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_search_session_card.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_search_task_feedback.dart';
+import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_search_toolbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -29,6 +30,21 @@ class MemoryToolSearchDialog extends HookConsumerWidget {
     final hasRunningTask = ref.watch(hasRunningSearchTaskProvider);
     final searchFormNotifier = ref.read(memoryToolSearchFormProvider.notifier);
     final valueController = useTextEditingController(text: searchFormState.value);
+    final canRunFirstScan =
+        selectedProcess != null &&
+        !searchActionState.isLoading &&
+        !hasRunningTask &&
+        searchFormState.supportsCurrentType;
+    final canRunNextScan =
+        selectedProcess != null &&
+        !searchActionState.isLoading &&
+        !hasRunningTask &&
+        hasMatchingSession &&
+        searchFormState.supportsCurrentType;
+    final canReset =
+        selectedProcess != null &&
+        !searchActionState.isLoading &&
+        !hasRunningTask;
 
     useEffect(() {
       Future.microtask(() {
@@ -121,6 +137,23 @@ class MemoryToolSearchDialog extends HookConsumerWidget {
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: <Widget>[
+                              MemoryToolSearchToolbar(
+                                canRunFirstScan: canRunFirstScan,
+                                canRunNextScan: canRunNextScan,
+                                canReset: canReset,
+                                onFirstScan: () {
+                                  runAndClose(searchFormNotifier.firstScan);
+                                },
+                                onNextScan: () {
+                                  runAndClose(searchFormNotifier.nextScan);
+                                },
+                                onReset: () {
+                                  runAndClose(
+                                    searchFormNotifier.resetSearchSession,
+                                  );
+                                },
+                              ),
+                              SizedBox(height: 12.r),
                               if (selectedProcess != null) ...<Widget>[
                                 MemoryToolSearchSessionCard(
                                   sessionStateAsync: sessionStateAsync,
@@ -133,7 +166,6 @@ class MemoryToolSearchDialog extends HookConsumerWidget {
                                 state: searchFormState,
                                 actionState: searchActionState,
                                 hasRunningTask: hasRunningTask,
-                                canRunNextScan: hasMatchingSession,
                                 onValueChanged: searchFormNotifier.updateValue,
                                 onValueCategoryChanged:
                                     searchFormNotifier.updateValueCategory,
@@ -144,15 +176,6 @@ class MemoryToolSearchDialog extends HookConsumerWidget {
                                 onCustomRangeSectionToggled:
                                     searchFormNotifier.toggleCustomRangeSection,
                                 onEndianChanged: searchFormNotifier.updateEndian,
-                                onFirstScan: () => runAndClose(
-                                  searchFormNotifier.firstScan,
-                                ),
-                                onNextScan: () => runAndClose(
-                                  searchFormNotifier.nextScan,
-                                ),
-                                onReset: () => runAndClose(
-                                  searchFormNotifier.resetSearchSession,
-                                ),
                                 taskStatus: MemoryToolSearchTaskFeedback(
                                   taskStateAsync: taskStateAsync,
                                 ),

@@ -11,6 +11,9 @@ part 'memory_tool_search_state.freezed.dart';
 enum MemoryToolSearchValidationError {
   valueRequired,
   invalidBytes,
+  invalidInteger,
+  integerOutOfRange,
+  invalidDecimal,
   unsupportedType,
 }
 

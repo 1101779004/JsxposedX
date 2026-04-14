@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:JsxposedX/core/extensions/context_extensions.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_search_dialog.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_search_result_card.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_search_task_feedback.dart';
@@ -112,6 +113,9 @@ class MemoryToolSearchTab extends HookConsumerWidget {
         ref.invalidate(hasMatchingSearchSessionProvider);
         ref.invalidate(currentSearchResultsProvider);
       },
+      onOpenSearch: () {
+        isSearchDialogVisible.value = true;
+      },
     );
 
     return LayoutBuilder(
@@ -142,23 +146,6 @@ class MemoryToolSearchTab extends HookConsumerWidget {
         return Stack(
           children: <Widget>[
             Positioned.fill(child: content),
-            Positioned(
-              right: 16.r,
-              bottom: 16.r,
-              child: FilledButton(
-                style: FilledButton.styleFrom(
-                  minimumSize: Size(52.r, 52.r),
-                  padding: EdgeInsets.symmetric(horizontal: 16.r),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(18.r),
-                  ),
-                ),
-                onPressed: () {
-                  isSearchDialogVisible.value = true;
-                },
-                child: Icon(Icons.search_rounded, size: 22.r),
-              ),
-            ),
             if (isSearchDialogVisible.value)
               Positioned.fill(
                 child: MemoryToolSearchDialog(

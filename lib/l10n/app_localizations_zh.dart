@@ -1934,6 +1934,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get memoryToolSessionResultCount => '结果数';
 
   @override
+  String get memoryToolSessionSelectedCount => '选中数';
+
+  @override
+  String get memoryToolSessionPageCount => '分页数';
+
+  @override
+  String get memoryToolSessionRenderedCount => '当前渲染';
+
+  @override
   String get memoryToolSessionBoundToCurrent => '已绑定当前进程';
 
   @override
@@ -1999,6 +2008,15 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get memoryToolValidationBytesInvalid =>
       '字节数组格式不正确，请输入偶数位十六进制，例如 12 34 AB。';
+
+  @override
+  String get memoryToolValidationIntegerInvalid => '整数类型只能输入整数值。';
+
+  @override
+  String get memoryToolValidationIntegerOutOfRange => '整数值超出当前类型可搜索的范围。';
+
+  @override
+  String get memoryToolValidationDecimalInvalid => '小数类型请输入有效的数字。';
 
   @override
   String get memoryToolValidationTypeUnsupported => '当前搜索类型尚未接入扫描内核。';

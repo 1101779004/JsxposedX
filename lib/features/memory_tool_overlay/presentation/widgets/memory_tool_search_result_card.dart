@@ -3,6 +3,7 @@ import 'package:JsxposedX/common/widgets/ref_error.dart';
 import 'package:JsxposedX/core/extensions/context_extensions.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_query_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_tool_search_provider.dart';
+import 'package:JsxposedX/features/memory_tool_overlay/presentation/states/memory_tool_result_selection_state.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_result_badge.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_result_selection_dialog.dart';
 import 'package:JsxposedX/generated/memory_tool.g.dart';
@@ -17,11 +18,13 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
     required this.hasMatchingSession,
     required this.sessionStateAsync,
     required this.onRetry,
+    required this.onOpenSearch,
   });
 
   final bool hasMatchingSession;
   final AsyncValue<SearchSessionState> sessionStateAsync;
   final VoidCallback onRetry;
+  final VoidCallback onOpenSearch;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -44,6 +47,9 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
       data: (state) => state.resultCount,
       orElse: () => displayedResults.length,
     );
+    final pageCount = selectionState.selectionLimit <= 0
+        ? 0
+        : (resultCount / selectionState.selectionLimit).ceil();
     final visibleResults = displayedResults
         .take(selectionState.selectionLimit)
         .toList(growable: false);
@@ -55,143 +61,70 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
       children: <Widget>[
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 2.r),
-          child: !hasMatchingSession
-              ? Center(
-                  child: Text(
-                    context.l10n.noData,
-                    style: context.textTheme.bodyMedium?.copyWith(
-                      color: context.colorScheme.onSurface.withValues(
-                        alpha: 0.66,
+          child: Column(
+            children: <Widget>[
+              _MemoryToolResultSelectionBar(
+                hasVisibleResults: visibleResults.isNotEmpty,
+                onSelectAll: () {
+                  selectionNotifier.selectVisible(visibleResults);
+                },
+                onInvert: () {
+                  selectionNotifier.invertVisible(visibleResults);
+                },
+                onClear: selectionNotifier.clear,
+                onOpenSettings: () {
+                  isSettingsVisible.value = true;
+                },
+                onOpenSearch: onOpenSearch,
+              ),
+              SizedBox(height: 1.r),
+              Expanded(
+                child: !hasMatchingSession
+                    ? _MemoryToolSearchEmptyState(message: context.l10n.noData)
+                    : resultsAsync.when(
+                        data: (_) {
+                          if (visibleResults.isEmpty) {
+                            return _MemoryToolSearchEmptyState(
+                              message: context.l10n.noData,
+                            );
+                          }
+
+                          return _MemoryToolSearchResultList(
+                            listStorageKey: listStorageKey,
+                            results: visibleResults,
+                            selectionState: selectionState,
+                            selectionNotifier: selectionNotifier,
+                            livePreviewsAsync: livePreviewsAsync,
+                          );
+                        },
+                        error: (error, _) => RefError(
+                          onRetry: onRetry,
+                          error: error,
+                        ),
+                        loading: () {
+                          if (visibleResults.isNotEmpty) {
+                            return _MemoryToolSearchResultList(
+                              listStorageKey: listStorageKey,
+                              results: visibleResults,
+                              selectionState: selectionState,
+                              selectionNotifier: selectionNotifier,
+                              livePreviewsAsync: livePreviewsAsync,
+                            );
+                          }
+
+                          return const Loading();
+                        },
                       ),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                )
-              : resultsAsync.when(
-                  data: (_) {
-                    if (visibleResults.isEmpty) {
-                      return Center(
-                        child: Text(
-                          context.l10n.noData,
-                          style: context.textTheme.bodyMedium?.copyWith(
-                            color: context.colorScheme.onSurface.withValues(
-                              alpha: 0.66,
-                            ),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      );
-                    }
-
-                    return Column(
-                      children: <Widget>[
-                        _MemoryToolResultSelectionBar(
-                          onSelectAll: () {
-                            selectionNotifier.selectVisible(visibleResults);
-                          },
-                          onInvert: () {
-                            selectionNotifier.invertVisible(visibleResults);
-                          },
-                          onClear: selectionNotifier.clear,
-                          onOpenSettings: () {
-                            isSettingsVisible.value = true;
-                          },
-                        ),
-                        SizedBox(height: 1.r),
-                        Expanded(
-                          child: ListView.separated(
-                            key: listStorageKey,
-                            padding: EdgeInsets.zero,
-                            itemCount: visibleResults.length,
-                            separatorBuilder: (_, index) => SizedBox(
-                              height: index == visibleResults.length - 1
-                                  ? 6.r
-                                  : 4.r,
-                            ),
-                            itemBuilder: (BuildContext context, int index) {
-                              final result = visibleResults[index];
-                              return _MemoryToolSearchResultTile(
-                                result: result,
-                                displayValue: _resolveDisplayValue(
-                                  result: result,
-                                  livePreviewsAsync: livePreviewsAsync,
-                                ),
-                                isSelected: selectionState.contains(
-                                  result.address,
-                                ),
-                                onToggleSelection: () {
-                                  selectionNotifier.toggle(result);
-                                },
-                                onLongPress: () {
-                                  selectionNotifier.toggle(result);
-                                },
-                              );
-                            },
-                          ),
-                        ),
-                        SizedBox(height: 6.r),
-                        _MemoryToolResultCountText(count: resultCount),
-                      ],
-                    );
-                  },
-                  error: (error, _) => RefError(onRetry: onRetry, error: error),
-                  loading: () {
-                    if (visibleResults.isNotEmpty) {
-                      return Column(
-                        children: <Widget>[
-                          _MemoryToolResultSelectionBar(
-                            onSelectAll: () {
-                              selectionNotifier.selectVisible(visibleResults);
-                            },
-                            onInvert: () {
-                              selectionNotifier.invertVisible(visibleResults);
-                            },
-                            onClear: selectionNotifier.clear,
-                            onOpenSettings: () {
-                              isSettingsVisible.value = true;
-                            },
-                          ),
-                          SizedBox(height: 1.r),
-                          Expanded(
-                            child: ListView.separated(
-                              key: listStorageKey,
-                              padding: EdgeInsets.zero,
-                              itemCount: visibleResults.length,
-                              separatorBuilder: (_, index) => SizedBox(
-                                height: index == visibleResults.length - 1
-                                    ? 6.r
-                                    : 4.r,
-                              ),
-                              itemBuilder: (BuildContext context, int index) {
-                                final result = visibleResults[index];
-                                return _MemoryToolSearchResultTile(
-                                  result: result,
-                                  displayValue: _resolveDisplayValue(
-                                    result: result,
-                                    livePreviewsAsync: livePreviewsAsync,
-                                  ),
-                                  isSelected: selectionState.contains(
-                                    result.address,
-                                  ),
-                                  onToggleSelection: () {
-                                    selectionNotifier.toggle(result);
-                                  },
-                                  onLongPress: () {
-                                    selectionNotifier.toggle(result);
-                                  },
-                                );
-                              },
-                            ),
-                          ),
-                          SizedBox(height: 6.r),
-                          _MemoryToolResultCountText(count: resultCount),
-                        ],
-                      );
-                    }
-
-                    return const Loading();
-                  },
-                ),
+              ),
+              SizedBox(height: 6.r),
+              _MemoryToolResultStatsBar(
+                resultCount: resultCount,
+                selectedCount: selectionState.selectedCount,
+                renderedCount: visibleResults.length,
+                pageCount: pageCount,
+              ),
+            ],
+          ),
         ),
         if (isSettingsVisible.value)
           Positioned.fill(
@@ -211,22 +144,168 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
   }
 }
 
-class _MemoryToolResultCountText extends StatelessWidget {
-  const _MemoryToolResultCountText({required this.count});
+class _MemoryToolSearchEmptyState extends StatelessWidget {
+  const _MemoryToolSearchEmptyState({required this.message});
 
-  final int count;
+  final String message;
 
   @override
   Widget build(BuildContext context) {
+    return Center(
+      child: Text(
+        message,
+        style: context.textTheme.bodyMedium?.copyWith(
+          color: context.colorScheme.onSurface.withValues(alpha: 0.66),
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+class _MemoryToolSearchResultList extends StatelessWidget {
+  const _MemoryToolSearchResultList({
+    required this.listStorageKey,
+    required this.results,
+    required this.selectionState,
+    required this.selectionNotifier,
+    required this.livePreviewsAsync,
+  });
+
+  final PageStorageKey<String> listStorageKey;
+  final List<SearchResult> results;
+  final MemoryToolResultSelectionState selectionState;
+  final MemoryToolResultSelectionController selectionNotifier;
+  final AsyncValue<Map<int, MemoryValuePreview>> livePreviewsAsync;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      key: listStorageKey,
+      padding: EdgeInsets.zero,
+      itemCount: results.length,
+      separatorBuilder: (_, index) => SizedBox(
+        height: index == results.length - 1 ? 6.r : 4.r,
+      ),
+      itemBuilder: (BuildContext context, int index) {
+        final result = results[index];
+        return _MemoryToolSearchResultTile(
+          result: result,
+          displayValue: _resolveDisplayValue(
+            result: result,
+            livePreviewsAsync: livePreviewsAsync,
+          ),
+          isSelected: selectionState.contains(result.address),
+          onToggleSelection: () {
+            selectionNotifier.toggle(result);
+          },
+          onLongPress: () {
+            selectionNotifier.toggle(result);
+          },
+        );
+      },
+    );
+  }
+}
+
+class _MemoryToolResultStatsBar extends StatelessWidget {
+  const _MemoryToolResultStatsBar({
+    required this.resultCount,
+    required this.selectedCount,
+    required this.renderedCount,
+    required this.pageCount,
+  });
+
+  final int resultCount;
+  final int selectedCount;
+  final int renderedCount;
+  final int pageCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final items = <({String label, int value})>[
+      if (resultCount > 0)
+        (label: context.l10n.memoryToolSessionResultCount, value: resultCount),
+      if (selectedCount > 0)
+        (
+          label: context.l10n.memoryToolSessionSelectedCount,
+          value: selectedCount,
+        ),
+      if (pageCount > 0)
+        (label: context.l10n.memoryToolSessionPageCount, value: pageCount),
+      if (renderedCount > 0)
+        (
+          label: context.l10n.memoryToolSessionRenderedCount,
+          value: renderedCount,
+        ),
+    ];
+    if (items.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     return Align(
       alignment: Alignment.centerLeft,
-      child: Text(
-        '${context.l10n.memoryToolSessionResultCount}: $count',
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: context.textTheme.bodySmall?.copyWith(
-          color: context.colorScheme.onSurface.withValues(alpha: 0.64),
-          fontWeight: FontWeight.w600,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: items
+              .map(
+                (item) => Padding(
+                  padding: EdgeInsets.only(right: 6.r),
+                  child: _MemoryToolResultStatChip(
+                    label: item.label,
+                    value: item.value,
+                  ),
+                ),
+              )
+              .toList(growable: false),
+        ),
+      ),
+    );
+  }
+}
+
+class _MemoryToolResultStatChip extends StatelessWidget {
+  const _MemoryToolResultStatChip({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final int value;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: context.colorScheme.surfaceContainerHighest.withValues(
+          alpha: 0.52,
+        ),
+        borderRadius: BorderRadius.circular(999.r),
+        border: Border.all(
+          color: context.colorScheme.outlineVariant.withValues(alpha: 0.34),
+        ),
+      ),
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 10.r, vertical: 4.r),
+        child: RichText(
+          maxLines: 1,
+          text: TextSpan(
+            style: context.textTheme.bodySmall?.copyWith(
+              color: context.colorScheme.onSurface.withValues(alpha: 0.64),
+              fontWeight: FontWeight.w600,
+            ),
+            children: <InlineSpan>[
+              TextSpan(text: '$label '),
+              TextSpan(
+                text: value.toString(),
+                style: context.textTheme.bodySmall?.copyWith(
+                  color: context.colorScheme.primary,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -246,16 +325,20 @@ String _resolveDisplayValue({
 
 class _MemoryToolResultSelectionBar extends StatelessWidget {
   const _MemoryToolResultSelectionBar({
+    required this.hasVisibleResults,
     required this.onSelectAll,
     required this.onInvert,
     required this.onClear,
     required this.onOpenSettings,
+    required this.onOpenSearch,
   });
 
+  final bool hasVisibleResults;
   final VoidCallback onSelectAll;
   final VoidCallback onInvert;
   final VoidCallback onClear;
   final VoidCallback onOpenSettings;
+  final VoidCallback onOpenSearch;
 
   @override
   Widget build(BuildContext context) {
@@ -274,18 +357,23 @@ class _MemoryToolResultSelectionBar extends StatelessWidget {
             _MemoryToolToolbarGroup(
               children: <Widget>[
                 _MemoryToolToolbarAction(
+                  icon: Icons.search_rounded,
+                  onTap: onOpenSearch,
+                ),
+                _MemoryToolToolbarDivider(),
+                _MemoryToolToolbarAction(
                   icon: Icons.done_all_rounded,
-                  onTap: onSelectAll,
+                  onTap: hasVisibleResults ? onSelectAll : null,
                 ),
                 _MemoryToolToolbarDivider(),
                 _MemoryToolToolbarAction(
                   icon: Icons.flip_rounded,
-                  onTap: onInvert,
+                  onTap: hasVisibleResults ? onInvert : null,
                 ),
                 _MemoryToolToolbarDivider(),
                 _MemoryToolToolbarAction(
                   icon: Icons.layers_clear_rounded,
-                  onTap: onClear,
+                  onTap: hasVisibleResults ? onClear : null,
                 ),
                 _MemoryToolToolbarDivider(),
                 _MemoryToolToolbarAction(
@@ -342,7 +430,7 @@ class _MemoryToolToolbarAction extends StatelessWidget {
   const _MemoryToolToolbarAction({required this.icon, required this.onTap});
 
   final IconData icon;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -356,7 +444,9 @@ class _MemoryToolToolbarAction extends StatelessWidget {
           child: Icon(
             icon,
             size: 18.r,
-            color: context.colorScheme.onSurface.withValues(alpha: 0.76),
+            color: context.colorScheme.onSurface.withValues(
+              alpha: onTap == null ? 0.3 : 0.76,
+            ),
           ),
         ),
       ),

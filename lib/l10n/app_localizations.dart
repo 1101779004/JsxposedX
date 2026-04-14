@@ -3824,6 +3824,24 @@ abstract class AppLocalizations {
   /// **'结果数'**
   String get memoryToolSessionResultCount;
 
+  /// No description provided for @memoryToolSessionSelectedCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'选中数'**
+  String get memoryToolSessionSelectedCount;
+
+  /// No description provided for @memoryToolSessionPageCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'分页数'**
+  String get memoryToolSessionPageCount;
+
+  /// No description provided for @memoryToolSessionRenderedCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前渲染'**
+  String get memoryToolSessionRenderedCount;
+
   /// No description provided for @memoryToolSessionBoundToCurrent.
   ///
   /// In zh, this message translates to:
@@ -3955,6 +3973,24 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'字节数组格式不正确，请输入偶数位十六进制，例如 12 34 AB。'**
   String get memoryToolValidationBytesInvalid;
+
+  /// No description provided for @memoryToolValidationIntegerInvalid.
+  ///
+  /// In zh, this message translates to:
+  /// **'整数类型只能输入整数值。'**
+  String get memoryToolValidationIntegerInvalid;
+
+  /// No description provided for @memoryToolValidationIntegerOutOfRange.
+  ///
+  /// In zh, this message translates to:
+  /// **'整数值超出当前类型可搜索的范围。'**
+  String get memoryToolValidationIntegerOutOfRange;
+
+  /// No description provided for @memoryToolValidationDecimalInvalid.
+  ///
+  /// In zh, this message translates to:
+  /// **'小数类型请输入有效的数字。'**
+  String get memoryToolValidationDecimalInvalid;
 
   /// No description provided for @memoryToolValidationTypeUnsupported.
   ///
