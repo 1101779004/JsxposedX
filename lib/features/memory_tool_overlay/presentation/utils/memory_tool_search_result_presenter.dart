@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:JsxposedX/core/extensions/context_extensions.dart';
 import 'package:JsxposedX/generated/memory_tool.g.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +15,54 @@ String resolveMemoryToolSearchResultDisplayValue({
     error: (_, _) => '--',
     loading: () => '...',
   );
+}
+
+String resolveMemoryToolSearchResultValueByType({
+  required SearchValueType type,
+  required Uint8List rawBytes,
+  required String fallbackDisplayValue,
+}) {
+  if (rawBytes.isEmpty) {
+    return fallbackDisplayValue;
+  }
+
+  final byteData = ByteData.sublistView(rawBytes);
+  try {
+    return switch (type) {
+      SearchValueType.i8 => byteData.getInt8(0).toString(),
+      SearchValueType.i16 => rawBytes.length < 2
+          ? fallbackDisplayValue
+          : byteData.getInt16(0, Endian.little).toString(),
+      SearchValueType.i32 => rawBytes.length < 4
+          ? fallbackDisplayValue
+          : byteData.getInt32(0, Endian.little).toString(),
+      SearchValueType.i64 => rawBytes.length < 8
+          ? fallbackDisplayValue
+          : byteData.getInt64(0, Endian.little).toString(),
+      SearchValueType.f32 => rawBytes.length < 4
+          ? fallbackDisplayValue
+          : _formatFloatingValue(byteData.getFloat32(0, Endian.little)),
+      SearchValueType.f64 => rawBytes.length < 8
+          ? fallbackDisplayValue
+          : _formatFloatingValue(byteData.getFloat64(0, Endian.little)),
+      SearchValueType.bytes => _formatBytesDisplayValue(rawBytes),
+    };
+  } catch (_) {
+    return fallbackDisplayValue;
+  }
+}
+
+int resolveMemoryToolReadLengthForType({
+  required SearchValueType type,
+  required int bytesLength,
+}) {
+  return switch (type) {
+    SearchValueType.i8 => 1,
+    SearchValueType.i16 => 2,
+    SearchValueType.i32 || SearchValueType.f32 => 4,
+    SearchValueType.i64 || SearchValueType.f64 => 8,
+    SearchValueType.bytes => bytesLength < 1 ? 1 : bytesLength,
+  };
 }
 
 String formatMemoryToolSearchResultAddress(int value) {
@@ -113,4 +164,80 @@ bool _looksLikeHexByteSequence(String value) {
     return false;
   }
   return RegExp(r'^[0-9A-F]{2}( [0-9A-F]{2})*$').hasMatch(normalized);
+}
+
+String _formatFloatingValue(double value) {
+  final normalized = value.toStringAsPrecision(12);
+  if (normalized.contains(RegExp(r'[eE]'))) {
+    final match = RegExp(r'^([^eE]+)([eE].+)$').firstMatch(normalized);
+    if (match == null) {
+      return normalized;
+    }
+    final mantissa = match
+        .group(1)!
+        .replaceFirst(RegExp(r'0+$'), '')
+        .replaceFirst(RegExp(r'\.$'), '');
+    return '$mantissa${match.group(2)!}';
+  }
+
+  return normalized
+      .replaceFirst(RegExp(r'0+$'), '')
+      .replaceFirst(RegExp(r'\.$'), '');
+}
+
+String _formatBytesDisplayValue(Uint8List rawBytes) {
+  final utf8Value = _tryDecodeUtf8(rawBytes);
+  if (utf8Value != null && utf8Value.isNotEmpty) {
+    return utf8Value;
+  }
+
+  final utf16Value = _tryDecodeUtf16Le(rawBytes);
+  if (utf16Value != null && utf16Value.isNotEmpty) {
+    return utf16Value;
+  }
+
+  return rawBytes
+      .map((byte) => byte.toRadixString(16).padLeft(2, '0').toUpperCase())
+      .join(' ');
+}
+
+String? _tryDecodeUtf8(Uint8List rawBytes) {
+  try {
+    final decoded = utf8.decode(rawBytes, allowMalformed: false);
+    return _isReadableText(decoded) ? decoded : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+String? _tryDecodeUtf16Le(Uint8List rawBytes) {
+  if (rawBytes.length < 2 || rawBytes.length.isOdd) {
+    return null;
+  }
+
+  final codeUnits = <int>[];
+  for (int index = 0; index < rawBytes.length; index += 2) {
+    codeUnits.add(rawBytes[index] | (rawBytes[index + 1] << 8));
+  }
+
+  final decoded = String.fromCharCodes(codeUnits);
+  return _isReadableText(decoded) ? decoded : null;
+}
+
+bool _isReadableText(String value) {
+  final trimmed = value.trim();
+  if (trimmed.isEmpty) {
+    return false;
+  }
+
+  for (final codePoint in trimmed.runes) {
+    if (codePoint == 0) {
+      return false;
+    }
+    final isControl = codePoint < 32 && codePoint != 9 && codePoint != 10 && codePoint != 13;
+    if (isControl) {
+      return false;
+    }
+  }
+  return true;
 }

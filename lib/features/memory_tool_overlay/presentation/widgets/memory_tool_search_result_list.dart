@@ -76,6 +76,7 @@ class MemoryToolSearchResultList extends HookWidget {
             child: MemoryToolSearchResultDialog(
               result: dialog.result,
               displayValue: dialog.displayValue,
+              livePreviewsAsync: livePreviewsAsync,
               onClose: () {
                 activeResultDialog.value = null;
               },
