@@ -88,85 +88,68 @@ class MemoryToolSearchDialog extends HookConsumerWidget {
     return OverlayPanelDialog(
       onClose: onClose,
       childBuilder: (context, viewport) {
-        final isLandscapeDialog = viewport.isLandscape;
-        final availableWidth = viewport.availableWidth;
-        final availableHeight = viewport.availableHeight;
-        final dialogWidthCap = isLandscapeDialog ? 560.0 : 388.0;
-        final dialogHeightCap = isLandscapeDialog ? 420.0 : 520.0;
-        final dialogWidth = availableWidth < dialogWidthCap
-            ? availableWidth
-            : dialogWidthCap;
-        final dialogMaxHeight = isLandscapeDialog
-            ? availableHeight * 0.9
-            : (availableHeight < dialogHeightCap
-                  ? availableHeight
-                  : dialogHeightCap);
+        final layout = viewport.resolveLayout(
+          maxWidthPortrait: 388.0,
+          maxWidthLandscape: 560.0,
+          maxHeightPortrait: 520.0,
+          maxHeightLandscape: 420.0,
+        );
 
-        if (dialogWidth <= 0 || dialogMaxHeight <= 0) {
+        if (layout == null) {
           return const SizedBox.shrink();
         }
 
-        return Material(
-          color: context.colorScheme.surface,
-          borderRadius: BorderRadius.circular(18.r),
-          clipBehavior: Clip.antiAlias,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: dialogWidth,
-              maxHeight: dialogMaxHeight,
-            ),
-            child: SizedBox(
-              width: dialogWidth,
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(14.r),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    MemoryToolSearchToolbar(
-                      canRunFirstScan: canRunFirstScan,
-                      canRunNextScan: canRunNextScan,
-                      canReset: canReset,
-                      onFirstScan: () {
-                        runAndClose(searchFormNotifier.firstScan);
-                      },
-                      onNextScan: () {
-                        runAndClose(searchFormNotifier.nextScan);
-                      },
-                      onReset: () {
-                        runAndClose(searchFormNotifier.resetSearchSession);
-                      },
-                    ),
-                    SizedBox(height: 12.r),
-                    if (selectedProcess != null) ...<Widget>[
-                      MemoryToolSearchSessionCard(
-                        sessionStateAsync: sessionStateAsync,
-                        selectedPid: selectedProcess.pid,
-                      ),
-                      SizedBox(height: 12.r),
-                    ],
-                    MemoryToolSearchFormCard(
-                      valueController: valueController,
-                      state: searchFormState,
-                      actionState: searchActionState,
-                      hasRunningTask: hasRunningTask,
-                      onValueChanged: searchFormNotifier.updateValue,
-                      onValueCategoryChanged:
-                          searchFormNotifier.updateValueCategory,
-                      onValueTypeOptionChanged:
-                          searchFormNotifier.updateValueTypeOption,
-                      onRangePresetChanged:
-                          searchFormNotifier.updateRangePreset,
-                      onCustomRangeSectionToggled:
-                          searchFormNotifier.toggleCustomRangeSection,
-                      onEndianChanged: searchFormNotifier.updateEndian,
-                      taskStatus: MemoryToolSearchTaskFeedback(
-                        taskStateAsync: taskStateAsync,
-                      ),
-                    ),
-                  ],
+        return OverlayPanelCard(
+          layout: layout,
+          borderRadius: 18.r,
+          child: SingleChildScrollView(
+            padding: EdgeInsets.all(14.r),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                MemoryToolSearchToolbar(
+                  canRunFirstScan: canRunFirstScan,
+                  canRunNextScan: canRunNextScan,
+                  canReset: canReset,
+                  onFirstScan: () {
+                    runAndClose(searchFormNotifier.firstScan);
+                  },
+                  onNextScan: () {
+                    runAndClose(searchFormNotifier.nextScan);
+                  },
+                  onReset: () {
+                    runAndClose(searchFormNotifier.resetSearchSession);
+                  },
                 ),
-              ),
+                SizedBox(height: 12.r),
+                if (selectedProcess != null) ...<Widget>[
+                  MemoryToolSearchSessionCard(
+                    sessionStateAsync: sessionStateAsync,
+                    selectedPid: selectedProcess.pid,
+                  ),
+                  SizedBox(height: 12.r),
+                ],
+                MemoryToolSearchFormCard(
+                  valueController: valueController,
+                  state: searchFormState,
+                  actionState: searchActionState,
+                  hasRunningTask: hasRunningTask,
+                  onValueChanged: searchFormNotifier.updateValue,
+                  onValueCategoryChanged:
+                      searchFormNotifier.updateValueCategory,
+                  onValueTypeOptionChanged:
+                      searchFormNotifier.updateValueTypeOption,
+                  onRangePresetChanged:
+                      searchFormNotifier.updateRangePreset,
+                  onCustomRangeSectionToggled:
+                      searchFormNotifier.toggleCustomRangeSection,
+                  onEndianChanged: searchFormNotifier.updateEndian,
+                  taskStatus: MemoryToolSearchTaskFeedback(
+                    taskStateAsync: taskStateAsync,
+                  ),
+                ),
+              ],
             ),
           ),
         );

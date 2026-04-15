@@ -13,6 +13,7 @@ class MemoryToolSearchResultTile extends StatelessWidget {
     required this.isSelected,
     required this.onToggleSelection,
     this.onTap,
+    this.onLongProcess,
   });
 
   final SearchResult result;
@@ -20,6 +21,7 @@ class MemoryToolSearchResultTile extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onToggleSelection;
   final VoidCallback? onTap;
+  final VoidCallback? onLongProcess;
 
   @override
   Widget build(BuildContext context) {
@@ -27,6 +29,7 @@ class MemoryToolSearchResultTile extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
+        onLongPress: onLongProcess,
         borderRadius: BorderRadius.circular(14.r),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 160),

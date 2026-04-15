@@ -16,70 +16,53 @@ class MemoryToolProcessTerminatedDialog extends StatelessWidget {
     return OverlayPanelDialog(
       barrierDismissible: false,
       childBuilder: (context, viewport) {
-        final isLandscapeDialog = viewport.isLandscape;
-        final availableWidth = viewport.availableWidth;
-        final availableHeight = viewport.availableHeight;
-        final dialogWidthCap = isLandscapeDialog ? 520.0 : 372.0;
-        final dialogHeightCap = isLandscapeDialog ? 248.0 : 280.0;
-        final dialogWidth = availableWidth < dialogWidthCap
-            ? availableWidth
-            : dialogWidthCap;
-        final dialogMaxHeight = isLandscapeDialog
-            ? availableHeight * 0.9
-            : (availableHeight < dialogHeightCap
-                  ? availableHeight
-                  : dialogHeightCap);
+        final layout = viewport.resolveLayout(
+          maxWidthPortrait: 372.0,
+          maxWidthLandscape: 520.0,
+          maxHeightPortrait: 280.0,
+          maxHeightLandscape: 248.0,
+        );
 
-        if (dialogWidth <= 0 || dialogMaxHeight <= 0) {
+        if (layout == null) {
           return const SizedBox.shrink();
         }
 
-        return Material(
-          color: context.colorScheme.surface,
-          borderRadius: BorderRadius.circular(18.r),
-          clipBehavior: Clip.antiAlias,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: dialogWidth,
-              maxHeight: dialogMaxHeight,
-            ),
-            child: SizedBox(
-              width: dialogWidth,
-              child: Padding(
-                padding: EdgeInsets.all(16.r),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      context.l10n.memoryToolProcessTerminatedTitle,
-                      style: context.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    SizedBox(height: 10.r),
-                    Text(
-                      context.l10n.memoryToolProcessTerminatedDescription,
-                      style: context.textTheme.bodyMedium?.copyWith(
-                        color: context.colorScheme.onSurface.withValues(
-                          alpha: 0.74,
-                        ),
-                        height: 1.45,
-                      ),
-                    ),
-                    SizedBox(height: 16.r),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: FilledButton(
-                        onPressed: onConfirm,
-                        child: Text(
-                          context.l10n.memoryToolProcessTerminatedAction,
-                        ),
-                      ),
-                    ),
-                  ],
+        return OverlayPanelCard(
+          layout: layout,
+          borderRadius: 18.r,
+          child: Padding(
+            padding: EdgeInsets.all(16.r),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  context.l10n.memoryToolProcessTerminatedTitle,
+                  style: context.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
-              ),
+                SizedBox(height: 10.r),
+                Text(
+                  context.l10n.memoryToolProcessTerminatedDescription,
+                  style: context.textTheme.bodyMedium?.copyWith(
+                    color: context.colorScheme.onSurface.withValues(
+                      alpha: 0.74,
+                    ),
+                    height: 1.45,
+                  ),
+                ),
+                SizedBox(height: 16.r),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: FilledButton(
+                    onPressed: onConfirm,
+                    child: Text(
+                      context.l10n.memoryToolProcessTerminatedAction,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         );

@@ -13,12 +13,154 @@ class OverlayPanelViewport {
 
   double get availableHeight =>
       constraints.maxHeight.clamp(0.0, double.infinity).toDouble();
+
+  OverlayPanelLayout? resolveLayout({
+    required double maxWidthPortrait,
+    required double maxWidthLandscape,
+    required double maxHeightPortrait,
+    required double maxHeightLandscape,
+    double landscapeHeightFactor = 0.9,
+  }) {
+    final dialogWidthCap = isLandscape ? maxWidthLandscape : maxWidthPortrait;
+    final dialogHeightCap = isLandscape
+        ? maxHeightLandscape
+        : maxHeightPortrait;
+    final width = availableWidth < dialogWidthCap
+        ? availableWidth
+        : dialogWidthCap;
+    final maxHeight = isLandscape
+        ? availableHeight * landscapeHeightFactor
+        : (availableHeight < dialogHeightCap
+              ? availableHeight
+              : dialogHeightCap);
+
+    if (width <= 0 || maxHeight <= 0) {
+      return null;
+    }
+
+    return OverlayPanelLayout(
+      width: width,
+      maxHeight: maxHeight,
+    );
+  }
+
+  OverlayPanelScaledLayout? resolveScaledLayout({
+    required double maxWidthPortrait,
+    required double maxWidthLandscape,
+    required double maxHeightPortrait,
+    required double maxHeightLandscape,
+    required Size portraitBaseSize,
+    required Size landscapeBaseSize,
+    double landscapeHeightFactor = 0.9,
+    double minScalePortrait = 0.5,
+    double minScaleLandscape = 0.66,
+    double maxScale = 1.0,
+  }) {
+    final layout = resolveLayout(
+      maxWidthPortrait: maxWidthPortrait,
+      maxWidthLandscape: maxWidthLandscape,
+      maxHeightPortrait: maxHeightPortrait,
+      maxHeightLandscape: maxHeightLandscape,
+      landscapeHeightFactor: landscapeHeightFactor,
+    );
+
+    if (layout == null) {
+      return null;
+    }
+
+    final baseSize = isLandscape ? landscapeBaseSize : portraitBaseSize;
+    final scale = (layout.width / baseSize.width < layout.maxHeight / baseSize.height
+            ? layout.width / baseSize.width
+            : layout.maxHeight / baseSize.height)
+        .clamp(isLandscape ? minScaleLandscape : minScalePortrait, maxScale)
+        .toDouble();
+
+    return OverlayPanelScaledLayout(
+      layout: layout,
+      scale: scale,
+    );
+  }
 }
 
 typedef OverlayPanelDialogBuilder = Widget Function(
   BuildContext context,
   OverlayPanelViewport viewport,
 );
+
+class OverlayPanelLayout {
+  const OverlayPanelLayout({
+    required this.width,
+    required this.maxHeight,
+  });
+
+  final double width;
+  final double maxHeight;
+}
+
+class OverlayPanelScaledLayout {
+  const OverlayPanelScaledLayout({
+    required this.layout,
+    required this.scale,
+  });
+
+  final OverlayPanelLayout layout;
+  final double scale;
+}
+
+class OverlayPanelCard extends StatelessWidget {
+  const OverlayPanelCard({
+    super.key,
+    required this.layout,
+    required this.child,
+    this.color,
+    this.borderRadius = 18.0,
+    this.clipBehavior = Clip.antiAlias,
+    this.height,
+    this.minWidth,
+    this.maxWidth,
+  });
+
+  final OverlayPanelLayout layout;
+  final Widget child;
+  final Color? color;
+  final double borderRadius;
+  final Clip clipBehavior;
+  final double? height;
+  final double? minWidth;
+  final double? maxWidth;
+
+  @override
+  Widget build(BuildContext context) {
+    final resolvedWidth = maxWidth == null
+        ? layout.width
+        : layout.width < maxWidth!
+        ? layout.width
+        : maxWidth!;
+    final resolvedMinWidth = minWidth == null
+        ? 0.0
+        : minWidth! < resolvedWidth
+        ? minWidth!
+        : resolvedWidth;
+
+    return Material(
+      color: color ?? Theme.of(context).colorScheme.surface,
+      borderRadius: BorderRadius.circular(borderRadius),
+      clipBehavior: clipBehavior,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          minWidth: resolvedMinWidth,
+          maxWidth: resolvedWidth,
+          maxHeight: layout.maxHeight,
+        ),
+        child: SizedBox(
+          width: resolvedWidth,
+          height: height,
+          child: child,
+        ),
+      ),
+    );
+  }
+}
 
 class OverlayPanelDialog extends StatelessWidget {
   const OverlayPanelDialog({

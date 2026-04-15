@@ -43,6 +43,7 @@ class MemoryToolSearchResultList extends StatelessWidget {
           onToggleSelection: () {
             selectionNotifier.toggle(result);
           },
+          onTap: (){},
         );
       },
     );

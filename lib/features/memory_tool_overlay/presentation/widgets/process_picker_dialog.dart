@@ -30,29 +30,23 @@ class MemoryToolProcessPickerDialog extends HookConsumerWidget {
       onClose: onClose,
       childBuilder: (context, viewport) {
         final isLandscapeDialog = viewport.isLandscape;
-        const portraitBaseSize = Size(340, 420);
-        const landscapeBaseSize = Size(520, 236);
-        final availableWidth = viewport.availableWidth;
-        final availableHeight = viewport.availableHeight;
-        final dialogWidthCap = isLandscapeDialog ? 520.0 : 360.0;
-        final dialogHeightCap = isLandscapeDialog ? 280.0 : 560.0;
-        final dialogWidth = availableWidth < dialogWidthCap
-            ? availableWidth
-            : dialogWidthCap;
-        final dialogHeight = isLandscapeDialog
-            ? availableHeight * 0.9
-            : (availableHeight < dialogHeightCap
-                  ? availableHeight
-                  : dialogHeightCap);
-        final baseSize = isLandscapeDialog
-            ? landscapeBaseSize
-            : portraitBaseSize;
-        final contentScale = (dialogWidth / baseSize.width <
-                    dialogHeight / baseSize.height
-                ? dialogWidth / baseSize.width
-                : dialogHeight / baseSize.height)
-            .clamp(isLandscapeDialog ? 0.66 : 0.5, 1.0)
-            .toDouble();
+        final scaledLayout = viewport.resolveScaledLayout(
+          maxWidthPortrait: 360.0,
+          maxWidthLandscape: 520.0,
+          maxHeightPortrait: 560.0,
+          maxHeightLandscape: 280.0,
+          portraitBaseSize: const Size(340, 420),
+          landscapeBaseSize: const Size(520, 236),
+        );
+
+        if (scaledLayout == null) {
+          return const SizedBox.shrink();
+        }
+
+        final layout = scaledLayout.layout;
+        final dialogWidth = layout.width;
+        final dialogHeight = layout.maxHeight;
+        final contentScale = scaledLayout.scale;
         final titleFontSize =
             (isLandscapeDialog ? 16.0 : 18.0) * contentScale;
         final actionFontSize =
@@ -69,96 +63,88 @@ class MemoryToolProcessPickerDialog extends HookConsumerWidget {
             ? (0.92 * contentScale).clamp(0.64, 0.94).toDouble()
             : (0.94 * contentScale).clamp(0.56, 1.0).toDouble();
 
-        if (dialogWidth <= 0 || dialogHeight <= 0) {
-          return const SizedBox.shrink();
-        }
-
-        return Material(
-          color: context.colorScheme.surface,
-          borderRadius: BorderRadius.circular(18.0 * contentScale),
-          clipBehavior: Clip.antiAlias,
-          child: SizedBox(
-            width: dialogWidth,
-            height: dialogHeight,
-            child: Column(
-              children: [
-                Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: headerHorizontalPadding,
-                    vertical: headerVerticalPadding,
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          context.l10n.selectApp,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: titleFontSize,
-                            fontWeight: FontWeight.w700,
-                            height: 1.0,
-                          ),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: onClose,
-                        style: TextButton.styleFrom(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 6.0 * contentScale,
-                            vertical: 2.0 * contentScale,
-                          ),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          visualDensity: VisualDensity.compact,
-                        ),
-                        child: Text(
-                          context.l10n.close,
-                          style: TextStyle(fontSize: actionFontSize),
-                        ),
-                      ),
-                    ],
-                  ),
+        return OverlayPanelCard(
+          layout: layout,
+          height: dialogHeight,
+          borderRadius: 18.0 * contentScale,
+          child: Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: headerHorizontalPadding,
+                  vertical: headerVerticalPadding,
                 ),
-                Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.all(listPadding),
-                    child: processListAsync.when(
-                      data: (processes) {
-                        if (processes.isEmpty) {
-                          return Center(
-                            child: Text(
-                              context.l10n.noData,
-                              style: TextStyle(
-                                color: context.colorScheme.onSurface.withValues(
-                                  alpha: 0.6,
-                                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        context.l10n.selectApp,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: titleFontSize,
+                          fontWeight: FontWeight.w700,
+                          height: 1.0,
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: onClose,
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 6.0 * contentScale,
+                          vertical: 2.0 * contentScale,
+                        ),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        visualDensity: VisualDensity.compact,
+                      ),
+                      child: Text(
+                        context.l10n.close,
+                        style: TextStyle(fontSize: actionFontSize),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.all(listPadding),
+                  child: processListAsync.when(
+                    data: (processes) {
+                      if (processes.isEmpty) {
+                        return Center(
+                          child: Text(
+                            context.l10n.noData,
+                            style: TextStyle(
+                              color: context.colorScheme.onSurface.withValues(
+                                alpha: 0.6,
                               ),
                             ),
-                          );
-                        }
-
-                        return ListView.separated(
-                          padding: EdgeInsets.zero,
-                          itemCount: processes.length,
-                          separatorBuilder: (_, _) =>
-                              SizedBox(height: separatorHeight),
-                          itemBuilder: (context, index) {
-                            return ProcessInfoTile(
-                              process: processes[index],
-                              scale: tileScale,
-                              onTap: () => onSelected(processes[index]),
-                            );
-                          },
+                          ),
                         );
-                      },
-                      error: (error, stack) => RefError(onRetry: onRetry),
-                      loading: () => const Loading(),
-                    ),
+                      }
+
+                      return ListView.separated(
+                        padding: EdgeInsets.zero,
+                        itemCount: processes.length,
+                        separatorBuilder: (_, _) =>
+                            SizedBox(height: separatorHeight),
+                        itemBuilder: (context, index) {
+                          return ProcessInfoTile(
+                            process: processes[index],
+                            scale: tileScale,
+                            onTap: () => onSelected(processes[index]),
+                          );
+                        },
+                      );
+                    },
+                    error: (error, stack) => RefError(onRetry: onRetry),
+                    loading: () => const Loading(),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         );
       },
