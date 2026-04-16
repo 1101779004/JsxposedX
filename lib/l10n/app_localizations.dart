@@ -3338,6 +3338,12 @@ abstract class AppLocalizations {
   /// **'修改'**
   String get memoryToolTabEdit;
 
+  /// No description provided for @memoryToolTabSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂存'**
+  String get memoryToolTabSaved;
+
   /// No description provided for @memoryToolTabWatch.
   ///
   /// In zh, this message translates to:
@@ -4022,6 +4028,12 @@ abstract class AppLocalizations {
   /// **'上次值'**
   String get memoryToolResultPreviousValue;
 
+  /// No description provided for @memoryToolFrozenBadge.
+  ///
+  /// In zh, this message translates to:
+  /// **'冻结'**
+  String get memoryToolFrozenBadge;
+
   /// No description provided for @memoryToolResultDetailTitle.
   ///
   /// In zh, this message translates to:
@@ -4100,6 +4112,24 @@ abstract class AppLocalizations {
   /// **'为后续批量写入和筛选后的编辑预留入口。'**
   String get memoryToolResultActionBatchEditHint;
 
+  /// No description provided for @memoryToolResultActionSaveToSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存到暂存区'**
+  String get memoryToolResultActionSaveToSaved;
+
+  /// No description provided for @memoryToolResultActionSaveToSavedHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'把当前结果加入暂存区，便于后续集中编辑与冻结。'**
+  String get memoryToolResultActionSaveToSavedHint;
+
+  /// No description provided for @memoryToolSavedToSavedMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'已保存 {count} 项到暂存区'**
+  String memoryToolSavedToSavedMessage(Object count);
+
   /// No description provided for @memoryToolResultActionAddWatch.
   ///
   /// In zh, this message translates to:
@@ -4123,6 +4153,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'为后续冻结和保持数值稳定预留入口。'**
   String get memoryToolResultActionFreezeHint;
+
+  /// No description provided for @memoryToolSavedEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无暂存数据'**
+  String get memoryToolSavedEmpty;
 
   /// No description provided for @memoryToolResultCalculatorTitle.
   ///

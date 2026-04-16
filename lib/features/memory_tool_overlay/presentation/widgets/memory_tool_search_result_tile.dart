@@ -11,6 +11,7 @@ class MemoryToolSearchResultTile extends StatelessWidget {
     required this.result,
     required this.displayValue,
     this.previousDisplayValue,
+    this.isFrozen = false,
     required this.isSelected,
     required this.onToggleSelection,
     required this.onDeleteRecord,
@@ -21,6 +22,7 @@ class MemoryToolSearchResultTile extends StatelessWidget {
   final SearchResult result;
   final String displayValue;
   final String? previousDisplayValue;
+  final bool isFrozen;
   final bool isSelected;
   final VoidCallback onToggleSelection;
   final VoidCallback onDeleteRecord;
@@ -119,19 +121,35 @@ class MemoryToolSearchResultTile extends StatelessWidget {
                                 ),
                               ],
                               SizedBox(height: 2.r),
-                              MemoryToolResultBadge(
-                                label: mapMemoryToolSearchResultTypeLabel(
-                                  type: result.type,
-                                  displayValue: displayValue,
-                                ),
-                                backgroundColor:
-                                    mapMemoryToolSearchResultTypeBadgeBackground(
-                                      result.type,
+                              Wrap(
+                                spacing: 6.r,
+                                runSpacing: 6.r,
+                                children: <Widget>[
+                                  MemoryToolResultBadge(
+                                    label: mapMemoryToolSearchResultTypeLabel(
+                                      type: result.type,
+                                      displayValue: displayValue,
                                     ),
-                                foregroundColor:
-                                    mapMemoryToolSearchResultTypeBadgeForeground(
-                                      result.type,
+                                    backgroundColor:
+                                        mapMemoryToolSearchResultTypeBadgeBackground(
+                                          result.type,
+                                        ),
+                                    foregroundColor:
+                                        mapMemoryToolSearchResultTypeBadgeForeground(
+                                          result.type,
+                                        ),
+                                  ),
+                                  if (isFrozen)
+                                    MemoryToolResultBadge(
+                                      label: context.l10n.memoryToolFrozenBadge,
+                                      backgroundColor: context
+                                          .colorScheme
+                                          .errorContainer
+                                          .withValues(alpha: 0.9),
+                                      foregroundColor:
+                                          context.colorScheme.onErrorContainer,
                                     ),
+                                ],
                               ),
                             ],
                           ),

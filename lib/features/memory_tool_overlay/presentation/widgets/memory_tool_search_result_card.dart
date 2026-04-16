@@ -1,13 +1,15 @@
+import 'package:JsxposedX/common/pages/toast.dart';
 import 'package:JsxposedX/common/widgets/loading.dart';
 import 'package:JsxposedX/common/widgets/ref_error.dart';
 import 'package:JsxposedX/core/extensions/context_extensions.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_action_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_query_provider.dart';
-import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_batch_edit_dialog.dart';
+import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_tool_saved_items_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_tool_search_provider.dart';
+import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_batch_edit_dialog.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_result_calculator_dialog.dart';
-import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_result_selection_dialog.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_result_selection_bar.dart';
+import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_result_selection_dialog.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_result_stats_bar.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_search_result_list.dart';
 import 'package:JsxposedX/generated/memory_tool.g.dart';
@@ -36,15 +38,15 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
     final selectionNotifier = ref.read(
       memoryToolResultSelectionProvider.notifier,
     );
-    final livePreviewsAsync = ref.watch(
-      currentSearchResultLivePreviewsProvider,
-    );
+    final livePreviewsAsync = ref.watch(currentSearchResultLivePreviewsProvider);
     final valueHistoryState = ref.watch(memoryValueHistoryProvider);
     final removedResultState = ref.watch(memoryToolRemovedResultProvider);
     final removedResultNotifier = ref.read(
       memoryToolRemovedResultProvider.notifier,
     );
+    final savedItemsNotifier = ref.read(memoryToolSavedItemsProvider.notifier);
     final selectedPid = ref.watch(memoryToolSelectedProcessProvider)?.pid;
+    final frozenValuesAsync = ref.watch(currentFrozenMemoryValuesProvider);
     final processPausedAsync = selectedPid == null
         ? const AsyncValue.data(false)
         : ref.watch(processPausedProvider(pid: selectedPid));
@@ -89,6 +91,40 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
     final listStorageKey = PageStorageKey<String>(
       'memory_tool_search_results_${selectedPid ?? 0}',
     );
+    final frozenAddresses = <int>{
+      for (final value in frozenValuesAsync.asData?.value ?? const <FrozenMemoryValue>[])
+        if (selectedPid != null && value.pid == selectedPid) value.address,
+    };
+
+    Future<void> showSavedToast(int count) async {
+      await ToastOverlayMessage.show(
+        context.l10n.memoryToolSavedToSavedMessage(count),
+        duration: const Duration(milliseconds: 1200),
+      );
+    }
+
+    Future<void> saveResultsToSaved(
+      Iterable<SearchResult> results, {
+      required Map<int, MemoryValuePreview> previewsByAddress,
+      required Set<int> frozenResultAddresses,
+    }) async {
+      if (selectedPid == null) {
+        return;
+      }
+
+      final resultList = results.toList(growable: false);
+      if (resultList.isEmpty) {
+        return;
+      }
+
+      savedItemsNotifier.saveMany(
+        pid: selectedPid,
+        results: resultList,
+        previewsByAddress: previewsByAddress,
+        frozenAddresses: frozenResultAddresses,
+      );
+      await showSavedToast(resultList.length);
+    }
 
     return Stack(
       children: <Widget>[
@@ -97,77 +133,136 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
           child: Column(
             children: <Widget>[
               MemoryToolResultSelectionBar(
-                hasProcess: selectedPid != null,
-                isProcessPaused: processPausedAsync.asData?.value ?? false,
-                isProcessPauseLoading:
-                    processControlState.isLoading ||
-                    processPausedAsync.isLoading,
-                hasVisibleResults: visibleResults.isNotEmpty,
-                hasSelection: selectedResults.isNotEmpty,
-                canOpenCalculator: selectedResults.length >= 2,
-                canRestorePrevious: canRestorePrevious,
-                onToggleProcessPaused: () async {
-                  if (selectedPid == null) {
-                    return;
-                  }
-
-                  try {
-                    final isPaused = processPausedAsync.asData?.value ?? false;
-                    await ref
-                        .read(memoryProcessControlActionProvider.notifier)
-                        .setProcessPaused(pid: selectedPid, paused: !isPaused);
-                  } catch (error) {
-                    if (!context.mounted) {
-                      return;
-                    }
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text(error.toString())));
-                  }
-                },
-                onSelectAll: () {
-                  selectionNotifier.selectVisible(visibleResults);
-                },
-                onInvert: () {
-                  selectionNotifier.invertVisible(visibleResults);
-                },
-                onClear: selectionNotifier.clear,
-                onDeleteSelected: () {
-                  removedResultNotifier.removeMany(
-                    selectionState.selectedAddresses,
-                  );
-                  selectionNotifier.clear();
-                },
-                onOpenCalculator: () {
-                  isCalculatorVisible.value = true;
-                },
-                onOpenBatchEdit: () {
-                  isBatchEditVisible.value = true;
-                },
-                onRestorePrevious: () async {
-                  try {
-                    final sessionState = await ref.read(
-                      getSearchSessionStateProvider.future,
-                    );
-                    await ref
-                        .read(memoryValueActionProvider.notifier)
-                        .restorePreviousValues(
-                          addresses: selectionState.selectedAddresses,
-                          littleEndian: sessionState.littleEndian,
-                        );
-                  } catch (error) {
-                    if (!context.mounted) {
-                      return;
-                    }
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text(error.toString())));
-                  }
-                },
-                onOpenSettings: () {
-                  isSettingsVisible.value = true;
-                },
-                onOpenSearch: onOpenSearch,
+                actions: <MemoryToolResultSelectionActionData>[
+                  MemoryToolResultSelectionActionData(
+                    icon: Icons.search_rounded,
+                    onTap: onOpenSearch,
+                  ),
+                  MemoryToolResultSelectionActionData(
+                    icon: processPausedAsync.asData?.value ?? false
+                        ? Icons.play_arrow_rounded
+                        : Icons.pause_rounded,
+                    onTap:
+                        selectedPid == null ||
+                            processControlState.isLoading ||
+                            processPausedAsync.isLoading
+                        ? null
+                        : () async {
+                            try {
+                              final isPaused =
+                                  processPausedAsync.asData?.value ?? false;
+                              await ref
+                                  .read(
+                                    memoryProcessControlActionProvider.notifier,
+                                  )
+                                  .setProcessPaused(
+                                    pid: selectedPid,
+                                    paused: !isPaused,
+                                  );
+                            } catch (error) {
+                              if (!context.mounted) {
+                                return;
+                              }
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(error.toString())),
+                              );
+                            }
+                          },
+                  ),
+                  MemoryToolResultSelectionActionData(
+                    icon: Icons.done_all_rounded,
+                    onTap: visibleResults.isEmpty
+                        ? null
+                        : () {
+                            selectionNotifier.selectVisible(visibleResults);
+                          },
+                  ),
+                  MemoryToolResultSelectionActionData(
+                    icon: Icons.flip_rounded,
+                    onTap: visibleResults.isEmpty
+                        ? null
+                        : () {
+                            selectionNotifier.invertVisible(visibleResults);
+                          },
+                  ),
+                  MemoryToolResultSelectionActionData(
+                    icon: Icons.layers_clear_rounded,
+                    onTap:
+                        visibleResults.isEmpty ? null : selectionNotifier.clear,
+                  ),
+                  MemoryToolResultSelectionActionData(
+                    icon: Icons.delete_sweep_rounded,
+                    onTap: selectedResults.isEmpty
+                        ? null
+                        : () {
+                            removedResultNotifier.removeMany(
+                              selectionState.selectedAddresses,
+                            );
+                            selectionNotifier.clear();
+                          },
+                  ),
+                  MemoryToolResultSelectionActionData(
+                    icon: Icons.save_alt_rounded,
+                    onTap: selectedResults.isEmpty
+                        ? null
+                        : () async {
+                            await saveResultsToSaved(
+                              selectedResults,
+                              previewsByAddress:
+                                  livePreviewsAsync.asData?.value ??
+                                  const <int, MemoryValuePreview>{},
+                              frozenResultAddresses: frozenAddresses,
+                            );
+                          },
+                  ),
+                  MemoryToolResultSelectionActionData(
+                    icon: Icons.calculate_outlined,
+                    onTap: selectedResults.length >= 2
+                        ? () {
+                            isCalculatorVisible.value = true;
+                          }
+                        : null,
+                  ),
+                  MemoryToolResultSelectionActionData(
+                    icon: Icons.edit_rounded,
+                    onTap: selectedResults.isEmpty
+                        ? null
+                        : () {
+                            isBatchEditVisible.value = true;
+                          },
+                  ),
+                  MemoryToolResultSelectionActionData(
+                    icon: Icons.undo_rounded,
+                    onTap: canRestorePrevious
+                        ? () async {
+                            try {
+                              final sessionState = await ref.read(
+                                getSearchSessionStateProvider.future,
+                              );
+                              await ref
+                                  .read(memoryValueActionProvider.notifier)
+                                  .restorePreviousValues(
+                                    addresses: selectionState.selectedAddresses,
+                                    littleEndian: sessionState.littleEndian,
+                                  );
+                            } catch (error) {
+                              if (!context.mounted) {
+                                return;
+                              }
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(error.toString())),
+                              );
+                            }
+                          }
+                        : null,
+                  ),
+                  MemoryToolResultSelectionActionData(
+                    icon: Icons.tune_rounded,
+                    onTap: () {
+                      isSettingsVisible.value = true;
+                    },
+                  ),
+                ],
               ),
               SizedBox(height: 1.r),
               Expanded(
@@ -188,6 +283,34 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
                             selectionNotifier: selectionNotifier,
                             livePreviewsAsync: livePreviewsAsync,
                             previousValueByAddress: previousValueByAddress,
+                            processPid: selectedPid,
+                            initialFrozenStateByAddress: <int, bool>{
+                              for (final address in frozenAddresses) address: true,
+                            },
+                            onSaved: (result, preview, isFrozen) async {
+                              if (selectedPid == null) {
+                                return;
+                              }
+                              savedItemsNotifier.saveOne(
+                                pid: selectedPid,
+                                result: result,
+                                preview: preview,
+                                isFrozen: isFrozen,
+                              );
+                            },
+                            onSaveResult: (result) async {
+                              if (selectedPid == null) {
+                                return;
+                              }
+                              savedItemsNotifier.saveOne(
+                                pid: selectedPid,
+                                result: result,
+                                preview:
+                                    livePreviewsAsync.asData?.value[result.address],
+                                isFrozen: frozenAddresses.contains(result.address),
+                              );
+                              await showSavedToast(1);
+                            },
                           );
                         },
                         error: (error, _) =>
@@ -201,6 +324,36 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
                               selectionNotifier: selectionNotifier,
                               livePreviewsAsync: livePreviewsAsync,
                               previousValueByAddress: previousValueByAddress,
+                              processPid: selectedPid,
+                              initialFrozenStateByAddress: <int, bool>{
+                                for (final address in frozenAddresses) address: true,
+                              },
+                              onSaved: (result, preview, isFrozen) async {
+                                if (selectedPid == null) {
+                                  return;
+                                }
+                                savedItemsNotifier.saveOne(
+                                  pid: selectedPid,
+                                  result: result,
+                                  preview: preview,
+                                  isFrozen: isFrozen,
+                                );
+                              },
+                              onSaveResult: (result) async {
+                                if (selectedPid == null) {
+                                  return;
+                                }
+                                savedItemsNotifier.saveOne(
+                                  pid: selectedPid,
+                                  result: result,
+                                  preview:
+                                      livePreviewsAsync.asData?.value[result.address],
+                                  isFrozen: frozenAddresses.contains(
+                                    result.address,
+                                  ),
+                                );
+                                await showSavedToast(1);
+                              },
                             );
                           }
 
@@ -236,6 +389,18 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
             child: MemoryToolBatchEditDialog(
               results: selectedResults,
               livePreviewsAsync: livePreviewsAsync,
+              onSaved: (results, updatedPreviews, isFrozen) async {
+                if (!isFrozen || selectedPid == null) {
+                  return;
+                }
+                await saveResultsToSaved(
+                  results,
+                  previewsByAddress: updatedPreviews,
+                  frozenResultAddresses: results
+                      .map((result) => result.address)
+                      .toSet(),
+                );
+              },
               onClose: () {
                 isBatchEditVisible.value = false;
               },

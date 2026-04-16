@@ -4,6 +4,7 @@
 #include <iterator>
 #include <stdexcept>
 #include <thread>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 
@@ -14,6 +15,8 @@
 namespace memory_tool {
 
 namespace {
+
+constexpr size_t kHardFreezeYieldEveryPasses = 64;
 
 uint64_t ElapsedMilliseconds(const std::chrono::steady_clock::time_point& started_at) {
     if (started_at == std::chrono::steady_clock::time_point{}) {
@@ -405,44 +408,51 @@ void MemoryToolEngine::SetMemoryFreeze(const MemoryFreezeRequest& request) {
         throw std::runtime_error(error.empty() ? "Invalid frozen value." : error);
     }
 
-    std::lock_guard<std::mutex> lock(mutex_);
-    EnsureActiveSessionLocked();
-    if (!IsProcessAlive(session_.pid)) {
-        session_.Clear();
-        throw std::runtime_error("Search session target process is no longer available.");
-    }
-
-    auto entry_iterator = std::find_if(
-        frozen_entries_.begin(),
-        frozen_entries_.end(),
-        [&request](const FrozenWriteEntry& entry) {
-            return entry.address == request.address;
-        });
-
-    if (!request.enabled) {
-        if (entry_iterator != frozen_entries_.end()) {
-            frozen_entries_.erase(entry_iterator);
+    int pid = 0;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        EnsureActiveSessionLocked();
+        if (!IsProcessAlive(session_.pid)) {
+            session_.Clear();
+            throw std::runtime_error("Search session target process is no longer available.");
         }
+
+        pid = session_.pid;
+        auto entry_iterator = std::find_if(
+            frozen_entries_.begin(),
+            frozen_entries_.end(),
+            [pid, &request](const FrozenWriteEntry& entry) {
+                return entry.pid == pid && entry.address == request.address;
+            });
+
+        if (!request.enabled) {
+            if (entry_iterator != frozen_entries_.end()) {
+                frozen_entries_.erase(entry_iterator);
+            }
+            NotifyFreezeWorkerLocked();
+            return;
+        }
+
+        FrozenWriteEntry next_entry;
+        next_entry.pid = pid;
+        next_entry.address = request.address;
+        next_entry.type = request.value.type;
+        next_entry.value_bytes = value_bytes;
+        next_entry.little_endian = request.value.little_endian;
+        next_entry.bytes_display_encoding = bytes_display_encoding;
+
+        if (entry_iterator == frozen_entries_.end()) {
+            frozen_entries_.push_back(std::move(next_entry));
+        } else {
+            *entry_iterator = std::move(next_entry);
+        }
+
+        EnsureFreezeWorkerLocked();
         NotifyFreezeWorkerLocked();
-        return;
     }
 
-    FrozenWriteEntry next_entry;
-    next_entry.pid = session_.pid;
-    next_entry.address = request.address;
-    next_entry.type = request.value.type;
-    next_entry.value_bytes = std::move(value_bytes);
-    next_entry.little_endian = request.value.little_endian;
-    next_entry.bytes_display_encoding = bytes_display_encoding;
-
-    if (entry_iterator == frozen_entries_.end()) {
-        frozen_entries_.push_back(std::move(next_entry));
-    } else {
-        *entry_iterator = std::move(next_entry);
-    }
-
-    EnsureFreezeWorkerLocked();
-    NotifyFreezeWorkerLocked();
+    ProcessMemoryReader reader(pid);
+    reader.Write(request.address, value_bytes);
 }
 
 std::vector<FrozenMemoryValueView> MemoryToolEngine::GetFrozenMemoryValues() {
@@ -1113,51 +1123,68 @@ void MemoryToolEngine::NotifyFreezeWorkerLocked() {
 }
 
 void MemoryToolEngine::FreezeWorkerLoop() {
+    std::unordered_map<int, std::unique_ptr<ProcessMemoryReader>> readers_by_pid;
+    size_t pass_count = 0;
     while (true) {
         std::vector<FrozenWriteEntry> snapshot;
         {
             std::unique_lock<std::mutex> lock(mutex_);
-            if (frozen_entries_.empty()) {
-                freeze_condition_.wait(lock, [this]() { return !frozen_entries_.empty(); });
-            } else {
-                freeze_condition_.wait_for(lock, std::chrono::milliseconds(120));
-            }
+            freeze_condition_.wait(lock, [this]() { return !frozen_entries_.empty(); });
             snapshot = frozen_entries_;
         }
 
-        if (snapshot.empty()) {
-            continue;
-        }
-
-        std::vector<uint64_t> inactive_addresses;
+        std::unordered_set<int> active_pids;
+        std::vector<std::pair<int, uint64_t>> inactive_entries;
         for (const FrozenWriteEntry& entry : snapshot) {
+            active_pids.insert(entry.pid);
             if (!IsProcessAlive(entry.pid)) {
-                inactive_addresses.push_back(entry.address);
+                inactive_entries.emplace_back(entry.pid, entry.address);
                 continue;
             }
 
-            ProcessMemoryReader reader(entry.pid);
-            if (!reader.Write(entry.address, entry.value_bytes) &&
+            auto reader_iterator = readers_by_pid.find(entry.pid);
+            if (reader_iterator == readers_by_pid.end()) {
+                reader_iterator =
+                    readers_by_pid.emplace(entry.pid, std::make_unique<ProcessMemoryReader>(entry.pid))
+                        .first;
+            }
+
+            if (!reader_iterator->second->Write(entry.address, entry.value_bytes) &&
                 !IsProcessAlive(entry.pid)) {
-                inactive_addresses.push_back(entry.address);
+                inactive_entries.emplace_back(entry.pid, entry.address);
             }
         }
 
-        if (inactive_addresses.empty()) {
+        for (auto iterator = readers_by_pid.begin(); iterator != readers_by_pid.end();) {
+            if (active_pids.find(iterator->first) == active_pids.end() ||
+                !IsProcessAlive(iterator->first)) {
+                iterator = readers_by_pid.erase(iterator);
+                continue;
+            }
+            ++iterator;
+        }
+
+        if (!inactive_entries.empty()) {
+            std::lock_guard<std::mutex> lock(mutex_);
+            frozen_entries_.erase(
+                std::remove_if(
+                    frozen_entries_.begin(),
+                    frozen_entries_.end(),
+                    [&inactive_entries](const FrozenWriteEntry& entry) {
+                        return std::find(inactive_entries.begin(),
+                                         inactive_entries.end(),
+                                         std::make_pair(entry.pid, entry.address)) !=
+                               inactive_entries.end();
+                    }),
+                frozen_entries_.end());
             continue;
         }
 
-        std::lock_guard<std::mutex> lock(mutex_);
-        frozen_entries_.erase(
-            std::remove_if(
-                frozen_entries_.begin(),
-                frozen_entries_.end(),
-                [&inactive_addresses](const FrozenWriteEntry& entry) {
-                    return std::find(inactive_addresses.begin(),
-                                     inactive_addresses.end(),
-                                     entry.address) != inactive_addresses.end();
-                }),
-            frozen_entries_.end());
+        ++pass_count;
+        if (pass_count >= kHardFreezeYieldEveryPasses) {
+            pass_count = 0;
+            std::this_thread::yield();
+        }
     }
 }
 

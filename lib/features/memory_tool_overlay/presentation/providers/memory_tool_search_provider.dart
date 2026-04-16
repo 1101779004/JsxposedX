@@ -78,68 +78,54 @@ class MemoryToolRemovedResultState {
   }
 }
 
-final memoryToolResultSelectionProvider =
-    NotifierProvider<
-      MemoryToolResultSelectionController,
-      MemoryToolResultSelectionState
-    >(MemoryToolResultSelectionController.new);
+@riverpod
+Future<Map<int, MemoryValuePreview>> currentSearchResultLivePreviews(
+  Ref ref,
+) async {
+  final hasMatchingSession = ref.watch(hasMatchingSearchSessionProvider);
+  final isPanelVisible = ref.watch(
+    overlayWindowHostRuntimeProvider.select(
+      (state) => state.payload.isPanel && !state.isTransitioningToPanel,
+    ),
+  );
+  final renderLimit = ref.watch(
+    memoryToolResultSelectionProvider.select((state) => state.selectionLimit),
+  );
+  final removedAddresses = ref.watch(
+    memoryToolRemovedResultProvider.select((state) => state.removedAddresses),
+  );
 
-final memoryToolRemovedResultProvider =
-    NotifierProvider<
-      MemoryToolRemovedResultController,
-      MemoryToolRemovedResultState
-    >(MemoryToolRemovedResultController.new);
+  if (!hasMatchingSession || !isPanelVisible) {
+    return const <int, MemoryValuePreview>{};
+  }
 
-final currentSearchResultLivePreviewsProvider =
-    FutureProvider.autoDispose<Map<int, MemoryValuePreview>>((ref) async {
-      final hasMatchingSession = ref.watch(hasMatchingSearchSessionProvider);
-      final isPanelVisible = ref.watch(
-        overlayWindowHostRuntimeProvider.select(
-          (state) => state.payload.isPanel && !state.isTransitioningToPanel,
-        ),
+  final rawResults = await ref.watch(
+    getSearchResultsProvider(offset: 0, limit: renderLimit).future,
+  );
+  final results = rawResults
+      .where((result) => !removedAddresses.contains(result.address))
+      .take(renderLimit)
+      .toList(growable: false);
+  if (results.isEmpty) {
+    return const <int, MemoryValuePreview>{};
+  }
+
+  final previews = await ref
+      .watch(memoryQueryRepositoryProvider)
+      .readMemoryValues(
+        requests: results
+            .take(renderLimit)
+            .map(_buildMemoryReadRequestFromResult)
+            .toList(growable: false),
       );
-      final renderLimit = ref.watch(
-        memoryToolResultSelectionProvider.select(
-          (state) => state.selectionLimit,
-        ),
-      );
-      final removedAddresses = ref.watch(
-        memoryToolRemovedResultProvider.select(
-          (state) => state.removedAddresses,
-        ),
-      );
 
-      if (!hasMatchingSession || !isPanelVisible) {
-        return const <int, MemoryValuePreview>{};
-      }
+  return <int, MemoryValuePreview>{
+    for (final preview in previews) preview.address: preview,
+  };
+}
 
-      final rawResults = await ref.watch(
-        getSearchResultsProvider(offset: 0, limit: renderLimit).future,
-      );
-      final results = rawResults
-          .where((result) => !removedAddresses.contains(result.address))
-          .take(renderLimit)
-          .toList(growable: false);
-      if (results.isEmpty) {
-        return const <int, MemoryValuePreview>{};
-      }
-
-      final previews = await ref
-          .watch(memoryQueryRepositoryProvider)
-          .readMemoryValues(
-            requests: results
-                .take(renderLimit)
-                .map(_buildMemoryReadRequestFromResult)
-                .toList(growable: false),
-          );
-
-      return <int, MemoryValuePreview>{
-        for (final preview in previews) preview.address: preview,
-      };
-    });
-
-class MemoryToolResultSelectionController
-    extends Notifier<MemoryToolResultSelectionState> {
+@Riverpod(keepAlive: true)
+class MemoryToolResultSelection extends _$MemoryToolResultSelection {
   @override
   MemoryToolResultSelectionState build() {
     return const MemoryToolResultSelectionState();
@@ -224,8 +210,8 @@ class MemoryToolResultSelectionController
   }
 }
 
-class MemoryToolRemovedResultController
-    extends Notifier<MemoryToolRemovedResultState> {
+@Riverpod(keepAlive: true)
+class MemoryToolRemovedResult extends _$MemoryToolRemovedResult {
   @override
   MemoryToolRemovedResultState build() {
     return const MemoryToolRemovedResultState();

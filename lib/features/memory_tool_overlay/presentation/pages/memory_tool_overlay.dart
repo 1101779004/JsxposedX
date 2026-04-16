@@ -7,8 +7,8 @@ import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memo
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/process_avatar.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/process_picker_dialog.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/pages/tabs/memory_tool_edit_tab.dart';
+import 'package:JsxposedX/features/memory_tool_overlay/presentation/pages/tabs/memory_tool_saved_tab.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/pages/tabs/memory_tool_search_tab.dart';
-import 'package:JsxposedX/features/memory_tool_overlay/presentation/pages/tabs/memory_tool_watch_tab.dart';
 import 'package:JsxposedX/features/overlay_window/domain/models/overlay_window_presentation.dart';
 import 'package:JsxposedX/features/overlay_window/presentation/providers/overlay_window_host_runtime_provider.dart';
 import 'package:JsxposedX/generated/memory_tool.g.dart';
@@ -217,7 +217,7 @@ class MemoryToolOverlay extends HookConsumerWidget {
                 tabs: <Widget>[
                   Tab(text: context.l10n.memoryToolTabSearch),
                   Tab(text: context.l10n.memoryToolTabEdit),
-                  Tab(text: context.l10n.memoryToolTabWatch),
+                  Tab(text: context.l10n.memoryToolTabSaved),
                 ],
               ),
               showMinimizeAction: true,
@@ -242,7 +242,7 @@ class MemoryToolOverlay extends HookConsumerWidget {
                       children: <Widget>[
                         MemoryToolSearchTab(),
                         MemoryToolEditTab(),
-                        MemoryToolWatchTab(),
+                        MemoryToolSavedTab(),
                       ],
                     ),
             ),

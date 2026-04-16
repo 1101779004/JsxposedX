@@ -5,45 +5,17 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 class MemoryToolResultSelectionBar extends StatelessWidget {
   const MemoryToolResultSelectionBar({
     super.key,
-    required this.hasProcess,
-    required this.isProcessPaused,
-    required this.isProcessPauseLoading,
-    required this.hasVisibleResults,
-    required this.hasSelection,
-    required this.canOpenCalculator,
-    required this.canRestorePrevious,
-    required this.onToggleProcessPaused,
-    required this.onSelectAll,
-    required this.onInvert,
-    required this.onClear,
-    required this.onDeleteSelected,
-    required this.onOpenCalculator,
-    required this.onOpenBatchEdit,
-    required this.onRestorePrevious,
-    required this.onOpenSettings,
-    required this.onOpenSearch,
+    required this.actions,
   });
 
-  final bool hasProcess;
-  final bool isProcessPaused;
-  final bool isProcessPauseLoading;
-  final bool hasVisibleResults;
-  final bool hasSelection;
-  final bool canOpenCalculator;
-  final bool canRestorePrevious;
-  final VoidCallback onToggleProcessPaused;
-  final VoidCallback onSelectAll;
-  final VoidCallback onInvert;
-  final VoidCallback onClear;
-  final VoidCallback onDeleteSelected;
-  final VoidCallback onOpenCalculator;
-  final VoidCallback onOpenBatchEdit;
-  final VoidCallback onRestorePrevious;
-  final VoidCallback onOpenSettings;
-  final VoidCallback onOpenSearch;
+  final List<MemoryToolResultSelectionActionData> actions;
 
   @override
   Widget build(BuildContext context) {
+    if (actions.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     return DecoratedBox(
       decoration: BoxDecoration(
         color: context.colorScheme.surface.withValues(alpha: 0.78),
@@ -68,59 +40,10 @@ class MemoryToolResultSelectionBar extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
-                  _MemoryToolResultSelectionAction(
-                    icon: Icons.search_rounded,
-                    onTap: onOpenSearch,
-                  ),
-                  const _MemoryToolResultSelectionDivider(),
-                  _MemoryToolResultSelectionAction(
-                    icon: isProcessPaused
-                        ? Icons.play_arrow_rounded
-                        : Icons.pause_rounded,
-                    onTap: hasProcess && !isProcessPauseLoading
-                        ? onToggleProcessPaused
-                        : null,
-                  ),
-                  const _MemoryToolResultSelectionDivider(),
-                  _MemoryToolResultSelectionAction(
-                    icon: Icons.done_all_rounded,
-                    onTap: hasVisibleResults ? onSelectAll : null,
-                  ),
-                  const _MemoryToolResultSelectionDivider(),
-                  _MemoryToolResultSelectionAction(
-                    icon: Icons.flip_rounded,
-                    onTap: hasVisibleResults ? onInvert : null,
-                  ),
-                  const _MemoryToolResultSelectionDivider(),
-                  _MemoryToolResultSelectionAction(
-                    icon: Icons.layers_clear_rounded,
-                    onTap: hasVisibleResults ? onClear : null,
-                  ),
-                  const _MemoryToolResultSelectionDivider(),
-                  _MemoryToolResultSelectionAction(
-                    icon: Icons.delete_sweep_rounded,
-                    onTap: hasSelection ? onDeleteSelected : null,
-                  ),
-                  const _MemoryToolResultSelectionDivider(),
-                  _MemoryToolResultSelectionAction(
-                    icon: Icons.calculate_outlined,
-                    onTap: canOpenCalculator ? onOpenCalculator : null,
-                  ),
-                  const _MemoryToolResultSelectionDivider(),
-                  _MemoryToolResultSelectionAction(
-                    icon: Icons.edit_rounded,
-                    onTap: hasSelection ? onOpenBatchEdit : null,
-                  ),
-                  const _MemoryToolResultSelectionDivider(),
-                  _MemoryToolResultSelectionAction(
-                    icon: Icons.undo_rounded,
-                    onTap: canRestorePrevious ? onRestorePrevious : null,
-                  ),
-                  const _MemoryToolResultSelectionDivider(),
-                  _MemoryToolResultSelectionAction(
-                    icon: Icons.tune_rounded,
-                    onTap: onOpenSettings,
-                  ),
+                  for (int index = 0; index < actions.length; index++) ...<Widget>[
+                    if (index > 0) const _MemoryToolResultSelectionDivider(),
+                    _MemoryToolResultSelectionAction(data: actions[index]),
+                  ],
                 ],
               ),
             ),
@@ -129,6 +52,16 @@ class MemoryToolResultSelectionBar extends StatelessWidget {
       ),
     );
   }
+}
+
+class MemoryToolResultSelectionActionData {
+  const MemoryToolResultSelectionActionData({
+    required this.icon,
+    this.onTap,
+  });
+
+  final IconData icon;
+  final VoidCallback? onTap;
 }
 
 class _MemoryToolResultSelectionDivider extends StatelessWidget {
@@ -146,28 +79,24 @@ class _MemoryToolResultSelectionDivider extends StatelessWidget {
 }
 
 class _MemoryToolResultSelectionAction extends StatelessWidget {
-  const _MemoryToolResultSelectionAction({
-    required this.icon,
-    required this.onTap,
-  });
+  const _MemoryToolResultSelectionAction({required this.data});
 
-  final IconData icon;
-  final VoidCallback? onTap;
+  final MemoryToolResultSelectionActionData data;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       borderRadius: BorderRadius.circular(8.r),
-      onTap: onTap,
+      onTap: data.onTap,
       child: SizedBox(
         width: 28.r,
         height: 28.r,
         child: Center(
           child: Icon(
-            icon,
+            data.icon,
             size: 18.r,
             color: context.colorScheme.onSurface.withValues(
-              alpha: onTap == null ? 0.3 : 0.76,
+              alpha: data.onTap == null ? 0.3 : 0.76,
             ),
           ),
         ),

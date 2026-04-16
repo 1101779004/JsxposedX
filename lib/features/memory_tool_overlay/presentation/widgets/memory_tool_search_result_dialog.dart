@@ -14,12 +14,23 @@ class MemoryToolSearchResultDialog extends HookConsumerWidget {
     required this.result,
     required this.displayValue,
     required this.livePreviewsAsync,
+    this.processPid,
+    this.initialFrozenState,
+    this.onSaved,
     required this.onClose,
   });
 
   final SearchResult result;
   final String displayValue;
   final AsyncValue<Map<int, MemoryValuePreview>> livePreviewsAsync;
+  final int? processPid;
+  final bool? initialFrozenState;
+  final Future<void> Function(
+    SearchResult result,
+    MemoryValuePreview preview,
+    bool isFrozen,
+  )?
+  onSaved;
   final VoidCallback onClose;
 
   @override
@@ -64,8 +75,11 @@ class MemoryToolSearchResultDialog extends HookConsumerWidget {
         : selectedPreview?.displayValue ?? '';
     final isFrozen =
         frozenValuesAsync.asData?.value.any(
-          (value) => value.address == result.address,
+          (value) =>
+              value.address == result.address &&
+              (processPid == null || value.pid == processPid),
         ) ??
+        initialFrozenState ??
         false;
     final valueController = useTextEditingController(
       text: selectedDisplayValue,
@@ -131,6 +145,28 @@ class MemoryToolSearchResultDialog extends HookConsumerWidget {
             enabled: freezeEnabled.value,
           ),
         );
+        if (onSaved != null) {
+          final updatedPreviewRequest = MemoryReadRequest(
+            address: result.address,
+            type: selectedType.value,
+            length: resolveMemoryToolReadLengthForType(
+              type: selectedType.value,
+              bytesLength: sourceBytesLength,
+            ),
+          );
+          final updatedPreviews = await ref
+              .read(memoryQueryRepositoryProvider)
+              .readMemoryValues(requests: <MemoryReadRequest>[updatedPreviewRequest]);
+          final updatedPreview = updatedPreviews.isNotEmpty
+              ? updatedPreviews.first
+              : MemoryValuePreview(
+                  address: result.address,
+                  type: selectedType.value,
+                  rawBytes: sourceRawBytes,
+                  displayValue: valueController.text.trim(),
+                );
+          await onSaved!(result, updatedPreview, freezeEnabled.value);
+        }
 
         if (!context.mounted) {
           return;

@@ -1716,6 +1716,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get memoryToolTabEdit => 'Edit';
 
   @override
+  String get memoryToolTabSaved => 'Saved';
+
+  @override
   String get memoryToolTabWatch => 'Watch';
 
   @override
@@ -2075,6 +2078,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get memoryToolResultPreviousValue => 'Previous';
 
   @override
+  String get memoryToolFrozenBadge => 'Frozen';
+
+  @override
   String get memoryToolResultDetailTitle => 'Result Details';
 
   @override
@@ -2117,6 +2123,18 @@ class AppLocalizationsEn extends AppLocalizations {
       'Reserve an entry point for future batch write and filtered edit flows.';
 
   @override
+  String get memoryToolResultActionSaveToSaved => 'Save to Saved';
+
+  @override
+  String get memoryToolResultActionSaveToSavedHint =>
+      'Add the current result to the saved list for later edits and freeze actions.';
+
+  @override
+  String memoryToolSavedToSavedMessage(Object count) {
+    return 'Added $count item(s) to Saved';
+  }
+
+  @override
   String get memoryToolResultActionAddWatch => 'Add to Watch List';
 
   @override
@@ -2129,6 +2147,9 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get memoryToolResultActionFreezeHint =>
       'Reserve an entry point for future freeze and keep-value-stable actions.';
+
+  @override
+  String get memoryToolSavedEmpty => 'No saved items';
 
   @override
   String get memoryToolResultCalculatorTitle => 'Offset / XOR';

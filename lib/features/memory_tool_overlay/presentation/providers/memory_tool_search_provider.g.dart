@@ -143,6 +143,182 @@ final class CurrentSearchResultsProvider
 String _$currentSearchResultsHash() =>
     r'9ee3aa19905020badfd4764dc6e98126067c8136';
 
+@ProviderFor(currentSearchResultLivePreviews)
+const currentSearchResultLivePreviewsProvider =
+    CurrentSearchResultLivePreviewsProvider._();
+
+final class CurrentSearchResultLivePreviewsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<Map<int, MemoryValuePreview>>,
+          Map<int, MemoryValuePreview>,
+          FutureOr<Map<int, MemoryValuePreview>>
+        >
+    with
+        $FutureModifier<Map<int, MemoryValuePreview>>,
+        $FutureProvider<Map<int, MemoryValuePreview>> {
+  const CurrentSearchResultLivePreviewsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'currentSearchResultLivePreviewsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$currentSearchResultLivePreviewsHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<Map<int, MemoryValuePreview>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<Map<int, MemoryValuePreview>> create(Ref ref) {
+    return currentSearchResultLivePreviews(ref);
+  }
+}
+
+String _$currentSearchResultLivePreviewsHash() =>
+    r'63adf8926e5efbe668b515118a4a4fa1d4069886';
+
+@ProviderFor(MemoryToolResultSelection)
+const memoryToolResultSelectionProvider = MemoryToolResultSelectionProvider._();
+
+final class MemoryToolResultSelectionProvider
+    extends
+        $NotifierProvider<
+          MemoryToolResultSelection,
+          MemoryToolResultSelectionState
+        > {
+  const MemoryToolResultSelectionProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'memoryToolResultSelectionProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$memoryToolResultSelectionHash();
+
+  @$internal
+  @override
+  MemoryToolResultSelection create() => MemoryToolResultSelection();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(MemoryToolResultSelectionState value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<MemoryToolResultSelectionState>(
+        value,
+      ),
+    );
+  }
+}
+
+String _$memoryToolResultSelectionHash() =>
+    r'cf47c9d5901fb067b82a4dfe6ca9182abe98edb2';
+
+abstract class _$MemoryToolResultSelection
+    extends $Notifier<MemoryToolResultSelectionState> {
+  MemoryToolResultSelectionState build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref =
+        this.ref
+            as $Ref<
+              MemoryToolResultSelectionState,
+              MemoryToolResultSelectionState
+            >;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<
+                MemoryToolResultSelectionState,
+                MemoryToolResultSelectionState
+              >,
+              MemoryToolResultSelectionState,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}
+
+@ProviderFor(MemoryToolRemovedResult)
+const memoryToolRemovedResultProvider = MemoryToolRemovedResultProvider._();
+
+final class MemoryToolRemovedResultProvider
+    extends
+        $NotifierProvider<
+          MemoryToolRemovedResult,
+          MemoryToolRemovedResultState
+        > {
+  const MemoryToolRemovedResultProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'memoryToolRemovedResultProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$memoryToolRemovedResultHash();
+
+  @$internal
+  @override
+  MemoryToolRemovedResult create() => MemoryToolRemovedResult();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(MemoryToolRemovedResultState value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<MemoryToolRemovedResultState>(value),
+    );
+  }
+}
+
+String _$memoryToolRemovedResultHash() =>
+    r'47041611a0da6d4569364e4de46e77e2162e4b83';
+
+abstract class _$MemoryToolRemovedResult
+    extends $Notifier<MemoryToolRemovedResultState> {
+  MemoryToolRemovedResultState build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref =
+        this.ref
+            as $Ref<MemoryToolRemovedResultState, MemoryToolRemovedResultState>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<
+                MemoryToolRemovedResultState,
+                MemoryToolRemovedResultState
+              >,
+              MemoryToolRemovedResultState,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}
+
 @ProviderFor(MemoryToolSearchForm)
 const memoryToolSearchFormProvider = MemoryToolSearchFormProvider._();
 

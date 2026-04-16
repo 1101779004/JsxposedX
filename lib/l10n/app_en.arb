@@ -852,6 +852,7 @@
   "overlayConnected": "Overlay connected",
   "memoryToolTabSearch": "Search",
   "memoryToolTabEdit": "Edit",
+  "memoryToolTabSaved": "Saved",
   "memoryToolTabWatch": "Watch",
   "memoryToolSearchTabTitle": "Search Parameters",
   "memoryToolSearchTabSubtitle": "Use this area for first scan, narrowing, and read entry points.",
@@ -966,6 +967,7 @@
   "memoryToolResultType": "Type",
   "memoryToolResultValue": "Value",
   "memoryToolResultPreviousValue": "Previous",
+  "memoryToolFrozenBadge": "Frozen",
   "memoryToolResultDetailTitle": "Result Details",
   "memoryToolResultDetailActionsLabel": "Quick Actions",
   "memoryToolResultDetailActionEdit": "Edit",
@@ -979,10 +981,19 @@
   "memoryToolResultActionStartMultiSelectHint": "Start multi-select and batch operations from the current result.",
   "memoryToolResultActionBatchEdit": "Batch Edit",
   "memoryToolResultActionBatchEditHint": "Reserve an entry point for future batch write and filtered edit flows.",
+  "memoryToolResultActionSaveToSaved": "Save to Saved",
+  "memoryToolResultActionSaveToSavedHint": "Add the current result to the saved list for later edits and freeze actions.",
+  "memoryToolSavedToSavedMessage": "Added {count} item(s) to Saved",
+  "@memoryToolSavedToSavedMessage": {
+    "placeholders": {
+      "count": {}
+    }
+  },
   "memoryToolResultActionAddWatch": "Add to Watch List",
   "memoryToolResultActionAddWatchHint": "Add the current result to the watch area for continuous observation.",
   "memoryToolResultActionFreeze": "Add to Freeze Queue",
   "memoryToolResultActionFreezeHint": "Reserve an entry point for future freeze and keep-value-stable actions.",
+  "memoryToolSavedEmpty": "No saved items",
   "memoryToolResultCalculatorTitle": "Offset / XOR",
   "memoryToolResultCalculatorSummary": "{selectedCount} selected, {pairCount} pairs",
   "@memoryToolResultCalculatorSummary": {

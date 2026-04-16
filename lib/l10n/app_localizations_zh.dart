@@ -1691,6 +1691,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get memoryToolTabEdit => '修改';
 
   @override
+  String get memoryToolTabSaved => '暂存';
+
+  @override
   String get memoryToolTabWatch => '监视';
 
   @override
@@ -2033,6 +2036,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get memoryToolResultPreviousValue => '上次值';
 
   @override
+  String get memoryToolFrozenBadge => '冻结';
+
+  @override
   String get memoryToolResultDetailTitle => '结果详情';
 
   @override
@@ -2072,6 +2078,17 @@ class AppLocalizationsZh extends AppLocalizations {
   String get memoryToolResultActionBatchEditHint => '为后续批量写入和筛选后的编辑预留入口。';
 
   @override
+  String get memoryToolResultActionSaveToSaved => '保存到暂存区';
+
+  @override
+  String get memoryToolResultActionSaveToSavedHint => '把当前结果加入暂存区，便于后续集中编辑与冻结。';
+
+  @override
+  String memoryToolSavedToSavedMessage(Object count) {
+    return '已保存 $count 项到暂存区';
+  }
+
+  @override
   String get memoryToolResultActionAddWatch => '加入监视列表';
 
   @override
@@ -2082,6 +2099,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get memoryToolResultActionFreezeHint => '为后续冻结和保持数值稳定预留入口。';
+
+  @override
+  String get memoryToolSavedEmpty => '暂无暂存数据';
 
   @override
   String get memoryToolResultCalculatorTitle => '偏移 / 异或';

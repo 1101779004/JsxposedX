@@ -15,11 +15,18 @@ class MemoryToolBatchEditDialog extends HookConsumerWidget {
     super.key,
     required this.results,
     required this.livePreviewsAsync,
+    this.onSaved,
     required this.onClose,
   });
 
   final List<SearchResult> results;
   final AsyncValue<Map<int, MemoryValuePreview>> livePreviewsAsync;
+  final Future<void> Function(
+    List<SearchResult> results,
+    Map<int, MemoryValuePreview> updatedPreviews,
+    bool isFrozen,
+  )?
+  onSaved;
   final VoidCallback onClose;
 
   @override
@@ -93,12 +100,14 @@ class MemoryToolBatchEditDialog extends HookConsumerWidget {
       final requests = <MemoryWriteRequest>[];
       final freezeRequests = <MemoryFreezeRequest>[];
       final previousPreviews = <MemoryValuePreview>[];
+      final processedResults = <SearchResult>[];
       for (final result in results) {
         final currentPreview = currentPreviewByAddress[result.address];
         if (currentPreview == null) {
           continue;
         }
 
+        processedResults.add(result);
         previousPreviews.add(currentPreview);
         final targetIndex = requests.length;
         final writeValue = incrementEnabled.value
@@ -148,6 +157,18 @@ class MemoryToolBatchEditDialog extends HookConsumerWidget {
         await ref
             .read(memoryValueActionProvider.notifier)
             .setMemoryFreezes(requests: freezeRequests);
+      }
+      if (onSaved != null) {
+        final updatedPreviews = await ref
+            .read(memoryQueryRepositoryProvider)
+            .readMemoryValues(requests: previewRequests);
+        await onSaved!(
+          processedResults,
+          <int, MemoryValuePreview>{
+            for (final preview in updatedPreviews) preview.address: preview,
+          },
+          freezeEnabled.value,
+        );
       }
 
       if (!context.mounted) {

@@ -857,6 +857,7 @@
   "overlayConnected": "悬浮窗已连接",
   "memoryToolTabSearch": "搜索",
   "memoryToolTabEdit": "修改",
+  "memoryToolTabSaved": "暂存",
   "memoryToolTabWatch": "监视",
   "memoryToolSearchTabTitle": "搜索参数",
   "memoryToolSearchTabSubtitle": "用于放首次搜索、范围缩小和读取入口。",
@@ -971,6 +972,7 @@
   "memoryToolResultType": "类型",
   "memoryToolResultValue": "值",
   "memoryToolResultPreviousValue": "上次值",
+  "memoryToolFrozenBadge": "冻结",
   "memoryToolResultDetailTitle": "结果详情",
   "memoryToolResultDetailActionsLabel": "快捷操作",
   "memoryToolResultDetailActionEdit": "编辑",
@@ -984,10 +986,19 @@
   "memoryToolResultActionStartMultiSelectHint": "从当前结果开始进行多选和批量操作。",
   "memoryToolResultActionBatchEdit": "批量修改",
   "memoryToolResultActionBatchEditHint": "为后续批量写入和筛选后的编辑预留入口。",
+  "memoryToolResultActionSaveToSaved": "保存到暂存区",
+  "memoryToolResultActionSaveToSavedHint": "把当前结果加入暂存区，便于后续集中编辑与冻结。",
+  "memoryToolSavedToSavedMessage": "已保存 {count} 项到暂存区",
+  "@memoryToolSavedToSavedMessage": {
+    "placeholders": {
+      "count": {}
+    }
+  },
   "memoryToolResultActionAddWatch": "加入监视列表",
   "memoryToolResultActionAddWatchHint": "把当前结果加入监视区，后续持续查看变化。",
   "memoryToolResultActionFreeze": "加入冻结队列",
   "memoryToolResultActionFreezeHint": "为后续冻结和保持数值稳定预留入口。",
+  "memoryToolSavedEmpty": "暂无暂存数据",
   "memoryToolResultCalculatorTitle": "偏移 / 异或",
   "memoryToolResultCalculatorSummary": "已选 {selectedCount} 项，可计算 {pairCount} 组",
   "@memoryToolResultCalculatorSummary": {
