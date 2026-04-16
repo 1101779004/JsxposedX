@@ -114,6 +114,74 @@ SearchValue buildMemoryToolWriteValue({
   };
 }
 
+bool isMemoryToolNumericValueType(SearchValueType type) {
+  return type != SearchValueType.bytes;
+}
+
+String resolveMemoryToolIncrementedInput({
+  required SearchValueType type,
+  required String baseInput,
+  required String incrementInput,
+  required int index,
+}) {
+  if (!isMemoryToolNumericValueType(type)) {
+    throw const FormatException('增量模式仅支持数值类型。');
+  }
+
+  final trimmedBase = baseInput.trim();
+  if (trimmedBase.isEmpty) {
+    throw const FormatException('请输入起始值。');
+  }
+
+  final trimmedIncrement = incrementInput.trim();
+  if (trimmedIncrement.isEmpty) {
+    throw const FormatException('请输入增量步长。');
+  }
+
+  return switch (type) {
+    SearchValueType.i8 ||
+    SearchValueType.i16 ||
+    SearchValueType.i32 ||
+    SearchValueType.i64 => _resolveIncrementedIntegerInput(
+        baseInput: trimmedBase,
+        incrementInput: trimmedIncrement,
+        index: index,
+      ),
+    SearchValueType.f32 || SearchValueType.f64 => _resolveIncrementedFloatInput(
+        baseInput: trimmedBase,
+        incrementInput: trimmedIncrement,
+        index: index,
+      ),
+    SearchValueType.bytes => throw const FormatException('增量模式仅支持数值类型。'),
+  };
+}
+
+SearchValue buildMemoryToolIncrementalWriteValue({
+  required SearchValueType type,
+  required String baseInput,
+  required String incrementInput,
+  required int index,
+  required bool littleEndian,
+  required SearchValueType sourceType,
+  required Uint8List sourceRawBytes,
+  required String sourceDisplayValue,
+}) {
+  final resolvedInput = resolveMemoryToolIncrementedInput(
+    type: type,
+    baseInput: baseInput,
+    incrementInput: incrementInput,
+    index: index,
+  );
+  return buildMemoryToolWriteValue(
+    type: type,
+    input: resolvedInput,
+    littleEndian: littleEndian,
+    sourceType: sourceType,
+    sourceRawBytes: sourceRawBytes,
+    sourceDisplayValue: sourceDisplayValue,
+  );
+}
+
 MemoryToolBytesInputMode resolveMemoryToolBytesInputMode({
   required String input,
   required SearchValueType sourceType,
@@ -336,6 +404,42 @@ Uint8List _parseHexBytes(String value) {
     bytes.add(byte);
   }
   return Uint8List.fromList(bytes);
+}
+
+String _resolveIncrementedIntegerInput({
+  required String baseInput,
+  required String incrementInput,
+  required int index,
+}) {
+  final baseValue = int.tryParse(baseInput);
+  if (baseValue == null) {
+    throw const FormatException('起始值必须是整数。');
+  }
+
+  final incrementValue = int.tryParse(incrementInput);
+  if (incrementValue == null) {
+    throw const FormatException('增量步长必须是整数。');
+  }
+
+  return (baseValue + (incrementValue * index)).toString();
+}
+
+String _resolveIncrementedFloatInput({
+  required String baseInput,
+  required String incrementInput,
+  required int index,
+}) {
+  final baseValue = double.tryParse(baseInput);
+  if (baseValue == null) {
+    throw const FormatException('起始值必须是数字。');
+  }
+
+  final incrementValue = double.tryParse(incrementInput);
+  if (incrementValue == null) {
+    throw const FormatException('增量步长必须是数字。');
+  }
+
+  return _formatFloatingValue(baseValue + (incrementValue * index));
 }
 
 List<int> _encodeUtf16Le(String value) {

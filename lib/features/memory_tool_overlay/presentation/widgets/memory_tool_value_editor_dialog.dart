@@ -22,6 +22,7 @@ class MemoryToolValueEditorDialog extends StatelessWidget {
     this.valueHintText,
     this.isFreezeEnabled,
     this.onFreezeChanged,
+    this.extraContent,
     this.metadata = const <MemoryToolValueEditorMeta>[],
     this.errorText,
     this.maxWidthPortrait,
@@ -39,6 +40,7 @@ class MemoryToolValueEditorDialog extends StatelessWidget {
   final String? valueHintText;
   final bool? isFreezeEnabled;
   final ValueChanged<bool>? onFreezeChanged;
+  final Widget? extraContent;
   final List<MemoryToolValueEditorMeta> metadata;
   final String? errorText;
   final bool canSave;
@@ -165,6 +167,10 @@ class MemoryToolValueEditorDialog extends StatelessWidget {
                 enabledBorderColor: context.colorScheme.outlineVariant
                     .withValues(alpha: 0.34),
               ),
+              if (extraContent != null) ...<Widget>[
+                SizedBox(height: 12.r),
+                extraContent!,
+              ],
               if (isFreezeEnabled != null &&
                   onFreezeChanged != null) ...<Widget>[
                 SizedBox(height: 12.r),
