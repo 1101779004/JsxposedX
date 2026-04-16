@@ -2131,6 +2131,33 @@ class AppLocalizationsEn extends AppLocalizations {
       'Reserve an entry point for future freeze and keep-value-stable actions.';
 
   @override
+  String get memoryToolResultCalculatorTitle => 'Offset / XOR';
+
+  @override
+  String memoryToolResultCalculatorSummary(
+    Object selectedCount,
+    Object pairCount,
+  ) {
+    return '$selectedCount selected, $pairCount pairs';
+  }
+
+  @override
+  String get memoryToolResultCalculatorNeedAtLeastTwo =>
+      'Select at least 2 integer results.';
+
+  @override
+  String get memoryToolResultCalculatorValues => 'Values';
+
+  @override
+  String get memoryToolResultCalculatorCombinations => 'Combinations';
+
+  @override
+  String get memoryToolResultCalculatorOffset => 'Offset';
+
+  @override
+  String get memoryToolResultCalculatorXor => 'XOR';
+
+  @override
   String get memoryToolTargetProcess => 'Target Process';
 
   @override

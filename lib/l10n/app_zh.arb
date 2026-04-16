@@ -988,6 +988,19 @@
   "memoryToolResultActionAddWatchHint": "把当前结果加入监视区，后续持续查看变化。",
   "memoryToolResultActionFreeze": "加入冻结队列",
   "memoryToolResultActionFreezeHint": "为后续冻结和保持数值稳定预留入口。",
+  "memoryToolResultCalculatorTitle": "偏移 / 异或",
+  "memoryToolResultCalculatorSummary": "已选 {selectedCount} 项，可计算 {pairCount} 组",
+  "@memoryToolResultCalculatorSummary": {
+    "placeholders": {
+      "selectedCount": {},
+      "pairCount": {}
+    }
+  },
+  "memoryToolResultCalculatorNeedAtLeastTwo": "至少选择 2 个整数结果。",
+  "memoryToolResultCalculatorValues": "值",
+  "memoryToolResultCalculatorCombinations": "组合",
+  "memoryToolResultCalculatorOffset": "偏移",
+  "memoryToolResultCalculatorXor": "异或",
   "memoryToolTargetProcess": "目标进程",
   "memoryToolValidationValueRequired": "请先输入搜索值。",
   "memoryToolValidationBytesInvalid": "字节数组格式不正确，请输入偶数位十六进制，例如 12 34 AB。",

@@ -1,11 +1,10 @@
 import 'dart:async';
-import 'dart:ui';
-
 import 'package:JsxposedX/features/overlay_window/domain/models/overlay_host_layout.dart';
 import 'package:JsxposedX/features/overlay_window/domain/models/overlay_viewport_metrics.dart';
 import 'package:JsxposedX/features/overlay_window/domain/models/overlay_window_payload.dart';
 import 'package:JsxposedX/features/overlay_window/domain/models/overlay_window_presentation.dart';
 import 'package:JsxposedX/features/overlay_window/domain/models/overlay_window_runtime_message.dart';
+import 'package:JsxposedX/features/overlay_window/domain/models/overlay_toast.dart';
 import 'package:JsxposedX/features/overlay_window/presentation/models/overlay_scene_definition.dart';
 import 'package:JsxposedX/features/overlay_window/presentation/models/overlay_window_host_runtime_state.dart';
 import 'package:JsxposedX/features/overlay_window/presentation/providers/overlay_scene_registry_provider.dart';
@@ -133,6 +132,22 @@ class OverlayWindowHostRuntimeNotifier
     _toastTimer?.cancel();
     _toastTimer = null;
     state = state.copyWith(clearActiveToast: true);
+  }
+
+  void showToast(String message, {int durationMs = 1800}) {
+    final trimmed = message.trim();
+    if (trimmed.isEmpty) {
+      return;
+    }
+
+    _toastTimer?.cancel();
+    final toast = OverlayToast(
+      message: trimmed,
+      durationMs: durationMs,
+      id: DateTime.now().microsecondsSinceEpoch,
+    );
+    state = state.copyWith(activeToast: toast);
+    _toastTimer = Timer(Duration(milliseconds: durationMs), clearActiveToast);
   }
 
   Future<void> refreshViewportMetrics({

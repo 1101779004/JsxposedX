@@ -4124,6 +4124,51 @@ abstract class AppLocalizations {
   /// **'为后续冻结和保持数值稳定预留入口。'**
   String get memoryToolResultActionFreezeHint;
 
+  /// No description provided for @memoryToolResultCalculatorTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'偏移 / 异或'**
+  String get memoryToolResultCalculatorTitle;
+
+  /// No description provided for @memoryToolResultCalculatorSummary.
+  ///
+  /// In zh, this message translates to:
+  /// **'已选 {selectedCount} 项，可计算 {pairCount} 组'**
+  String memoryToolResultCalculatorSummary(
+    Object selectedCount,
+    Object pairCount,
+  );
+
+  /// No description provided for @memoryToolResultCalculatorNeedAtLeastTwo.
+  ///
+  /// In zh, this message translates to:
+  /// **'至少选择 2 个整数结果。'**
+  String get memoryToolResultCalculatorNeedAtLeastTwo;
+
+  /// No description provided for @memoryToolResultCalculatorValues.
+  ///
+  /// In zh, this message translates to:
+  /// **'值'**
+  String get memoryToolResultCalculatorValues;
+
+  /// No description provided for @memoryToolResultCalculatorCombinations.
+  ///
+  /// In zh, this message translates to:
+  /// **'组合'**
+  String get memoryToolResultCalculatorCombinations;
+
+  /// No description provided for @memoryToolResultCalculatorOffset.
+  ///
+  /// In zh, this message translates to:
+  /// **'偏移'**
+  String get memoryToolResultCalculatorOffset;
+
+  /// No description provided for @memoryToolResultCalculatorXor.
+  ///
+  /// In zh, this message translates to:
+  /// **'异或'**
+  String get memoryToolResultCalculatorXor;
+
   /// No description provided for @memoryToolTargetProcess.
   ///
   /// In zh, this message translates to:

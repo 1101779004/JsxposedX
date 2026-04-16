@@ -6,6 +6,8 @@ import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Insets;
@@ -149,6 +151,9 @@ public class OverlayService extends Service implements View.OnTouchListener {
                 boolean enableDrag = call.argument("enableDrag");
                 String flag = call.argument("flag");
                 updateOverlayLayout(width, height, x, y, enableDrag, flag, result);
+            } else if (call.method.equals("setClipboardData")) {
+                String text = call.argument("text");
+                result.success(setClipboardData(text));
             }
         });
         overlayMessageChannel.setMessageHandler((message, reply) -> {
@@ -616,6 +621,21 @@ public class OverlayService extends Service implements View.OnTouchListener {
             payload.putAll(positionPayload);
         }
         overlayMessageChannel.send(payload);
+    }
+
+    private boolean setClipboardData(@Nullable String text) {
+        if (text == null) {
+            return false;
+        }
+
+        ClipboardManager clipboardManager =
+                (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        if (clipboardManager == null) {
+            return false;
+        }
+
+        clipboardManager.setPrimaryClip(ClipData.newPlainText("overlay", text));
+        return true;
     }
 
     private class TrayAnimationTimerTask extends TimerTask {

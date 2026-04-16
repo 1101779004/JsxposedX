@@ -2084,6 +2084,32 @@ class AppLocalizationsZh extends AppLocalizations {
   String get memoryToolResultActionFreezeHint => '为后续冻结和保持数值稳定预留入口。';
 
   @override
+  String get memoryToolResultCalculatorTitle => '偏移 / 异或';
+
+  @override
+  String memoryToolResultCalculatorSummary(
+    Object selectedCount,
+    Object pairCount,
+  ) {
+    return '已选 $selectedCount 项，可计算 $pairCount 组';
+  }
+
+  @override
+  String get memoryToolResultCalculatorNeedAtLeastTwo => '至少选择 2 个整数结果。';
+
+  @override
+  String get memoryToolResultCalculatorValues => '值';
+
+  @override
+  String get memoryToolResultCalculatorCombinations => '组合';
+
+  @override
+  String get memoryToolResultCalculatorOffset => '偏移';
+
+  @override
+  String get memoryToolResultCalculatorXor => '异或';
+
+  @override
   String get memoryToolTargetProcess => '目标进程';
 
   @override

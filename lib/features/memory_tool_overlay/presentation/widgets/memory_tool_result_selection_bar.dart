@@ -10,12 +10,14 @@ class MemoryToolResultSelectionBar extends StatelessWidget {
     required this.isProcessPauseLoading,
     required this.hasVisibleResults,
     required this.hasSelection,
+    required this.canOpenCalculator,
     required this.canRestorePrevious,
     required this.onToggleProcessPaused,
     required this.onSelectAll,
     required this.onInvert,
     required this.onClear,
     required this.onDeleteSelected,
+    required this.onOpenCalculator,
     required this.onOpenBatchEdit,
     required this.onRestorePrevious,
     required this.onOpenSettings,
@@ -27,12 +29,14 @@ class MemoryToolResultSelectionBar extends StatelessWidget {
   final bool isProcessPauseLoading;
   final bool hasVisibleResults;
   final bool hasSelection;
+  final bool canOpenCalculator;
   final bool canRestorePrevious;
   final VoidCallback onToggleProcessPaused;
   final VoidCallback onSelectAll;
   final VoidCallback onInvert;
   final VoidCallback onClear;
   final VoidCallback onDeleteSelected;
+  final VoidCallback onOpenCalculator;
   final VoidCallback onOpenBatchEdit;
   final VoidCallback onRestorePrevious;
   final VoidCallback onOpenSettings;
@@ -50,74 +54,77 @@ class MemoryToolResultSelectionBar extends StatelessWidget {
       ),
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 8.r, vertical: 6.r),
-        child: Row(
-          children: <Widget>[
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: context.colorScheme.surfaceContainerHighest.withValues(
-                  alpha: 0.42,
-                ),
-                borderRadius: BorderRadius.circular(10.r),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: context.colorScheme.surfaceContainerHighest.withValues(
+                alpha: 0.42,
               ),
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 4.r, vertical: 2.r),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    _MemoryToolResultSelectionAction(
-                      icon: Icons.search_rounded,
-                      onTap: onOpenSearch,
-                    ),
-                    const _MemoryToolResultSelectionDivider(),
-                    _MemoryToolResultSelectionAction(
-                      icon: isProcessPaused
-                          ? Icons.play_arrow_rounded
-                          : Icons.pause_rounded,
-                      onTap: hasProcess && !isProcessPauseLoading
-                          ? onToggleProcessPaused
-                          : null,
-                    ),
-                    const _MemoryToolResultSelectionDivider(),
-                    _MemoryToolResultSelectionAction(
-                      icon: Icons.done_all_rounded,
-                      onTap: hasVisibleResults ? onSelectAll : null,
-                    ),
-                    const _MemoryToolResultSelectionDivider(),
-                    _MemoryToolResultSelectionAction(
-                      icon: Icons.flip_rounded,
-                      onTap: hasVisibleResults ? onInvert : null,
-                    ),
-                    const _MemoryToolResultSelectionDivider(),
-                    _MemoryToolResultSelectionAction(
-                      icon: Icons.layers_clear_rounded,
-                      onTap: hasVisibleResults ? onClear : null,
-                    ),
-                    const _MemoryToolResultSelectionDivider(),
-                    _MemoryToolResultSelectionAction(
-                      icon: Icons.delete_sweep_rounded,
-                      onTap: hasSelection ? onDeleteSelected : null,
-                    ),
-                    const _MemoryToolResultSelectionDivider(),
-                    _MemoryToolResultSelectionAction(
-                      icon: Icons.edit_rounded,
-                      onTap: hasSelection ? onOpenBatchEdit : null,
-                    ),
-                    const _MemoryToolResultSelectionDivider(),
-                    _MemoryToolResultSelectionAction(
-                      icon: Icons.undo_rounded,
-                      onTap: canRestorePrevious ? onRestorePrevious : null,
-                    ),
-                    const _MemoryToolResultSelectionDivider(),
-                    _MemoryToolResultSelectionAction(
-                      icon: Icons.tune_rounded,
-                      onTap: onOpenSettings,
-                    ),
-                  ],
-                ),
+              borderRadius: BorderRadius.circular(10.r),
+            ),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 4.r, vertical: 2.r),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  _MemoryToolResultSelectionAction(
+                    icon: Icons.search_rounded,
+                    onTap: onOpenSearch,
+                  ),
+                  const _MemoryToolResultSelectionDivider(),
+                  _MemoryToolResultSelectionAction(
+                    icon: isProcessPaused
+                        ? Icons.play_arrow_rounded
+                        : Icons.pause_rounded,
+                    onTap: hasProcess && !isProcessPauseLoading
+                        ? onToggleProcessPaused
+                        : null,
+                  ),
+                  const _MemoryToolResultSelectionDivider(),
+                  _MemoryToolResultSelectionAction(
+                    icon: Icons.done_all_rounded,
+                    onTap: hasVisibleResults ? onSelectAll : null,
+                  ),
+                  const _MemoryToolResultSelectionDivider(),
+                  _MemoryToolResultSelectionAction(
+                    icon: Icons.flip_rounded,
+                    onTap: hasVisibleResults ? onInvert : null,
+                  ),
+                  const _MemoryToolResultSelectionDivider(),
+                  _MemoryToolResultSelectionAction(
+                    icon: Icons.layers_clear_rounded,
+                    onTap: hasVisibleResults ? onClear : null,
+                  ),
+                  const _MemoryToolResultSelectionDivider(),
+                  _MemoryToolResultSelectionAction(
+                    icon: Icons.delete_sweep_rounded,
+                    onTap: hasSelection ? onDeleteSelected : null,
+                  ),
+                  const _MemoryToolResultSelectionDivider(),
+                  _MemoryToolResultSelectionAction(
+                    icon: Icons.calculate_outlined,
+                    onTap: canOpenCalculator ? onOpenCalculator : null,
+                  ),
+                  const _MemoryToolResultSelectionDivider(),
+                  _MemoryToolResultSelectionAction(
+                    icon: Icons.edit_rounded,
+                    onTap: hasSelection ? onOpenBatchEdit : null,
+                  ),
+                  const _MemoryToolResultSelectionDivider(),
+                  _MemoryToolResultSelectionAction(
+                    icon: Icons.undo_rounded,
+                    onTap: canRestorePrevious ? onRestorePrevious : null,
+                  ),
+                  const _MemoryToolResultSelectionDivider(),
+                  _MemoryToolResultSelectionAction(
+                    icon: Icons.tune_rounded,
+                    onTap: onOpenSettings,
+                  ),
+                ],
               ),
             ),
-            const Spacer(),
-          ],
+          ),
         ),
       ),
     );

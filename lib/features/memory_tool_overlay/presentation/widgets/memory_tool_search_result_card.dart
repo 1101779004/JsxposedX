@@ -5,6 +5,7 @@ import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/me
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_query_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_batch_edit_dialog.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_tool_search_provider.dart';
+import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_result_calculator_dialog.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_result_selection_dialog.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_result_selection_bar.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_result_stats_bar.dart';
@@ -50,6 +51,7 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
     final processControlState = ref.watch(memoryProcessControlActionProvider);
     final isSettingsVisible = useState(false);
     final isBatchEditVisible = useState(false);
+    final isCalculatorVisible = useState(false);
 
     final resultsAsync = hasMatchingSession
         ? ref.watch(currentSearchResultsProvider)
@@ -102,6 +104,7 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
                     processPausedAsync.isLoading,
                 hasVisibleResults: visibleResults.isNotEmpty,
                 hasSelection: selectedResults.isNotEmpty,
+                canOpenCalculator: selectedResults.length >= 2,
                 canRestorePrevious: canRestorePrevious,
                 onToggleProcessPaused: () async {
                   if (selectedPid == null) {
@@ -134,6 +137,9 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
                     selectionState.selectedAddresses,
                   );
                   selectionNotifier.clear();
+                },
+                onOpenCalculator: () {
+                  isCalculatorVisible.value = true;
                 },
                 onOpenBatchEdit: () {
                   isBatchEditVisible.value = true;
@@ -232,6 +238,16 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
               livePreviewsAsync: livePreviewsAsync,
               onClose: () {
                 isBatchEditVisible.value = false;
+              },
+            ),
+          ),
+        if (isCalculatorVisible.value)
+          Positioned.fill(
+            child: MemoryToolResultCalculatorDialog(
+              results: selectedResults,
+              livePreviewsAsync: livePreviewsAsync,
+              onClose: () {
+                isCalculatorVisible.value = false;
               },
             ),
           ),

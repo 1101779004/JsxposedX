@@ -155,6 +155,15 @@ class FlutterOverlayWindow {
     return res;
   }
 
+  /// Write text into the system clipboard from the overlay runtime.
+  static Future<bool> setClipboardData(String text) async {
+    final bool? res = await _overlayChannel.invokeMethod<bool?>(
+      'setClipboardData',
+      <String, dynamic>{'text': text},
+    );
+    return res ?? false;
+  }
+
   /// Update the overlay position in the screen
   ///
   /// `position` the new position of the overlay

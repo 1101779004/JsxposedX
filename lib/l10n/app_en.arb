@@ -983,6 +983,19 @@
   "memoryToolResultActionAddWatchHint": "Add the current result to the watch area for continuous observation.",
   "memoryToolResultActionFreeze": "Add to Freeze Queue",
   "memoryToolResultActionFreezeHint": "Reserve an entry point for future freeze and keep-value-stable actions.",
+  "memoryToolResultCalculatorTitle": "Offset / XOR",
+  "memoryToolResultCalculatorSummary": "{selectedCount} selected, {pairCount} pairs",
+  "@memoryToolResultCalculatorSummary": {
+    "placeholders": {
+      "selectedCount": {},
+      "pairCount": {}
+    }
+  },
+  "memoryToolResultCalculatorNeedAtLeastTwo": "Select at least 2 integer results.",
+  "memoryToolResultCalculatorValues": "Values",
+  "memoryToolResultCalculatorCombinations": "Combinations",
+  "memoryToolResultCalculatorOffset": "Offset",
+  "memoryToolResultCalculatorXor": "XOR",
   "memoryToolTargetProcess": "Target Process",
   "memoryToolValidationValueRequired": "Enter a search value first.",
   "memoryToolValidationBytesInvalid": "Invalid byte pattern. Use even-length hex such as 12 34 AB.",
