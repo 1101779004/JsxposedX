@@ -2160,6 +2160,41 @@ class AppLocalizationsZh extends AppLocalizations {
   String get memoryToolResultCalculatorXor => '异或';
 
   @override
+  String get memoryToolResultSelectionDialogTitle => '结果列表设置';
+
+  @override
+  String get memoryToolResultSelectionSearchDescription =>
+      '控制搜索页当前渲染数量，同时也是多选、保存、批量修改等操作的上限。';
+
+  @override
+  String get memoryToolResultSelectionBrowseDescription =>
+      '控制浏览页单次可选数量和分页统计，不会清空已经加载的内存结果。';
+
+  @override
+  String get memoryToolResultSelectionFieldLabel => '数量上限';
+
+  @override
+  String get memoryToolResultSelectionHelperText =>
+      '建议 50 - 200，数值越大，列表渲染和批量操作越重。';
+
+  @override
+  String get memoryToolResultSelectionPresetLabel => '快速选择';
+
+  @override
+  String get memoryToolResultSelectionUnit => '项';
+
+  @override
+  String get memoryToolResultSelectionRequired => '请输入大于 0 的整数';
+
+  @override
+  String get memoryToolResultSelectionInvalid => '请输入大于 0 的整数';
+
+  @override
+  String memoryToolResultSelectionCurrent(int count) {
+    return '当前值：$count 项';
+  }
+
+  @override
   String get memoryToolTargetProcess => '目标进程';
 
   @override

@@ -375,6 +375,8 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
           Positioned.fill(
             child: MemoryToolResultSelectionDialog(
               initialLimit: selectionState.selectionLimit,
+              title: context.l10n.memoryToolResultSelectionDialogTitle,
+              fieldLabel: context.l10n.memoryToolResultSelectionFieldLabel,
               onClose: () {
                 isSettingsVisible.value = false;
               },

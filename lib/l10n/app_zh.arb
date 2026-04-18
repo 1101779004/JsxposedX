@@ -1022,6 +1022,23 @@
   "memoryToolResultCalculatorCombinations": "组合",
   "memoryToolResultCalculatorOffset": "偏移",
   "memoryToolResultCalculatorXor": "异或",
+  "memoryToolResultSelectionDialogTitle": "结果列表设置",
+  "memoryToolResultSelectionSearchDescription": "控制搜索页当前渲染数量，同时也是多选、保存、批量修改等操作的上限。",
+  "memoryToolResultSelectionBrowseDescription": "控制浏览页单次可选数量和分页统计，不会清空已经加载的内存结果。",
+  "memoryToolResultSelectionFieldLabel": "数量上限",
+  "memoryToolResultSelectionHelperText": "建议 50 - 200，数值越大，列表渲染和批量操作越重。",
+  "memoryToolResultSelectionPresetLabel": "快速选择",
+  "memoryToolResultSelectionUnit": "项",
+  "memoryToolResultSelectionRequired": "请输入大于 0 的整数",
+  "memoryToolResultSelectionInvalid": "请输入大于 0 的整数",
+  "memoryToolResultSelectionCurrent": "当前值：{count} 项",
+  "@memoryToolResultSelectionCurrent": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "memoryToolTargetProcess": "目标进程",
   "memoryToolValidationValueRequired": "请先输入搜索值。",
   "memoryToolValidationBytesInvalid": "字节数组格式不正确，请输入偶数位十六进制，例如 12 34 AB。",

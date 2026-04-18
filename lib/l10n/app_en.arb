@@ -1017,6 +1017,23 @@
   "memoryToolResultCalculatorCombinations": "Combinations",
   "memoryToolResultCalculatorOffset": "Offset",
   "memoryToolResultCalculatorXor": "XOR",
+  "memoryToolResultSelectionDialogTitle": "Result List Settings",
+  "memoryToolResultSelectionSearchDescription": "Controls how many search results are rendered now and also caps multi-select, save, and batch actions.",
+  "memoryToolResultSelectionBrowseDescription": "Controls browse-page selection capacity and page stats without clearing already loaded memory results.",
+  "memoryToolResultSelectionFieldLabel": "Item limit",
+  "memoryToolResultSelectionHelperText": "Recommended range: 50 - 200. Larger values make rendering and batch actions heavier.",
+  "memoryToolResultSelectionPresetLabel": "Quick presets",
+  "memoryToolResultSelectionUnit": "items",
+  "memoryToolResultSelectionRequired": "Enter an integer greater than 0.",
+  "memoryToolResultSelectionInvalid": "Enter an integer greater than 0.",
+  "memoryToolResultSelectionCurrent": "Current value: {count} items",
+  "@memoryToolResultSelectionCurrent": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "memoryToolTargetProcess": "Target Process",
   "memoryToolValidationValueRequired": "Enter a search value first.",
   "memoryToolValidationBytesInvalid": "Invalid byte pattern. Use even-length hex such as 12 34 AB.",

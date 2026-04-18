@@ -2212,6 +2212,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get memoryToolResultCalculatorXor => 'XOR';
 
   @override
+  String get memoryToolResultSelectionDialogTitle => 'Result List Settings';
+
+  @override
+  String get memoryToolResultSelectionSearchDescription =>
+      'Controls how many search results are rendered now and also caps multi-select, save, and batch actions.';
+
+  @override
+  String get memoryToolResultSelectionBrowseDescription =>
+      'Controls browse-page selection capacity and page stats without clearing already loaded memory results.';
+
+  @override
+  String get memoryToolResultSelectionFieldLabel => 'Item limit';
+
+  @override
+  String get memoryToolResultSelectionHelperText =>
+      'Recommended range: 50 - 200. Larger values make rendering and batch actions heavier.';
+
+  @override
+  String get memoryToolResultSelectionPresetLabel => 'Quick presets';
+
+  @override
+  String get memoryToolResultSelectionUnit => 'items';
+
+  @override
+  String get memoryToolResultSelectionRequired =>
+      'Enter an integer greater than 0.';
+
+  @override
+  String get memoryToolResultSelectionInvalid =>
+      'Enter an integer greater than 0.';
+
+  @override
+  String memoryToolResultSelectionCurrent(int count) {
+    return 'Current value: $count items';
+  }
+
+  @override
   String get memoryToolTargetProcess => 'Target Process';
 
   @override

@@ -4265,6 +4265,66 @@ abstract class AppLocalizations {
   /// **'异或'**
   String get memoryToolResultCalculatorXor;
 
+  /// No description provided for @memoryToolResultSelectionDialogTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'结果列表设置'**
+  String get memoryToolResultSelectionDialogTitle;
+
+  /// No description provided for @memoryToolResultSelectionSearchDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'控制搜索页当前渲染数量，同时也是多选、保存、批量修改等操作的上限。'**
+  String get memoryToolResultSelectionSearchDescription;
+
+  /// No description provided for @memoryToolResultSelectionBrowseDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'控制浏览页单次可选数量和分页统计，不会清空已经加载的内存结果。'**
+  String get memoryToolResultSelectionBrowseDescription;
+
+  /// No description provided for @memoryToolResultSelectionFieldLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'数量上限'**
+  String get memoryToolResultSelectionFieldLabel;
+
+  /// No description provided for @memoryToolResultSelectionHelperText.
+  ///
+  /// In zh, this message translates to:
+  /// **'建议 50 - 200，数值越大，列表渲染和批量操作越重。'**
+  String get memoryToolResultSelectionHelperText;
+
+  /// No description provided for @memoryToolResultSelectionPresetLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'快速选择'**
+  String get memoryToolResultSelectionPresetLabel;
+
+  /// No description provided for @memoryToolResultSelectionUnit.
+  ///
+  /// In zh, this message translates to:
+  /// **'项'**
+  String get memoryToolResultSelectionUnit;
+
+  /// No description provided for @memoryToolResultSelectionRequired.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入大于 0 的整数'**
+  String get memoryToolResultSelectionRequired;
+
+  /// No description provided for @memoryToolResultSelectionInvalid.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入大于 0 的整数'**
+  String get memoryToolResultSelectionInvalid;
+
+  /// No description provided for @memoryToolResultSelectionCurrent.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前值：{count} 项'**
+  String memoryToolResultSelectionCurrent(int count);
+
   /// No description provided for @memoryToolTargetProcess.
   ///
   /// In zh, this message translates to:
