@@ -2066,7 +2066,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get memoryToolResultActionPointerScan => '指针搜索';
 
   @override
-  String get memoryToolResultActionAutoChaseStatic => '一键追到静态区';
+  String get memoryToolResultActionAutoChaseStatic => '一键寻址';
 
   @override
   String get memoryToolResultActionJumpToPointer => '跳转到指针';
@@ -2087,7 +2087,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get memoryToolPointerScanTitle => '指针搜索';
 
   @override
-  String get memoryToolPointerAutoChaseTitle => '一键追到静态区';
+  String get memoryToolPointerAutoChaseTitle => '一键寻址';
 
   @override
   String get memoryToolPointerTargetAddressLabel => '目标地址';
@@ -2099,7 +2099,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get memoryToolPointerMaxOffsetLabel => '最大偏移';
 
   @override
-  String get memoryToolPointerMaxDepthLabel => '最大层数';
+  String get memoryToolPointerMaxDepthLabel => '指针层数';
 
   @override
   String get memoryToolPointerAlignmentLabel => '对齐步长';
@@ -2164,7 +2164,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get memoryToolPointerStopReasonNoMorePointers => '无更多上层指针';
 
   @override
-  String get memoryToolPointerStopReasonMaxDepth => '已达最大层数';
+  String get memoryToolPointerStopReasonMaxDepth => '已达指针层数';
 
   @override
   String get memoryToolPointerStopReasonCancelled => '已取消';

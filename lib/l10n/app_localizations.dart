@@ -4091,7 +4091,7 @@ abstract class AppLocalizations {
   /// No description provided for @memoryToolResultActionAutoChaseStatic.
   ///
   /// In zh, this message translates to:
-  /// **'一键追到静态区'**
+  /// **'一键寻址'**
   String get memoryToolResultActionAutoChaseStatic;
 
   /// No description provided for @memoryToolResultActionJumpToPointer.
@@ -4133,7 +4133,7 @@ abstract class AppLocalizations {
   /// No description provided for @memoryToolPointerAutoChaseTitle.
   ///
   /// In zh, this message translates to:
-  /// **'一键追到静态区'**
+  /// **'一键寻址'**
   String get memoryToolPointerAutoChaseTitle;
 
   /// No description provided for @memoryToolPointerTargetAddressLabel.
@@ -4157,7 +4157,7 @@ abstract class AppLocalizations {
   /// No description provided for @memoryToolPointerMaxDepthLabel.
   ///
   /// In zh, this message translates to:
-  /// **'最大层数'**
+  /// **'指针层数'**
   String get memoryToolPointerMaxDepthLabel;
 
   /// No description provided for @memoryToolPointerAlignmentLabel.
@@ -4283,7 +4283,7 @@ abstract class AppLocalizations {
   /// No description provided for @memoryToolPointerStopReasonMaxDepth.
   ///
   /// In zh, this message translates to:
-  /// **'已达最大层数'**
+  /// **'已达指针层数'**
   String get memoryToolPointerStopReasonMaxDepth;
 
   /// No description provided for @memoryToolPointerStopReasonCancelled.

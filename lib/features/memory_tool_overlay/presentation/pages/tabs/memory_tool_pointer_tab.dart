@@ -35,7 +35,6 @@ class MemoryToolPointerTab extends HookConsumerWidget {
     final taskStateAsync = ref.watch(getPointerScanTaskStateProvider);
     final sessionStateAsync = ref.watch(getPointerScanSessionStateProvider);
     final currentLayer = pointerState.currentLayer;
-    final staticOnlyMode = currentLayer?.staticOnlyMode ?? false;
     final scrollController = useScrollController();
     final previousTaskStatus = useRef<SearchTaskStatus?>(null);
     final selectedRegionTypeKeys = useState<Set<String>>(<String>{});
@@ -98,9 +97,7 @@ class MemoryToolPointerTab extends HookConsumerWidget {
       if (currentLayer != null)
         ...{
           for (final result in currentLayer.results)
-            if (!staticOnlyMode ||
-                pointerController.isStaticRegionType(result.regionTypeKey))
-              result.regionTypeKey,
+            result.regionTypeKey,
         },
     ];
     final availableRegionTypeSignature = availableRegionTypeKeys.join(',');
@@ -153,10 +150,6 @@ class MemoryToolPointerTab extends HookConsumerWidget {
     }
 
     bool matchesPointerResult(PointerScanResult result) {
-      if (staticOnlyMode &&
-          !pointerController.isStaticRegionType(result.regionTypeKey)) {
-        return false;
-      }
       if (selectedRegionTypeKeys.value.isNotEmpty &&
           !selectedRegionTypeKeys.value.contains(result.regionTypeKey)) {
         return false;
@@ -169,14 +162,22 @@ class MemoryToolPointerTab extends HookConsumerWidget {
         : currentLayer.results
               .where(matchesPointerResult)
               .toList(growable: false);
+    final selectedPointerLoaded = currentLayer == null ||
+        currentLayer.selectedPointerAddress == null ||
+        currentLayer.results.any(
+          (result) => result.pointerAddress == currentLayer.selectedPointerAddress,
+        );
+
+    final shouldAutoLoadMore = currentLayer != null &&
+        !currentLayer.isLoadingInitial &&
+        !currentLayer.isLoadingMore &&
+        currentLayer.hasMore &&
+        ((!selectedPointerLoaded && currentLayer.selectedPointerAddress != null) ||
+            (selectedRegionTypeKeys.value.isNotEmpty &&
+                filteredResults.length < 12));
 
     useEffect(() {
-      if (currentLayer == null ||
-          currentLayer.isLoadingInitial ||
-          currentLayer.isLoadingMore ||
-          !currentLayer.hasMore ||
-          filteredResults.length >= 12 ||
-          selectedRegionTypeKeys.value.isEmpty) {
+      if (!shouldAutoLoadMore) {
         return null;
       }
 
@@ -185,11 +186,14 @@ class MemoryToolPointerTab extends HookConsumerWidget {
       });
       return null;
     }, [
+      shouldAutoLoadMore,
       currentLayer?.results.length,
       currentLayer?.hasMore,
       currentLayer?.isLoadingInitial,
       currentLayer?.isLoadingMore,
       filteredResults.length,
+      selectedPointerLoaded,
+      currentLayer?.selectedPointerAddress,
       selectedRegionTypeSignature.join(','),
     ]);
 
@@ -443,8 +447,6 @@ class _PointerFooter extends StatelessWidget {
     required this.sessionStateAsync,
   });
 
-  static const Set<String> _staticRegionTypeKeys = <String>{'cData', 'cBss'};
-
   final PointerChainLayerState? currentLayer;
   final AsyncValue<PointerScanSessionState> sessionStateAsync;
 
@@ -452,20 +454,10 @@ class _PointerFooter extends StatelessWidget {
   Widget build(BuildContext context) {
     final loadedCount = currentLayer == null
         ? 0
-        : currentLayer!.staticOnlyMode
-            ? currentLayer!.results
-                  .where(
-                    (result) => _staticRegionTypeKeys.contains(result.regionTypeKey),
-                  )
-                  .length
-            : currentLayer!.results.length;
+        : currentLayer!.results.length;
     final sessionCount = sessionStateAsync.asData?.value.resultCount ?? 0;
     final totalCount = currentLayer?.totalResultCount ?? 0;
-    final resolvedTotalCount = currentLayer?.staticOnlyMode ?? false
-        ? loadedCount
-        : totalCount > 0
-            ? totalCount
-            : sessionCount;
+    final resolvedTotalCount = totalCount > 0 ? totalCount : sessionCount;
     final stopReasonText = switch (currentLayer?.autoStopReasonKey) {
       'staticReached' => context.l10n.memoryToolPointerStopReasonStaticReached,
       'noMorePointers' => context.l10n.memoryToolPointerStopReasonNoMorePointers,

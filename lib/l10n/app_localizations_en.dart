@@ -2108,7 +2108,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get memoryToolResultActionPointerScan => 'Pointer Scan';
 
   @override
-  String get memoryToolResultActionAutoChaseStatic => 'Auto Chase Static';
+  String get memoryToolResultActionAutoChaseStatic => 'Auto Locate';
 
   @override
   String get memoryToolResultActionJumpToPointer => 'Jump to Pointer';
@@ -2129,7 +2129,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get memoryToolPointerScanTitle => 'Pointer Scan';
 
   @override
-  String get memoryToolPointerAutoChaseTitle => 'Auto Chase Static Region';
+  String get memoryToolPointerAutoChaseTitle => 'Auto Locate';
 
   @override
   String get memoryToolPointerTargetAddressLabel => 'Target Address';
@@ -2141,7 +2141,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get memoryToolPointerMaxOffsetLabel => 'Max Offset';
 
   @override
-  String get memoryToolPointerMaxDepthLabel => 'Max Depth';
+  String get memoryToolPointerMaxDepthLabel => 'Pointer Depth';
 
   @override
   String get memoryToolPointerAlignmentLabel => 'Alignment';
@@ -2212,7 +2212,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'No more upper pointers';
 
   @override
-  String get memoryToolPointerStopReasonMaxDepth => 'Max depth reached';
+  String get memoryToolPointerStopReasonMaxDepth => 'Pointer depth reached';
 
   @override
   String get memoryToolPointerStopReasonCancelled => 'Cancelled';
