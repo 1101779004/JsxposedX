@@ -144,7 +144,7 @@ final class MemoryPointerActionProvider
 }
 
 String _$memoryPointerActionHash() =>
-    r'2e832d20f574450bece154968c3ef68811ef8f19';
+    r'cf2c14b79f24e00257696f607a11d2e72f24394e';
 
 abstract class _$MemoryPointerAction extends $Notifier<AsyncValue<void>> {
   AsyncValue<void> build();

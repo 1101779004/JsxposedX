@@ -21,13 +21,21 @@ class MemoryToolPointerScanDialog extends HookConsumerWidget {
     super.key,
     required this.pid,
     required this.targetAddress,
-    required this.onConfirm,
+    this.onConfirm,
+    this.onConfirmAutoChase,
+    this.showMaxDepthField = false,
     required this.onClose,
-  });
+  }) : assert(
+         (onConfirm != null) != (onConfirmAutoChase != null),
+         'Exactly one confirm callback must be provided.',
+       );
 
   final int pid;
   final int targetAddress;
-  final Future<void> Function(PointerScanRequest request) onConfirm;
+  final Future<void> Function(PointerScanRequest request)? onConfirm;
+  final Future<void> Function(PointerScanRequest request, int maxDepth)?
+      onConfirmAutoChase;
+  final bool showMaxDepthField;
   final VoidCallback onClose;
 
   @override
@@ -36,6 +44,9 @@ class MemoryToolPointerScanDialog extends HookConsumerWidget {
     final formNotifier = ref.read(memoryToolPointerSearchFormProvider.notifier);
     final maxOffsetController = useTextEditingController(
       text: formState.maxOffsetInput,
+    );
+    final maxDepthController = useTextEditingController(
+      text: formState.maxDepthInput,
     );
 
     useEffect(() {
@@ -51,25 +62,45 @@ class MemoryToolPointerScanDialog extends HookConsumerWidget {
       return null;
     }, [formState.maxOffsetInput, maxOffsetController]);
 
+    useEffect(() {
+      if (maxDepthController.text == formState.maxDepthInput) {
+        return null;
+      }
+      maxDepthController.value = TextEditingValue(
+        text: formState.maxDepthInput,
+        selection: TextSelection.collapsed(
+          offset: formState.maxDepthInput.length,
+        ),
+      );
+      return null;
+    }, [formState.maxDepthInput, maxDepthController]);
+
     Future<void> handleConfirm() async {
       final maxOffset = formNotifier.tryParseMaxOffset();
       if (maxOffset == null) {
         return;
       }
-      await onConfirm(
-        PointerScanRequest(
-          pid: pid,
-          targetAddress: targetAddress,
-          pointerWidth: formState.pointerWidth,
-          maxOffset: maxOffset,
-          alignment: formState.effectiveAlignment,
-          rangeSectionKeys: formState.effectiveRangeSections
-              .map(mapMemorySearchRangeSectionKey)
-              .toList(growable: false),
-          scanAllReadableRegions:
-              formState.selectedRangePreset == MemorySearchRangePresetEnum.all,
-        ),
+      final request = PointerScanRequest(
+        pid: pid,
+        targetAddress: targetAddress,
+        pointerWidth: formState.pointerWidth,
+        maxOffset: maxOffset,
+        alignment: formState.effectiveAlignment,
+        rangeSectionKeys: formState.effectiveRangeSections
+            .map(mapMemorySearchRangeSectionKey)
+            .toList(growable: false),
+        scanAllReadableRegions:
+            formState.selectedRangePreset == MemorySearchRangePresetEnum.all,
       );
+      if (showMaxDepthField) {
+        final maxDepth = formNotifier.tryParseMaxDepth();
+        if (maxDepth == null) {
+          return;
+        }
+        await onConfirmAutoChase!(request, maxDepth);
+      } else {
+        await onConfirm!(request);
+      }
       if (context.mounted) {
         onClose();
       }
@@ -89,7 +120,9 @@ class MemoryToolPointerScanDialog extends HookConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
-                context.l10n.memoryToolPointerScanTitle,
+                showMaxDepthField
+                    ? context.l10n.memoryToolPointerAutoChaseTitle
+                    : context.l10n.memoryToolPointerScanTitle,
                 style: context.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w900,
                 ),
@@ -152,6 +185,7 @@ class MemoryToolPointerScanDialog extends HookConsumerWidget {
                     MemoryToolPointerFormValidationError.invalidMaxOffset =>
                       context.l10n.memoryToolPointerInvalidMaxOffset,
                     null => null,
+                    _ => null,
                   },
                   suffixIconConstraints: BoxConstraints(
                     minWidth: 116.r,
@@ -185,6 +219,39 @@ class MemoryToolPointerScanDialog extends HookConsumerWidget {
                   ),
                 ),
               ),
+              if (showMaxDepthField) ...<Widget>[
+                SizedBox(height: 12.r),
+                _PointerDialogLabel(
+                  label: context.l10n.memoryToolPointerMaxDepthLabel,
+                ),
+                SizedBox(height: 6.r),
+                TextField(
+                  controller: maxDepthController,
+                  keyboardType: TextInputType.number,
+                  enableInteractiveSelection: true,
+                  contextMenuBuilder: buildOverlayTextInputContextMenu,
+                  inputFormatters: <TextInputFormatter>[
+                    FilteringTextInputFormatter.digitsOnly,
+                  ],
+                  onChanged: formNotifier.updateMaxDepthInput,
+                  decoration: InputDecoration(
+                    hintText: '6',
+                    errorText: switch (formState.validationError) {
+                      MemoryToolPointerFormValidationError.invalidMaxDepth =>
+                        context.l10n.memoryToolPointerInvalidMaxDepth,
+                      null => null,
+                      _ => null,
+                    },
+                    filled: true,
+                    fillColor: context.colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.42),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14.r),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+              ],
               SizedBox(height: 12.r),
               _PointerDialogLabel(
                 label: context.l10n.memoryToolPointerAlignmentLabel,

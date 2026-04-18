@@ -107,6 +107,10 @@ private class MemoryToolDaemonServer(
                 )
             )
 
+            "getPointerScanChaseHint" -> JSONObject(
+                MemoryToolHelperNativeBridge.getPointerScanChaseHintJson()
+            )
+
             "readMemoryValues" -> JSONArray(
                 MemoryToolHelperNativeBridge.readMemoryValuesJson(
                     addresses = extractLongArray(params.getJSONArray("requests"), "address"),

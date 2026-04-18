@@ -14,6 +14,8 @@ class MemoryToolPointerResultList extends HookWidget {
     required this.results,
     required this.request,
     required this.scrollController,
+    this.selectedPointerAddress,
+    this.isTerminalLayer = false,
     required this.onContinueSearch,
     required this.onJumpToTarget,
   });
@@ -21,6 +23,8 @@ class MemoryToolPointerResultList extends HookWidget {
   final List<PointerScanResult> results;
   final PointerScanRequest request;
   final ScrollController scrollController;
+  final int? selectedPointerAddress;
+  final bool isTerminalLayer;
   final Future<void> Function(PointerScanResult result) onContinueSearch;
   final Future<void> Function(PointerScanResult result) onJumpToTarget;
 
@@ -41,6 +45,9 @@ class MemoryToolPointerResultList extends HookWidget {
             return _MemoryToolPointerResultTile(
               result: result,
               pointerWidth: request.pointerWidth,
+              isAutoSelected: selectedPointerAddress == result.pointerAddress,
+              showStaticBadge:
+                  isTerminalLayer && selectedPointerAddress == result.pointerAddress,
               onOpenActions: () {
                 activeActionDialog.value = result;
               },
@@ -82,11 +89,15 @@ class _MemoryToolPointerResultTile extends StatelessWidget {
   const _MemoryToolPointerResultTile({
     required this.result,
     required this.pointerWidth,
+    required this.isAutoSelected,
+    required this.showStaticBadge,
     required this.onOpenActions,
   });
 
   final PointerScanResult result;
   final int pointerWidth;
+  final bool isAutoSelected;
+  final bool showStaticBadge;
   final VoidCallback onOpenActions;
 
   @override
@@ -100,10 +111,15 @@ class _MemoryToolPointerResultTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(14.r),
         child: Ink(
           decoration: BoxDecoration(
-            color: context.colorScheme.surface.withValues(alpha: 0.72),
+            color: isAutoSelected
+                ? context.colorScheme.primaryContainer.withValues(alpha: 0.5)
+                : context.colorScheme.surface.withValues(alpha: 0.72),
             borderRadius: BorderRadius.circular(14.r),
             border: Border.all(
-              color: context.colorScheme.outlineVariant.withValues(alpha: 0.42),
+              color: isAutoSelected
+                  ? context.colorScheme.primary
+                  : context.colorScheme.outlineVariant.withValues(alpha: 0.42),
+              width: isAutoSelected ? 1.4 : 1,
             ),
           ),
           padding: EdgeInsets.all(12.r),
@@ -149,6 +165,18 @@ class _MemoryToolPointerResultTile extends StatelessWidget {
                           backgroundColor: const Color(0xFFEAF2FF),
                           foregroundColor: const Color(0xFF3157C8),
                         ),
+                        if (isAutoSelected)
+                          MemoryToolResultBadge(
+                            label: context.l10n.memoryToolPointerBadgeAuto,
+                            backgroundColor: const Color(0xFFE9F8EF),
+                            foregroundColor: const Color(0xFF167C44),
+                          ),
+                        if (showStaticBadge)
+                          MemoryToolResultBadge(
+                            label: context.l10n.memoryToolPointerBadgeStatic,
+                            backgroundColor: const Color(0xFFFFF0CC),
+                            foregroundColor: const Color(0xFFB56A00),
+                          ),
                         MemoryToolResultBadge(
                           label: mapMemoryToolSearchResultRegionTypeLabel(
                             context,

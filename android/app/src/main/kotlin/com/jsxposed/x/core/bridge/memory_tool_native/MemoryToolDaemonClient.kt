@@ -17,6 +17,7 @@ class MemoryToolDaemonClient(
         private const val METHOD_GET_POINTER_SCAN_SESSION_STATE = "getPointerScanSessionState"
         private const val METHOD_GET_POINTER_SCAN_TASK_STATE = "getPointerScanTaskState"
         private const val METHOD_GET_POINTER_SCAN_RESULTS = "getPointerScanResults"
+        private const val METHOD_GET_POINTER_SCAN_CHASE_HINT = "getPointerScanChaseHint"
         private const val METHOD_READ_MEMORY_VALUES = "readMemoryValues"
         private const val METHOD_WRITE_MEMORY_VALUE = "writeMemoryValue"
         private const val METHOD_SET_MEMORY_FREEZE = "setMemoryFreeze"
@@ -288,6 +289,33 @@ class MemoryToolDaemonClient(
                 regionTypeKey = item.optString("regionTypeKey", "other")
             )
         }
+    }
+
+    fun getPointerScanChaseHint(): PointerScanChaseHint {
+        if (!helperManager.isDaemonAlive()) {
+            return PointerScanChaseHint(
+                result = null,
+                isTerminalStaticCandidate = false,
+                stopReasonKey = "noSession"
+            )
+        }
+
+        val item = sendOrThrow(METHOD_GET_POINTER_SCAN_CHASE_HINT, null).getJSONObject("result")
+        val resultItem = item.optJSONObject("result")
+        return PointerScanChaseHint(
+            result = resultItem?.let { result ->
+                PointerScanResult(
+                    pointerAddress = result.getLong("pointerAddress"),
+                    baseAddress = result.getLong("baseAddress"),
+                    targetAddress = result.getLong("targetAddress"),
+                    offset = result.getLong("offset"),
+                    regionStart = result.getLong("regionStart"),
+                    regionTypeKey = result.optString("regionTypeKey", "other")
+                )
+            },
+            isTerminalStaticCandidate = item.optBoolean("isTerminalStaticCandidate", false),
+            stopReasonKey = item.optString("stopReasonKey")
+        )
     }
 
     fun readMemoryValues(requests: List<MemoryReadRequest>): List<MemoryValuePreview> {

@@ -57,5 +57,6 @@ class MemoryPointerAction extends _$MemoryPointerAction {
     ref.invalidate(getPointerScanSessionStateProvider);
     ref.invalidate(getPointerScanTaskStateProvider);
     ref.invalidate(getPointerScanResultsProvider);
+    ref.invalidate(getPointerScanChaseHintProvider);
   }
 }

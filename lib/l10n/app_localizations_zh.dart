@@ -2066,6 +2066,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get memoryToolResultActionPointerScan => '指针搜索';
 
   @override
+  String get memoryToolResultActionAutoChaseStatic => '一键追到静态区';
+
+  @override
   String get memoryToolResultActionJumpToPointer => '跳转到指针';
 
   @override
@@ -2084,6 +2087,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get memoryToolPointerScanTitle => '指针搜索';
 
   @override
+  String get memoryToolPointerAutoChaseTitle => '一键追到静态区';
+
+  @override
   String get memoryToolPointerTargetAddressLabel => '目标地址';
 
   @override
@@ -2093,6 +2099,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get memoryToolPointerMaxOffsetLabel => '最大偏移';
 
   @override
+  String get memoryToolPointerMaxDepthLabel => '最大层数';
+
+  @override
   String get memoryToolPointerAlignmentLabel => '对齐步长';
 
   @override
@@ -2100,6 +2109,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get memoryToolPointerInvalidMaxOffset => '请输入有效偏移量';
+
+  @override
+  String get memoryToolPointerInvalidMaxDepth => '请输入 1 到 12 的层数';
 
   @override
   String get memoryToolPointerActionContinueSearch => '继续搜索上一层指针';
@@ -2117,6 +2129,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get memoryToolPointerPointerAddressLabel => '指针地址';
 
   @override
+  String get memoryToolPointerBadgeAuto => 'AUTO';
+
+  @override
+  String get memoryToolPointerBadgeStatic => 'STATIC';
+
+  @override
   String get memoryToolPointerEmpty => '从搜索、浏览或暂存结果长按并选择指针搜索';
 
   @override
@@ -2126,6 +2144,21 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get memoryToolPointerTaskRunningTitle => '指针搜索进行中';
+
+  @override
+  String get memoryToolPointerStopReasonStaticReached => '已命中静态区';
+
+  @override
+  String get memoryToolPointerStopReasonNoMorePointers => '无更多上层指针';
+
+  @override
+  String get memoryToolPointerStopReasonMaxDepth => '已达最大层数';
+
+  @override
+  String get memoryToolPointerStopReasonCancelled => '已取消';
+
+  @override
+  String get memoryToolPointerStopReasonFailed => '扫描失败';
 
   @override
   String get memoryToolOffsetPreviewTitle => '偏移量计算';

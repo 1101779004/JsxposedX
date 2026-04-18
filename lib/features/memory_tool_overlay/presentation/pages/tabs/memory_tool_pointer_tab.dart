@@ -82,10 +82,13 @@ class MemoryToolPointerTab extends HookConsumerWidget {
           ref.invalidate(getPointerScanSessionStateProvider);
           ref.invalidate(getPointerScanResultsProvider);
           if (taskState.status == SearchTaskStatus.completed) {
-            pointerController.refreshLayerForActiveSession();
+            unawaited(pointerController.handleTaskCompleted());
           } else if (taskState.status == SearchTaskStatus.failed ||
               taskState.status == SearchTaskStatus.cancelled) {
-            pointerController.markActiveScanLayerError(taskState.message);
+            pointerController.handleTaskStopped(
+              status: taskState.status,
+              message: taskState.message,
+            );
           }
         }
         previousTaskStatus.value = taskState.status;
@@ -286,6 +289,8 @@ class MemoryToolPointerTab extends HookConsumerWidget {
                         results: filteredResults,
                         request: currentLayer.request,
                         scrollController: scrollController,
+                        selectedPointerAddress: currentLayer.selectedPointerAddress,
+                        isTerminalLayer: currentLayer.isTerminalLayer,
                         onContinueSearch: (result) async {
                           await pointerController.continueScan(
                             result: result,
@@ -350,6 +355,10 @@ class MemoryToolPointerTab extends HookConsumerWidget {
                           alignment: Alignment.centerRight,
                           child: OutlinedButton(
                             onPressed: () {
+                              if (pointerState.isAutoChasing) {
+                                pointerController.cancelAutoChase();
+                                return;
+                              }
                               ref
                                   .read(memoryPointerActionProvider.notifier)
                                   .cancelPointerScan();
@@ -419,22 +428,51 @@ class _PointerFooter extends StatelessWidget {
     final sessionCount = sessionStateAsync.asData?.value.resultCount ?? 0;
     final totalCount = currentLayer?.totalResultCount ?? 0;
     final resolvedTotalCount = totalCount > 0 ? totalCount : sessionCount;
+    final stopReasonText = switch (currentLayer?.autoStopReasonKey) {
+      'staticReached' => context.l10n.memoryToolPointerStopReasonStaticReached,
+      'noMorePointers' => context.l10n.memoryToolPointerStopReasonNoMorePointers,
+      'maxDepth' => context.l10n.memoryToolPointerStopReasonMaxDepth,
+      'cancelled' => context.l10n.memoryToolPointerStopReasonCancelled,
+      'failed' => context.l10n.memoryToolPointerStopReasonFailed,
+      _ => null,
+    };
 
-    if (currentLayer == null || (loadedCount <= 0 && resolvedTotalCount <= 0)) {
+    if (currentLayer == null ||
+        (loadedCount <= 0 &&
+            resolvedTotalCount <= 0 &&
+            stopReasonText == null)) {
       return const SizedBox.shrink();
     }
 
     return Align(
       alignment: Alignment.centerRight,
-      child: Text(
-        context.l10n.memoryToolPointerLoadedCount(
-          loadedCount,
-          resolvedTotalCount,
-        ),
-        style: context.textTheme.bodySmall?.copyWith(
-          color: context.colorScheme.onSurface.withValues(alpha: 0.68),
-          fontWeight: FontWeight.w700,
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: <Widget>[
+          if (loadedCount > 0 || resolvedTotalCount > 0)
+            Text(
+              context.l10n.memoryToolPointerLoadedCount(
+                loadedCount,
+                resolvedTotalCount,
+              ),
+              style: context.textTheme.bodySmall?.copyWith(
+                color: context.colorScheme.onSurface.withValues(alpha: 0.68),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          if (stopReasonText != null) ...<Widget>[
+            SizedBox(height: 2.r),
+            Text(
+              stopReasonText,
+              style: context.textTheme.bodySmall?.copyWith(
+                color: currentLayer?.autoStopReasonKey == 'failed'
+                    ? context.colorScheme.error
+                    : context.colorScheme.primary,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

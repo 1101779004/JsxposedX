@@ -153,6 +153,30 @@ std::string SerializePointerScanResults(const std::vector<PointerScanResultEntry
     return stream.str();
 }
 
+std::string SerializePointerScanChaseHint(const PointerScanChaseHintView& hint) {
+    std::ostringstream stream;
+    stream << '{'
+           << "\"result\":";
+    if (hint.has_result) {
+        stream << '{'
+               << "\"pointerAddress\":" << hint.result.pointer_address << ','
+               << "\"baseAddress\":" << hint.result.base_address << ','
+               << "\"targetAddress\":" << hint.result.target_address << ','
+               << "\"offset\":" << hint.result.offset << ','
+               << "\"regionStart\":" << hint.result.region_start << ','
+               << "\"regionTypeKey\":\"" << utils::JsonEscape(hint.result.region_type_key) << "\""
+               << '}';
+    } else {
+        stream << "null";
+    }
+    stream << ','
+           << "\"isTerminalStaticCandidate\":"
+           << ToJsonBool(hint.is_terminal_static_candidate) << ','
+           << "\"stopReasonKey\":\"" << utils::JsonEscape(hint.stop_reason_key) << "\""
+           << '}';
+    return stream.str();
+}
+
 std::string SerializeMemoryValuePreviews(const std::vector<MemoryValuePreview>& previews) {
     std::ostringstream stream;
     stream << '[';

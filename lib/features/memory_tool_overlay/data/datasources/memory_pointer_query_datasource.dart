@@ -17,4 +17,8 @@ class MemoryPointerQueryDatasource {
   }) async {
     return await _native.getPointerScanResults(offset, limit);
   }
+
+  Future<PointerScanChaseHint> getPointerScanChaseHint() async {
+    return await _native.getPointerScanChaseHint();
+  }
 }

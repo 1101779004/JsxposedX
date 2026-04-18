@@ -395,6 +395,20 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
                               );
                             },
                             onJumpToPointer: jumpToPointer,
+                            onStartAutoChase: (
+                              PointerScanRequest request,
+                              int maxDepth,
+                            ) async {
+                              onOpenPointerTab();
+                              await ref
+                                  .read(
+                                    memoryToolPointerControllerProvider.notifier,
+                                  )
+                                  .startAutoChase(
+                                    request: request,
+                                    maxDepth: maxDepth,
+                                  );
+                            },
                             onStartPointerScan: (
                               PointerScanRequest request,
                             ) async {
@@ -465,6 +479,21 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
                                 );
                               },
                               onJumpToPointer: jumpToPointer,
+                              onStartAutoChase: (
+                                PointerScanRequest request,
+                                int maxDepth,
+                              ) async {
+                                onOpenPointerTab();
+                                await ref
+                                    .read(
+                                      memoryToolPointerControllerProvider
+                                          .notifier,
+                                    )
+                                    .startAutoChase(
+                                      request: request,
+                                      maxDepth: maxDepth,
+                                    );
+                              },
                               onStartPointerScan: (
                                 PointerScanRequest request,
                               ) async {

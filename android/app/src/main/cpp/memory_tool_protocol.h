@@ -22,6 +22,8 @@ std::string SerializePointerScanTaskState(const PointerScanTaskStateView& state)
 
 std::string SerializePointerScanResults(const std::vector<PointerScanResultEntry>& results);
 
+std::string SerializePointerScanChaseHint(const PointerScanChaseHintView& hint);
+
 std::string SerializeMemoryValuePreviews(const std::vector<MemoryValuePreview>& previews);
 
 std::string SerializeFrozenMemoryValues(const std::vector<FrozenMemoryValueView>& values);

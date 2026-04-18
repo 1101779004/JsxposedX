@@ -10,6 +10,10 @@ class PointerChainLayerState {
     this.isLoadingMore = false,
     this.hasMore = false,
     this.errorText,
+    this.selectedPointerAddress,
+    this.isAutoSelectedLayer = false,
+    this.isTerminalLayer = false,
+    this.autoStopReasonKey,
   });
 
   final PointerScanRequest request;
@@ -19,6 +23,10 @@ class PointerChainLayerState {
   final bool isLoadingMore;
   final bool hasMore;
   final String? errorText;
+  final int? selectedPointerAddress;
+  final bool isAutoSelectedLayer;
+  final bool isTerminalLayer;
+  final String? autoStopReasonKey;
 
   PointerChainLayerState copyWith({
     PointerScanRequest? request,
@@ -28,7 +36,13 @@ class PointerChainLayerState {
     bool? isLoadingMore,
     bool? hasMore,
     String? errorText,
+    int? selectedPointerAddress,
+    bool? isAutoSelectedLayer,
+    bool? isTerminalLayer,
+    String? autoStopReasonKey,
     bool clearErrorText = false,
+    bool clearSelectedPointerAddress = false,
+    bool clearAutoStopReasonKey = false,
   }) {
     return PointerChainLayerState(
       request: request ?? this.request,
@@ -38,6 +52,14 @@ class PointerChainLayerState {
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       hasMore: hasMore ?? this.hasMore,
       errorText: clearErrorText ? null : errorText ?? this.errorText,
+      selectedPointerAddress: clearSelectedPointerAddress
+          ? null
+          : selectedPointerAddress ?? this.selectedPointerAddress,
+      isAutoSelectedLayer: isAutoSelectedLayer ?? this.isAutoSelectedLayer,
+      isTerminalLayer: isTerminalLayer ?? this.isTerminalLayer,
+      autoStopReasonKey: clearAutoStopReasonKey
+          ? null
+          : autoStopReasonKey ?? this.autoStopReasonKey,
     );
   }
 }
@@ -46,10 +68,14 @@ class MemoryToolPointerState {
   const MemoryToolPointerState({
     this.layers = const <PointerChainLayerState>[],
     this.currentLayerIndex = -1,
+    this.isAutoChasing = false,
+    this.autoChaseMaxDepth = 0,
   });
 
   final List<PointerChainLayerState> layers;
   final int currentLayerIndex;
+  final bool isAutoChasing;
+  final int autoChaseMaxDepth;
 
   PointerChainLayerState? get currentLayer {
     if (currentLayerIndex < 0 || currentLayerIndex >= layers.length) {
@@ -63,10 +89,14 @@ class MemoryToolPointerState {
   MemoryToolPointerState copyWith({
     List<PointerChainLayerState>? layers,
     int? currentLayerIndex,
+    bool? isAutoChasing,
+    int? autoChaseMaxDepth,
   }) {
     return MemoryToolPointerState(
       layers: layers ?? this.layers,
       currentLayerIndex: currentLayerIndex ?? this.currentLayerIndex,
+      isAutoChasing: isAutoChasing ?? this.isAutoChasing,
+      autoChaseMaxDepth: autoChaseMaxDepth ?? this.autoChaseMaxDepth,
     );
   }
 }

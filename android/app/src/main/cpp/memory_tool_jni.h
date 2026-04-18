@@ -35,6 +35,8 @@ public:
 
     static jstring GetPointerScanResultsJson(JNIEnv* env, jint offset, jint limit);
 
+    static jstring GetPointerScanChaseHintJson(JNIEnv* env);
+
     static jstring ReadMemoryValuesJson(JNIEnv* env,
                                         jlongArray addresses,
                                         jintArray types,

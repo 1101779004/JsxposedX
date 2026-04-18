@@ -137,7 +137,7 @@ final class MemoryToolPointerSearchFormProvider
 }
 
 String _$memoryToolPointerSearchFormHash() =>
-    r'0fba5a70ca403705ecc228ad4a75da9dfbcd952a';
+    r'4569aa9738d99aafde88938e4794f5dce182c9ff';
 
 abstract class _$MemoryToolPointerSearchForm
     extends $Notifier<MemoryToolPointerFormState> {
@@ -199,7 +199,7 @@ final class MemoryToolPointerControllerProvider
 }
 
 String _$memoryToolPointerControllerHash() =>
-    r'76251379845bd46cdce709aa3c53cab11fe7b61e';
+    r'6528b2b6f23f0bd5b6631b90adabb87e7554fd58';
 
 abstract class _$MemoryToolPointerController
     extends $Notifier<MemoryToolPointerState> {

@@ -170,6 +170,10 @@ class MemoryTool(private val context: Context) {
         return daemonClient.getPointerScanResults(offset, limit)
     }
 
+    fun getPointerScanChaseHint(): PointerScanChaseHint {
+        return daemonClient.getPointerScanChaseHint()
+    }
+
     fun readMemoryValues(requests: List<MemoryReadRequest>): List<MemoryValuePreview> {
         return daemonClient.readMemoryValues(requests)
     }

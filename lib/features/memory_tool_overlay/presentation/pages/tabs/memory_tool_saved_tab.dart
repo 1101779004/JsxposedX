@@ -62,6 +62,7 @@ class MemoryToolSavedTab extends HookConsumerWidget {
         useState<({MemoryToolSavedItem item, String displayValue})?>(null);
     final activeOffsetPreviewDialog =
         useState<({MemoryToolSavedItem item, String displayValue})?>(null);
+    final activeAutoChaseDialog = useState<MemoryToolSavedItem?>(null);
     final activePointerScanDialog = useState<MemoryToolSavedItem?>(null);
 
     useEffect(() {
@@ -340,6 +341,14 @@ class MemoryToolSavedTab extends HookConsumerWidget {
             child: MemoryToolSearchResultActionDialog(
               actions: <MemoryToolSearchResultActionItemData>[
                 MemoryToolSearchResultActionItemData(
+                  icon: Icons.auto_mode_rounded,
+                  title: context.l10n.memoryToolResultActionAutoChaseStatic,
+                  onTap: () async {
+                    activeActionDialog.value = null;
+                    activeAutoChaseDialog.value = dialog.item;
+                  },
+                ),
+                MemoryToolSearchResultActionItemData(
                   icon: Icons.account_tree_rounded,
                   title: context.l10n.memoryToolResultActionPointerScan,
                   onTap: () async {
@@ -433,6 +442,24 @@ class MemoryToolSavedTab extends HookConsumerWidget {
               ],
               onClose: () {
                 activeActionDialog.value = null;
+              },
+            ),
+          ),
+        if (activeAutoChaseDialog.value case final item?)
+          Positioned.fill(
+            child: MemoryToolPointerScanDialog(
+              pid: item.pid,
+              targetAddress: item.address,
+              showMaxDepthField: true,
+              onConfirmAutoChase: (request, maxDepth) async {
+                onOpenPointerTab();
+                await pointerNotifier.startAutoChase(
+                  request: request,
+                  maxDepth: maxDepth,
+                );
+              },
+              onClose: () {
+                activeAutoChaseDialog.value = null;
               },
             ),
           ),

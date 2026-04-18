@@ -233,3 +233,45 @@ final class GetPointerScanResultsFamily extends $Family
   @override
   String toString() => r'getPointerScanResultsProvider';
 }
+
+@ProviderFor(getPointerScanChaseHint)
+const getPointerScanChaseHintProvider = GetPointerScanChaseHintProvider._();
+
+final class GetPointerScanChaseHintProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<PointerScanChaseHint>,
+          PointerScanChaseHint,
+          FutureOr<PointerScanChaseHint>
+        >
+    with
+        $FutureModifier<PointerScanChaseHint>,
+        $FutureProvider<PointerScanChaseHint> {
+  const GetPointerScanChaseHintProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'getPointerScanChaseHintProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$getPointerScanChaseHintHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<PointerScanChaseHint> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<PointerScanChaseHint> create(Ref ref) {
+    return getPointerScanChaseHint(ref);
+  }
+}
+
+String _$getPointerScanChaseHintHash() =>
+    r'394d2aca9c1d8774c7f6631e9aed1da3428b506c';

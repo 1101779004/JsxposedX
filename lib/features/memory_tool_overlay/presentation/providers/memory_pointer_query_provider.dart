@@ -34,3 +34,10 @@ Future<List<PointerScanResult>> getPointerScanResults(
       .watch(memoryPointerQueryRepositoryProvider)
       .getPointerScanResults(offset: offset, limit: limit);
 }
+
+@riverpod
+Future<PointerScanChaseHint> getPointerScanChaseHint(Ref ref) async {
+  return await ref
+      .watch(memoryPointerQueryRepositoryProvider)
+      .getPointerScanChaseHint();
+}

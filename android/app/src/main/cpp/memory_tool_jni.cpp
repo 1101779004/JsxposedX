@@ -120,6 +120,11 @@ jstring MemoryToolJniBridge::GetPointerScanResultsJson(JNIEnv* env, jint offset,
     return env->NewStringUTF(protocol::SerializePointerScanResults(results).c_str());
 }
 
+jstring MemoryToolJniBridge::GetPointerScanChaseHintJson(JNIEnv* env) {
+    const auto hint = MemoryToolEngine::Instance().GetPointerScanChaseHint();
+    return env->NewStringUTF(protocol::SerializePointerScanChaseHint(hint).c_str());
+}
+
 jstring MemoryToolJniBridge::ReadMemoryValuesJson(JNIEnv* env,
                                                   jlongArray addresses,
                                                   jintArray types,
@@ -421,6 +426,18 @@ Java_com_jsxposed_x_core_bridge_memory_1tool_1native_MemoryToolHelperNativeBridg
         jint limit) {
     try {
         return memory_tool::MemoryToolJniBridge::GetPointerScanResultsJson(env, offset, limit);
+    } catch (const std::exception& exception) {
+        memory_tool::ThrowRuntimeException(env, exception.what());
+        return nullptr;
+    }
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_jsxposed_x_core_bridge_memory_1tool_1native_MemoryToolHelperNativeBridge_getPointerScanChaseHintJson(
+        JNIEnv* env,
+        jobject /* thiz */) {
+    try {
+        return memory_tool::MemoryToolJniBridge::GetPointerScanChaseHintJson(env);
     } catch (const std::exception& exception) {
         memory_tool::ThrowRuntimeException(env, exception.what());
         return nullptr;

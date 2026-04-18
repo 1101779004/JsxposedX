@@ -4088,6 +4088,12 @@ abstract class AppLocalizations {
   /// **'指针搜索'**
   String get memoryToolResultActionPointerScan;
 
+  /// No description provided for @memoryToolResultActionAutoChaseStatic.
+  ///
+  /// In zh, this message translates to:
+  /// **'一键追到静态区'**
+  String get memoryToolResultActionAutoChaseStatic;
+
   /// No description provided for @memoryToolResultActionJumpToPointer.
   ///
   /// In zh, this message translates to:
@@ -4124,6 +4130,12 @@ abstract class AppLocalizations {
   /// **'指针搜索'**
   String get memoryToolPointerScanTitle;
 
+  /// No description provided for @memoryToolPointerAutoChaseTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'一键追到静态区'**
+  String get memoryToolPointerAutoChaseTitle;
+
   /// No description provided for @memoryToolPointerTargetAddressLabel.
   ///
   /// In zh, this message translates to:
@@ -4142,6 +4154,12 @@ abstract class AppLocalizations {
   /// **'最大偏移'**
   String get memoryToolPointerMaxOffsetLabel;
 
+  /// No description provided for @memoryToolPointerMaxDepthLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'最大层数'**
+  String get memoryToolPointerMaxDepthLabel;
+
   /// No description provided for @memoryToolPointerAlignmentLabel.
   ///
   /// In zh, this message translates to:
@@ -4159,6 +4177,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'请输入有效偏移量'**
   String get memoryToolPointerInvalidMaxOffset;
+
+  /// No description provided for @memoryToolPointerInvalidMaxDepth.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入 1 到 12 的层数'**
+  String get memoryToolPointerInvalidMaxDepth;
 
   /// No description provided for @memoryToolPointerActionContinueSearch.
   ///
@@ -4190,6 +4214,18 @@ abstract class AppLocalizations {
   /// **'指针地址'**
   String get memoryToolPointerPointerAddressLabel;
 
+  /// No description provided for @memoryToolPointerBadgeAuto.
+  ///
+  /// In zh, this message translates to:
+  /// **'AUTO'**
+  String get memoryToolPointerBadgeAuto;
+
+  /// No description provided for @memoryToolPointerBadgeStatic.
+  ///
+  /// In zh, this message translates to:
+  /// **'STATIC'**
+  String get memoryToolPointerBadgeStatic;
+
   /// No description provided for @memoryToolPointerEmpty.
   ///
   /// In zh, this message translates to:
@@ -4207,6 +4243,36 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'指针搜索进行中'**
   String get memoryToolPointerTaskRunningTitle;
+
+  /// No description provided for @memoryToolPointerStopReasonStaticReached.
+  ///
+  /// In zh, this message translates to:
+  /// **'已命中静态区'**
+  String get memoryToolPointerStopReasonStaticReached;
+
+  /// No description provided for @memoryToolPointerStopReasonNoMorePointers.
+  ///
+  /// In zh, this message translates to:
+  /// **'无更多上层指针'**
+  String get memoryToolPointerStopReasonNoMorePointers;
+
+  /// No description provided for @memoryToolPointerStopReasonMaxDepth.
+  ///
+  /// In zh, this message translates to:
+  /// **'已达最大层数'**
+  String get memoryToolPointerStopReasonMaxDepth;
+
+  /// No description provided for @memoryToolPointerStopReasonCancelled.
+  ///
+  /// In zh, this message translates to:
+  /// **'已取消'**
+  String get memoryToolPointerStopReasonCancelled;
+
+  /// No description provided for @memoryToolPointerStopReasonFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'扫描失败'**
+  String get memoryToolPointerStopReasonFailed;
 
   /// No description provided for @memoryToolOffsetPreviewTitle.
   ///

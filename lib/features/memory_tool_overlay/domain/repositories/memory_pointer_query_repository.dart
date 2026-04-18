@@ -9,4 +9,6 @@ abstract class MemoryPointerQueryRepository {
     required int offset,
     required int limit,
   });
+
+  Future<PointerScanChaseHint> getPointerScanChaseHint();
 }

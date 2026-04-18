@@ -2108,6 +2108,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get memoryToolResultActionPointerScan => 'Pointer Scan';
 
   @override
+  String get memoryToolResultActionAutoChaseStatic => 'Auto Chase Static';
+
+  @override
   String get memoryToolResultActionJumpToPointer => 'Jump to Pointer';
 
   @override
@@ -2126,6 +2129,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get memoryToolPointerScanTitle => 'Pointer Scan';
 
   @override
+  String get memoryToolPointerAutoChaseTitle => 'Auto Chase Static Region';
+
+  @override
   String get memoryToolPointerTargetAddressLabel => 'Target Address';
 
   @override
@@ -2135,6 +2141,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get memoryToolPointerMaxOffsetLabel => 'Max Offset';
 
   @override
+  String get memoryToolPointerMaxDepthLabel => 'Max Depth';
+
+  @override
   String get memoryToolPointerAlignmentLabel => 'Alignment';
 
   @override
@@ -2142,6 +2151,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get memoryToolPointerInvalidMaxOffset => 'Enter a valid offset.';
+
+  @override
+  String get memoryToolPointerInvalidMaxDepth => 'Enter a depth from 1 to 12.';
 
   @override
   String get memoryToolPointerActionContinueSearch =>
@@ -2160,6 +2172,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get memoryToolPointerPointerAddressLabel => 'Pointer Address';
 
   @override
+  String get memoryToolPointerBadgeAuto => 'AUTO';
+
+  @override
+  String get memoryToolPointerBadgeStatic => 'STATIC';
+
+  @override
   String get memoryToolPointerEmpty =>
       'Long press a search, browse, or saved result and choose Pointer Scan.';
 
@@ -2170,6 +2188,23 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get memoryToolPointerTaskRunningTitle => 'Pointer Scan Running';
+
+  @override
+  String get memoryToolPointerStopReasonStaticReached =>
+      'Static region reached';
+
+  @override
+  String get memoryToolPointerStopReasonNoMorePointers =>
+      'No more upper pointers';
+
+  @override
+  String get memoryToolPointerStopReasonMaxDepth => 'Max depth reached';
+
+  @override
+  String get memoryToolPointerStopReasonCancelled => 'Cancelled';
+
+  @override
+  String get memoryToolPointerStopReasonFailed => 'Scan failed';
 
   @override
   String get memoryToolOffsetPreviewTitle => 'Offset Preview';

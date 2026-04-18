@@ -36,6 +36,7 @@ class MemoryToolBrowseResultList extends HookConsumerWidget {
     this.initialFrozenStateByAddress = const <int, bool>{},
     this.onNavigateToAddress,
     this.onJumpToPointer,
+    this.onStartAutoChase,
     this.onStartPointerScan,
   });
 
@@ -61,6 +62,8 @@ class MemoryToolBrowseResultList extends HookConsumerWidget {
     MemoryValuePreview? preview,
     String displayValue,
   )? onJumpToPointer;
+  final Future<void> Function(PointerScanRequest request, int maxDepth)?
+      onStartAutoChase;
   final Future<void> Function(PointerScanRequest request)? onStartPointerScan;
 
   @override
@@ -73,6 +76,7 @@ class MemoryToolBrowseResultList extends HookConsumerWidget {
         useState<({SearchResult result, String displayValue})?>(null);
     final activeOffsetPreviewDialog =
         useState<({SearchResult result, String displayValue})?>(null);
+    final activeAutoChaseDialog = useState<SearchResult?>(null);
     final activePointerScanDialog = useState<SearchResult?>(null);
     final anchorExtent = useState<double>(94.r);
     final centerSliverKey = useMemoized(
@@ -234,6 +238,15 @@ class MemoryToolBrowseResultList extends HookConsumerWidget {
           Positioned.fill(
             child: MemoryToolSearchResultActionDialog(
               actions: <MemoryToolSearchResultActionItemData>[
+                if (onStartAutoChase != null && processPid != null)
+                  MemoryToolSearchResultActionItemData(
+                    icon: Icons.auto_mode_rounded,
+                    title: context.l10n.memoryToolResultActionAutoChaseStatic,
+                    onTap: () async {
+                      activeResultActionDialog.value = null;
+                      activeAutoChaseDialog.value = dialog.result;
+                    },
+                  ),
                 if (onStartPointerScan != null && processPid != null)
                   MemoryToolSearchResultActionItemData(
                     icon: Icons.account_tree_rounded,
@@ -333,6 +346,20 @@ class MemoryToolBrowseResultList extends HookConsumerWidget {
               ],
               onClose: () {
                 activeResultActionDialog.value = null;
+              },
+            ),
+          ),
+        if (activeAutoChaseDialog.value case final result?)
+          Positioned.fill(
+            child: MemoryToolPointerScanDialog(
+              pid: processPid!,
+              targetAddress: result.address,
+              showMaxDepthField: true,
+              onConfirmAutoChase: (request, maxDepth) async {
+                await onStartAutoChase!(request, maxDepth);
+              },
+              onClose: () {
+                activeAutoChaseDialog.value = null;
               },
             ),
           ),

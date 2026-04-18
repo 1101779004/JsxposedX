@@ -44,6 +44,57 @@ size_t ResolvePointerRegionEntryCount(const MemoryRegion& region, size_t pointer
     return ((region.size - pointer_width) / alignment) + 1;
 }
 
+bool IsPointerStaticCandidateRegionKey(const std::string& region_type_key) {
+    return region_type_key == "cData" ||
+           region_type_key == "cBss" ||
+           region_type_key == "codeApp" ||
+           region_type_key == "codeSys" ||
+           region_type_key == "other";
+}
+
+int ResolvePointerChaseRegionPriority(const std::string& region_type_key) {
+    if (region_type_key == "cData") {
+        return 0;
+    }
+    if (region_type_key == "cBss") {
+        return 1;
+    }
+    if (region_type_key == "codeApp") {
+        return 2;
+    }
+    if (region_type_key == "codeSys") {
+        return 3;
+    }
+    if (region_type_key == "other") {
+        return 4;
+    }
+    if (region_type_key == "cAlloc") {
+        return 5;
+    }
+    if (region_type_key == "cHeap") {
+        return 6;
+    }
+    if (region_type_key == "anonymous") {
+        return 7;
+    }
+    if (region_type_key == "javaHeap") {
+        return 8;
+    }
+    if (region_type_key == "java") {
+        return 9;
+    }
+    if (region_type_key == "ashmem") {
+        return 10;
+    }
+    if (region_type_key == "stack") {
+        return 11;
+    }
+    if (region_type_key == "bad") {
+        return 12;
+    }
+    return 13;
+}
+
 const MemoryRegion* FindRegionByStart(const std::vector<MemoryRegion>& regions,
                                       uint64_t region_start) {
     const auto iterator = std::lower_bound(
@@ -370,6 +421,54 @@ std::vector<PointerScanResultEntry> MemoryToolEngine::GetPointerScanResults(int 
     return std::vector<PointerScanResultEntry>(
         pointer_session_.results.begin() + static_cast<std::ptrdiff_t>(start),
         pointer_session_.results.begin() + static_cast<std::ptrdiff_t>(end));
+}
+
+PointerScanChaseHintView MemoryToolEngine::GetPointerScanChaseHint() {
+    std::lock_guard<std::mutex> lock(mutex_);
+    EnsureActivePointerSessionLocked();
+    if (!IsProcessAlive(pointer_session_.pid)) {
+        pointer_session_.Clear();
+        throw std::runtime_error("Pointer scan target process is no longer available.");
+    }
+
+    PointerScanChaseHintView hint;
+    if (pointer_session_.results.empty()) {
+        hint.stop_reason_key = "noMorePointers";
+        return hint;
+    }
+
+    for (const PointerScanResultEntry& entry : pointer_session_.results) {
+        if (!IsPointerStaticCandidateRegionKey(entry.region_type_key)) {
+            continue;
+        }
+        hint.has_result = true;
+        hint.result = entry;
+        hint.is_terminal_static_candidate = true;
+        hint.stop_reason_key = "staticReached";
+        return hint;
+    }
+
+    const PointerScanResultEntry* best_entry = nullptr;
+    int best_priority = 0;
+    for (const PointerScanResultEntry& entry : pointer_session_.results) {
+        const int priority = ResolvePointerChaseRegionPriority(entry.region_type_key);
+        if (best_entry == nullptr ||
+            priority < best_priority ||
+            (priority == best_priority && entry.offset < best_entry->offset) ||
+            (priority == best_priority && entry.offset == best_entry->offset &&
+             entry.pointer_address < best_entry->pointer_address)) {
+            best_entry = &entry;
+            best_priority = priority;
+        }
+    }
+
+    if (best_entry != nullptr) {
+        hint.has_result = true;
+        hint.result = *best_entry;
+    } else {
+        hint.stop_reason_key = "noMorePointers";
+    }
+    return hint;
 }
 
 std::vector<MemoryValuePreview> MemoryToolEngine::ReadMemoryValues(

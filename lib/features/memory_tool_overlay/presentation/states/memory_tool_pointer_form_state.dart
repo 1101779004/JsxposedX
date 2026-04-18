@@ -5,12 +5,14 @@ import 'package:JsxposedX/features/memory_tool_overlay/presentation/enums/memory
 
 enum MemoryToolPointerFormValidationError {
   invalidMaxOffset,
+  invalidMaxDepth,
 }
 
 class MemoryToolPointerFormState {
   const MemoryToolPointerFormState({
     this.pointerWidth = 8,
     this.maxOffsetInput = '400',
+    this.maxDepthInput = '6',
     this.isHexOffset = true,
     this.selectedAlignment = MemoryToolPointerAlignmentOption.followPointerWidth,
     this.selectedRangePreset = MemorySearchRangePresetEnum.all,
@@ -20,6 +22,7 @@ class MemoryToolPointerFormState {
 
   final int pointerWidth;
   final String maxOffsetInput;
+  final String maxDepthInput;
   final bool isHexOffset;
   final MemoryToolPointerAlignmentOption selectedAlignment;
   final MemorySearchRangePresetEnum selectedRangePreset;
@@ -50,6 +53,7 @@ class MemoryToolPointerFormState {
   MemoryToolPointerFormState copyWith({
     int? pointerWidth,
     String? maxOffsetInput,
+    String? maxDepthInput,
     bool? isHexOffset,
     MemoryToolPointerAlignmentOption? selectedAlignment,
     MemorySearchRangePresetEnum? selectedRangePreset,
@@ -60,6 +64,7 @@ class MemoryToolPointerFormState {
     return MemoryToolPointerFormState(
       pointerWidth: pointerWidth ?? this.pointerWidth,
       maxOffsetInput: maxOffsetInput ?? this.maxOffsetInput,
+      maxDepthInput: maxDepthInput ?? this.maxDepthInput,
       isHexOffset: isHexOffset ?? this.isHexOffset,
       selectedAlignment: selectedAlignment ?? this.selectedAlignment,
       selectedRangePreset: selectedRangePreset ?? this.selectedRangePreset,

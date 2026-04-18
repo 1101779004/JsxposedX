@@ -149,6 +149,18 @@ class PointerScanResult {
   });
 }
 
+class PointerScanChaseHint {
+  final PointerScanResult? result;
+  final bool isTerminalStaticCandidate;
+  final String stopReasonKey;
+
+  const PointerScanChaseHint({
+    this.result,
+    required this.isTerminalStaticCandidate,
+    required this.stopReasonKey,
+  });
+}
+
 class MemoryReadRequest {
   final int address;
   final SearchValueType type;
@@ -342,6 +354,9 @@ abstract class MemoryToolNative {
 
   @async
   List<PointerScanResult> getPointerScanResults(int offset, int limit);
+
+  @async
+  PointerScanChaseHint getPointerScanChaseHint();
 
   @async
   List<MemoryValuePreview> readMemoryValues(List<MemoryReadRequest> requests);

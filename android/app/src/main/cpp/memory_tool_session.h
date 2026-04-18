@@ -92,6 +92,13 @@ struct PointerScanResultEntry {
     std::string region_type_key;
 };
 
+struct PointerScanChaseHintView {
+    bool has_result = false;
+    PointerScanResultEntry result;
+    bool is_terminal_static_candidate = false;
+    std::string stop_reason_key;
+};
+
 struct MemoryReadRequest {
     uint64_t address = 0;
     SearchValueType type = SearchValueType::kI32;

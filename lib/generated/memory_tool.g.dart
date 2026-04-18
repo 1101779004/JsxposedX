@@ -605,6 +605,58 @@ class PointerScanResult {
 ;
 }
 
+class PointerScanChaseHint {
+  PointerScanChaseHint({
+    this.result,
+    required this.isTerminalStaticCandidate,
+    required this.stopReasonKey,
+  });
+
+  PointerScanResult? result;
+
+  bool isTerminalStaticCandidate;
+
+  String stopReasonKey;
+
+  List<Object?> _toList() {
+    return <Object?>[
+      result,
+      isTerminalStaticCandidate,
+      stopReasonKey,
+    ];
+  }
+
+  Object encode() {
+    return _toList();
+  }
+
+  static PointerScanChaseHint decode(Object result) {
+    result as List<Object?>;
+    return PointerScanChaseHint(
+      result: result[0] as PointerScanResult?,
+      isTerminalStaticCandidate: result[1]! as bool,
+      stopReasonKey: result[2]! as String,
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! PointerScanChaseHint || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(encode(), other.encode());
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => Object.hashAll(_toList())
+;
+}
+
 class MemoryReadRequest {
   MemoryReadRequest({
     required this.address,
@@ -1285,6 +1337,9 @@ class _PigeonCodec extends StandardMessageCodec {
     }    else if (value is PointerScanTaskState) {
       buffer.putUint8(149);
       writeValue(buffer, value.encode());
+    }    else if (value is PointerScanChaseHint) {
+      buffer.putUint8(150);
+      writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
     }
@@ -1338,6 +1393,8 @@ class _PigeonCodec extends StandardMessageCodec {
         return PointerScanSessionState.decode(readValue(buffer)!);
       case 149:
         return PointerScanTaskState.decode(readValue(buffer)!);
+      case 150:
+        return PointerScanChaseHint.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
     }
@@ -1606,6 +1663,34 @@ class MemoryToolNative {
       );
     } else {
       return (pigeonVar_replyList[0] as List<Object?>?)!.cast<PointerScanResult>();
+    }
+  }
+
+  Future<PointerScanChaseHint> getPointerScanChaseHint() async {
+    final String pigeonVar_channelName = 'dev.flutter.pigeon.JsxposedX.MemoryToolNative.getPointerScanChaseHint$pigeonVar_messageChannelSuffix';
+    final BasicMessageChannel<Object?> pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(null);
+    final List<Object?>? pigeonVar_replyList =
+        await pigeonVar_sendFuture as List<Object?>?;
+    if (pigeonVar_replyList == null) {
+      throw _createConnectionError(pigeonVar_channelName);
+    } else if (pigeonVar_replyList.length > 1) {
+      throw PlatformException(
+        code: pigeonVar_replyList[0]! as String,
+        message: pigeonVar_replyList[1] as String?,
+        details: pigeonVar_replyList[2],
+      );
+    } else if (pigeonVar_replyList[0] == null) {
+      throw PlatformException(
+        code: 'null-error',
+        message: 'Host platform returned null value for non-null return value.',
+      );
+    } else {
+      return (pigeonVar_replyList[0] as PointerScanChaseHint?)!;
     }
   }
 

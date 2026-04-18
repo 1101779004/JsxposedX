@@ -37,6 +37,8 @@ public:
 
     std::vector<PointerScanResultEntry> GetPointerScanResults(int offset, int limit);
 
+    PointerScanChaseHintView GetPointerScanChaseHint();
+
     std::vector<MemoryValuePreview> ReadMemoryValues(const std::vector<MemoryReadRequest>& requests);
 
     void WriteMemoryValue(const MemoryWriteRequest& request);

@@ -36,6 +36,7 @@ class MemoryToolSearchResultList extends HookConsumerWidget {
     this.onPreviewMemoryBlock,
     this.onNavigateToAddress,
     this.onJumpToPointer,
+    this.onStartAutoChase,
     this.onStartPointerScan,
     this.showPreviewMemoryBlockAction = true,
     this.itemKeyBuilder,
@@ -69,6 +70,8 @@ class MemoryToolSearchResultList extends HookConsumerWidget {
     MemoryValuePreview? preview,
     String displayValue,
   )? onJumpToPointer;
+  final Future<void> Function(PointerScanRequest request, int maxDepth)?
+      onStartAutoChase;
   final Future<void> Function(PointerScanRequest request)? onStartPointerScan;
   final bool showPreviewMemoryBlockAction;
 
@@ -82,6 +85,7 @@ class MemoryToolSearchResultList extends HookConsumerWidget {
         useState<({SearchResult result, String displayValue})?>(null);
     final activeOffsetPreviewDialog =
         useState<({SearchResult result, String displayValue})?>(null);
+    final activeAutoChaseDialog = useState<SearchResult?>(null);
     final activePointerScanDialog = useState<SearchResult?>(null);
     final savedItemsNotifier = ref.read(memoryToolSavedItemsProvider.notifier);
 
@@ -178,6 +182,15 @@ class MemoryToolSearchResultList extends HookConsumerWidget {
           Positioned.fill(
             child: MemoryToolSearchResultActionDialog(
               actions: <MemoryToolSearchResultActionItemData>[
+                if (onStartAutoChase != null && processPid != null)
+                  MemoryToolSearchResultActionItemData(
+                    icon: Icons.auto_mode_rounded,
+                    title: context.l10n.memoryToolResultActionAutoChaseStatic,
+                    onTap: () async {
+                      activeResultActionDialog.value = null;
+                      activeAutoChaseDialog.value = dialog.result;
+                    },
+                  ),
                 if (onStartPointerScan != null && processPid != null)
                   MemoryToolSearchResultActionItemData(
                     icon: Icons.account_tree_rounded,
@@ -291,6 +304,20 @@ class MemoryToolSearchResultList extends HookConsumerWidget {
               ],
               onClose: () {
                 activeResultActionDialog.value = null;
+              },
+            ),
+          ),
+        if (activeAutoChaseDialog.value case final result?)
+          Positioned.fill(
+            child: MemoryToolPointerScanDialog(
+              pid: processPid!,
+              targetAddress: result.address,
+              showMaxDepthField: true,
+              onConfirmAutoChase: (request, maxDepth) async {
+                await onStartAutoChase!(request, maxDepth);
+              },
+              onClose: () {
+                activeAutoChaseDialog.value = null;
               },
             ),
           ),

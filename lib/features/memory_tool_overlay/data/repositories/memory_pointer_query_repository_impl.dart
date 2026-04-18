@@ -27,4 +27,9 @@ class MemoryPointerQueryRepositoryImpl implements MemoryPointerQueryRepository {
       limit: limit,
     );
   }
+
+  @override
+  Future<PointerScanChaseHint> getPointerScanChaseHint() async {
+    return await dataSource.getPointerScanChaseHint();
+  }
 }
