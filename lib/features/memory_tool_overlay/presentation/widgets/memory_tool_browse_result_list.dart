@@ -34,7 +34,8 @@ class MemoryToolBrowseResultList extends HookConsumerWidget {
     required this.previousValueByAddress,
     this.processPid,
     this.initialFrozenStateByAddress = const <int, bool>{},
-    this.onPreviewMemoryAddress,
+    this.onNavigateToAddress,
+    this.onJumpToPointer,
     this.onStartPointerScan,
   });
 
@@ -54,7 +55,12 @@ class MemoryToolBrowseResultList extends HookConsumerWidget {
     MemoryValuePreview? preview,
     String displayValue,
     int targetAddress,
-  )? onPreviewMemoryAddress;
+  )? onNavigateToAddress;
+  final Future<void> Function(
+    SearchResult result,
+    MemoryValuePreview? preview,
+    String displayValue,
+  )? onJumpToPointer;
   final Future<void> Function(PointerScanRequest request)? onStartPointerScan;
 
   @override
@@ -237,7 +243,7 @@ class MemoryToolBrowseResultList extends HookConsumerWidget {
                       activePointerScanDialog.value = dialog.result;
                     },
                   ),
-                if (onPreviewMemoryAddress != null &&
+                if (onJumpToPointer != null &&
                     canInterpretMemoryToolPointer(
                       resolvePreview(dialog.result)?.rawBytes ??
                           dialog.result.rawBytes,
@@ -246,23 +252,15 @@ class MemoryToolBrowseResultList extends HookConsumerWidget {
                     icon: Icons.subdirectory_arrow_right_rounded,
                     title: context.l10n.memoryToolResultActionJumpToPointer,
                     onTap: () async {
-                      final targetAddress = decodeMemoryToolPointerAddress(
-                        resolvePreview(dialog.result)?.rawBytes ??
-                            dialog.result.rawBytes,
-                      );
-                      if (targetAddress == null) {
-                        return;
-                      }
-                      await onPreviewMemoryAddress!(
+                      activeResultActionDialog.value = null;
+                      await onJumpToPointer!(
                         dialog.result,
                         resolvePreview(dialog.result),
                         dialog.displayValue,
-                        targetAddress,
                       );
-                      activeResultActionDialog.value = null;
                     },
                   ),
-                if (onPreviewMemoryAddress != null)
+                if (onNavigateToAddress != null)
                   MemoryToolSearchResultActionItemData(
                     icon: Icons.calculate_rounded,
                     title: context.l10n.memoryToolResultActionOffsetPreview,
@@ -359,7 +357,7 @@ class MemoryToolBrowseResultList extends HookConsumerWidget {
               livePreviewsAsync: livePreviewsAsync,
               onConfirm: (targetAddress) async {
                 activeOffsetPreviewDialog.value = null;
-                await onPreviewMemoryAddress!(
+                await onNavigateToAddress!(
                   dialog.result,
                   resolvePreview(dialog.result),
                   dialog.displayValue,

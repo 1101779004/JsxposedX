@@ -73,7 +73,6 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
     await previewFromAddress(
       sourceResult: result,
       sourcePreview: preview,
-      sourceDisplayValue: displayValue,
       targetAddress: result.address,
     );
   }
@@ -81,7 +80,6 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
   Future<void> previewFromAddress({
     required SearchResult sourceResult,
     MemoryValuePreview? sourcePreview,
-    required String sourceDisplayValue,
     required int targetAddress,
   }) async {
     final selectedProcess = ref.read(memoryToolSelectedProcessProvider);
@@ -93,31 +91,50 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
       preview: sourcePreview,
       result: sourceResult,
     );
+    final strideBytes = sourceRawBytes.isEmpty ? 1 : sourceRawBytes.length;
+    var readableRegions = state.regions;
+    var targetRegion = _resolveRegionForAddress(
+      regions: readableRegions,
+      address: targetAddress,
+      strideBytes: strideBytes,
+    );
+    if (targetRegion == null) {
+      readableRegions = await _loadReadableRegions(pid: selectedProcess.pid);
+      targetRegion = _resolveRegionForAddress(
+        regions: readableRegions,
+        address: targetAddress,
+        strideBytes: strideBytes,
+      );
+    }
+    if (targetRegion == null) {
+      throw Exception('Target address is unreadable.');
+    }
+
     final targetPreview = await _readTargetPreviewOrNull(
       address: targetAddress,
-      bytesLength: sourceRawBytes.length,
+      bytesLength: strideBytes,
     );
-    final targetRawBytes =
-        targetPreview?.rawBytes ??
-        Uint8List(sourceRawBytes.isEmpty ? 1 : sourceRawBytes.length);
+    if (targetPreview == null) {
+      throw Exception('Target address is unreadable.');
+    }
+
     final nextAnchorResult = SearchResult(
       address: targetAddress,
-      regionStart: sourceResult.regionStart,
-      regionTypeKey: sourceResult.regionTypeKey,
+      regionStart: targetRegion.startAddress,
+      regionTypeKey: _mapBrowseRegionTypeKey(targetRegion),
       type: sourceResult.type,
-      rawBytes: targetRawBytes,
-      displayValue: targetPreview == null
-          ? sourceDisplayValue
-          : resolveMemoryToolSearchResultValueByType(
-              type: sourceResult.type,
-              rawBytes: targetPreview.rawBytes,
-              fallbackDisplayValue: sourceDisplayValue,
-            ),
+      rawBytes: targetPreview.rawBytes,
+      displayValue: resolveMemoryToolSearchResultValueByType(
+        type: sourceResult.type,
+        rawBytes: targetPreview.rawBytes,
+        fallbackDisplayValue: targetPreview.displayValue,
+      ),
     );
 
     await _previewAnchorResult(
       selectedPid: selectedProcess.pid,
       anchorResult: nextAnchorResult,
+      knownReadableRegions: readableRegions,
     );
   }
 
@@ -545,6 +562,7 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
   Future<void> _previewAnchorResult({
     required int selectedPid,
     required SearchResult anchorResult,
+    List<MemoryRegion>? knownReadableRegions,
   }) async {
     final nextAnchorRegion = _resolveRegionForAddress(
       regions: state.regions,
@@ -680,7 +698,8 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
     );
 
     try {
-      final readableRegions = await _loadReadableRegions(pid: selectedPid);
+      final readableRegions =
+          knownReadableRegions ?? await _loadReadableRegions(pid: selectedPid);
       if (readableRegions.isEmpty) {
         state = state.copyWith(
           results: const <SearchResult>[],

@@ -33,7 +33,9 @@ class MemoryToolSearchResultList extends HookConsumerWidget {
     this.initialFrozenStateByAddress = const <int, bool>{},
     this.highlightedAddress,
     this.scrollController,
-    this.onPreviewMemoryAddress,
+    this.onPreviewMemoryBlock,
+    this.onNavigateToAddress,
+    this.onJumpToPointer,
     this.onStartPointerScan,
     this.showPreviewMemoryBlockAction = true,
     this.itemKeyBuilder,
@@ -55,8 +57,18 @@ class MemoryToolSearchResultList extends HookConsumerWidget {
     SearchResult result,
     MemoryValuePreview? preview,
     String displayValue,
+  )? onPreviewMemoryBlock;
+  final Future<void> Function(
+    SearchResult result,
+    MemoryValuePreview? preview,
+    String displayValue,
     int targetAddress,
-  )? onPreviewMemoryAddress;
+  )? onNavigateToAddress;
+  final Future<void> Function(
+    SearchResult result,
+    MemoryValuePreview? preview,
+    String displayValue,
+  )? onJumpToPointer;
   final Future<void> Function(PointerScanRequest request)? onStartPointerScan;
   final bool showPreviewMemoryBlockAction;
 
@@ -175,7 +187,7 @@ class MemoryToolSearchResultList extends HookConsumerWidget {
                       activePointerScanDialog.value = dialog.result;
                     },
                   ),
-                if (onPreviewMemoryAddress != null &&
+                if (onJumpToPointer != null &&
                     canInterpretMemoryToolPointer(
                       resolvePreview(dialog.result)?.rawBytes ??
                           dialog.result.rawBytes,
@@ -184,37 +196,29 @@ class MemoryToolSearchResultList extends HookConsumerWidget {
                     icon: Icons.subdirectory_arrow_right_rounded,
                     title: context.l10n.memoryToolResultActionJumpToPointer,
                     onTap: () async {
-                      final targetAddress = decodeMemoryToolPointerAddress(
-                        resolvePreview(dialog.result)?.rawBytes ??
-                            dialog.result.rawBytes,
-                      );
-                      if (targetAddress == null) {
-                        return;
-                      }
-                      await onPreviewMemoryAddress!(
+                      activeResultActionDialog.value = null;
+                      await onJumpToPointer!(
                         dialog.result,
                         resolvePreview(dialog.result),
                         dialog.displayValue,
-                        targetAddress,
                       );
-                      activeResultActionDialog.value = null;
                     },
                   ),
-                if (showPreviewMemoryBlockAction && onPreviewMemoryAddress != null)
+                if (showPreviewMemoryBlockAction &&
+                    onPreviewMemoryBlock != null)
                   MemoryToolSearchResultActionItemData(
                     icon: Icons.preview_rounded,
                     title: context.l10n.memoryToolResultActionPreviewMemoryBlock,
                     onTap: () async {
-                      await onPreviewMemoryAddress!(
+                      await onPreviewMemoryBlock!(
                         dialog.result,
                         resolvePreview(dialog.result),
                         dialog.displayValue,
-                        dialog.result.address,
                       );
                       activeResultActionDialog.value = null;
                     },
                   ),
-                if (onPreviewMemoryAddress != null)
+                if (onNavigateToAddress != null)
                   MemoryToolSearchResultActionItemData(
                     icon: Icons.calculate_rounded,
                     title: context.l10n.memoryToolResultActionOffsetPreview,
@@ -311,7 +315,7 @@ class MemoryToolSearchResultList extends HookConsumerWidget {
               livePreviewsAsync: livePreviewsAsync,
               onConfirm: (targetAddress) async {
                 activeOffsetPreviewDialog.value = null;
-                await onPreviewMemoryAddress!(
+                await onNavigateToAddress!(
                   dialog.result,
                   resolvePreview(dialog.result),
                   dialog.displayValue,

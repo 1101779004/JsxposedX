@@ -118,6 +118,46 @@ class MemoryToolSavedTab extends HookConsumerWidget {
       );
     }
 
+    Future<void> previewAndOpenBrowse(
+      Future<void> Function() previewAction,
+    ) async {
+      try {
+        await previewAction();
+        onOpenBrowseTab();
+      } catch (_) {
+        if (!context.mounted) {
+          return;
+        }
+        ref
+            .read(overlayWindowHostRuntimeProvider.notifier)
+            .showToast(context.l10n.memoryToolOffsetPreviewUnreadable);
+      }
+    }
+
+    Future<void> jumpToPointer(
+      MemoryToolSavedItem item,
+      String displayValue,
+    ) async {
+      final preview = previewMap[item.address];
+      final targetAddress = decodeMemoryToolPointerAddress(
+        preview?.rawBytes ?? item.rawBytes,
+      );
+      if (targetAddress == null) {
+        ref
+            .read(overlayWindowHostRuntimeProvider.notifier)
+            .showToast(context.l10n.memoryToolOffsetPreviewUnreadable);
+        return;
+      }
+
+      await previewAndOpenBrowse(
+        () => browseNotifier.previewFromAddress(
+          sourceResult: item.toSearchResult(),
+          sourcePreview: preview,
+          targetAddress: targetAddress,
+        ),
+      );
+    }
+
     if (selectedProcess == null) {
       return Center(
         child: Text(
@@ -307,39 +347,24 @@ class MemoryToolSavedTab extends HookConsumerWidget {
                     activePointerScanDialog.value = dialog.item;
                   },
                 ),
-                if (canInterpretMemoryToolPointer(
-                  previewMap[dialog.item.address]?.rawBytes ?? dialog.item.rawBytes,
-                ))
-                  MemoryToolSearchResultActionItemData(
-                    icon: Icons.subdirectory_arrow_right_rounded,
-                    title: context.l10n.memoryToolResultActionJumpToPointer,
-                    onTap: () async {
-                      final targetAddress = decodeMemoryToolPointerAddress(
-                        previewMap[dialog.item.address]?.rawBytes ??
-                            dialog.item.rawBytes,
-                      );
-                      if (targetAddress == null) {
-                        return;
-                      }
-                      onOpenBrowseTab();
-                      await browseNotifier.previewFromAddress(
-                        sourceResult: dialog.item.toSearchResult(),
-                        sourcePreview: previewMap[dialog.item.address],
-                        sourceDisplayValue: dialog.displayValue,
-                        targetAddress: targetAddress,
-                      );
-                      activeActionDialog.value = null;
-                    },
-                  ),
+                MemoryToolSearchResultActionItemData(
+                  icon: Icons.subdirectory_arrow_right_rounded,
+                  title: context.l10n.memoryToolResultActionJumpToPointer,
+                  onTap: () async {
+                    activeActionDialog.value = null;
+                    await jumpToPointer(dialog.item, dialog.displayValue);
+                  },
+                ),
                 MemoryToolSearchResultActionItemData(
                   icon: Icons.preview_rounded,
                   title: context.l10n.memoryToolResultActionPreviewMemoryBlock,
                   onTap: () async {
-                    onOpenBrowseTab();
-                    await browseNotifier.previewFromSearchResult(
-                      result: dialog.item.toSearchResult(),
-                      preview: previewMap[dialog.item.address],
-                      displayValue: dialog.displayValue,
+                    await previewAndOpenBrowse(
+                      () => browseNotifier.previewFromSearchResult(
+                        result: dialog.item.toSearchResult(),
+                        preview: previewMap[dialog.item.address],
+                        displayValue: dialog.displayValue,
+                      ),
                     );
                     activeActionDialog.value = null;
                   },
@@ -433,12 +458,12 @@ class MemoryToolSavedTab extends HookConsumerWidget {
               livePreviewsAsync: livePreviewsAsync,
               onConfirm: (targetAddress) async {
                 activeOffsetPreviewDialog.value = null;
-                onOpenBrowseTab();
-                await browseNotifier.previewFromAddress(
-                  sourceResult: dialog.item.toSearchResult(),
-                  sourcePreview: previewMap[dialog.item.address],
-                  sourceDisplayValue: dialog.displayValue,
-                  targetAddress: targetAddress,
+                await previewAndOpenBrowse(
+                  () => browseNotifier.previewFromAddress(
+                    sourceResult: dialog.item.toSearchResult(),
+                    sourcePreview: previewMap[dialog.item.address],
+                    targetAddress: targetAddress,
+                  ),
                 );
               },
               onClose: () {

@@ -8,6 +8,7 @@ import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/me
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_query_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_tool_saved_items_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_tool_search_provider.dart';
+import 'package:JsxposedX/features/memory_tool_overlay/presentation/utils/memory_tool_pointer_utils.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_batch_edit_dialog.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_result_calculator_dialog.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_result_selection_bar.dart';
@@ -139,6 +140,54 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
         frozenAddresses: frozenResultAddresses,
       );
       await showSavedToast(resultList.length);
+    }
+
+    Future<void> previewAndOpenBrowse(
+      Future<void> Function() previewAction,
+    ) async {
+      try {
+        await previewAction();
+        onOpenBrowseTab();
+      } catch (_) {
+        if (!context.mounted) {
+          return;
+        }
+        await ToastOverlayMessage.show(
+          context.l10n.memoryToolOffsetPreviewUnreadable,
+          duration: const Duration(milliseconds: 1200),
+        );
+      }
+    }
+
+    Future<void> jumpToPointer(
+      SearchResult result,
+      MemoryValuePreview? preview,
+      String displayValue,
+    ) async {
+      if (selectedPid == null) {
+        return;
+      }
+
+      final targetAddress = decodeMemoryToolPointerAddress(
+        preview?.rawBytes ?? result.rawBytes,
+      );
+      if (targetAddress == null) {
+        await ToastOverlayMessage.show(
+          context.l10n.memoryToolOffsetPreviewUnreadable,
+          duration: const Duration(milliseconds: 1200),
+        );
+        return;
+      }
+
+      await previewAndOpenBrowse(
+        () => ref
+            .read(memoryToolBrowseControllerProvider.notifier)
+            .previewFromAddress(
+              sourceResult: result,
+              sourcePreview: preview,
+              targetAddress: targetAddress,
+            ),
+      );
     }
 
     return Stack(
@@ -308,24 +357,44 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
                               for (final address in frozenAddresses)
                                 address: true,
                             },
-                            onPreviewMemoryAddress: (
+                            onPreviewMemoryBlock: (
+                              result,
+                              preview,
+                              displayValue,
+                            ) async {
+                              await previewAndOpenBrowse(
+                                () => ref
+                                    .read(
+                                      memoryToolBrowseControllerProvider
+                                          .notifier,
+                                    )
+                                    .previewFromSearchResult(
+                                      result: result,
+                                      preview: preview,
+                                      displayValue: displayValue,
+                                    ),
+                              );
+                            },
+                            onNavigateToAddress: (
                               result,
                               preview,
                               displayValue,
                               targetAddress,
                             ) async {
-                              onOpenBrowseTab();
-                              await ref
-                                  .read(
-                                    memoryToolBrowseControllerProvider.notifier,
-                                  )
-                                  .previewFromAddress(
-                                    sourceResult: result,
-                                    sourcePreview: preview,
-                                    sourceDisplayValue: displayValue,
-                                    targetAddress: targetAddress,
-                                  );
+                              await previewAndOpenBrowse(
+                                () => ref
+                                    .read(
+                                      memoryToolBrowseControllerProvider
+                                          .notifier,
+                                    )
+                                    .previewFromAddress(
+                                      sourceResult: result,
+                                      sourcePreview: preview,
+                                      targetAddress: targetAddress,
+                                    ),
+                              );
                             },
+                            onJumpToPointer: jumpToPointer,
                             onStartPointerScan: (
                               PointerScanRequest request,
                             ) async {
@@ -358,25 +427,44 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
                                 for (final address in frozenAddresses)
                                   address: true,
                               },
-                              onPreviewMemoryAddress: (
+                              onPreviewMemoryBlock: (
+                                result,
+                                preview,
+                                displayValue,
+                              ) async {
+                                await previewAndOpenBrowse(
+                                  () => ref
+                                      .read(
+                                        memoryToolBrowseControllerProvider
+                                            .notifier,
+                                      )
+                                      .previewFromSearchResult(
+                                        result: result,
+                                        preview: preview,
+                                        displayValue: displayValue,
+                                      ),
+                                );
+                              },
+                              onNavigateToAddress: (
                                 result,
                                 preview,
                                 displayValue,
                                 targetAddress,
                               ) async {
-                                onOpenBrowseTab();
-                                await ref
-                                    .read(
-                                      memoryToolBrowseControllerProvider
-                                          .notifier,
-                                    )
-                                    .previewFromAddress(
-                                      sourceResult: result,
-                                      sourcePreview: preview,
-                                      sourceDisplayValue: displayValue,
-                                      targetAddress: targetAddress,
-                                    );
+                                await previewAndOpenBrowse(
+                                  () => ref
+                                      .read(
+                                        memoryToolBrowseControllerProvider
+                                            .notifier,
+                                      )
+                                      .previewFromAddress(
+                                        sourceResult: result,
+                                        sourcePreview: preview,
+                                        targetAddress: targetAddress,
+                                      ),
+                                );
                               },
+                              onJumpToPointer: jumpToPointer,
                               onStartPointerScan: (
                                 PointerScanRequest request,
                               ) async {

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:JsxposedX/common/pages/toast.dart';
 import 'package:JsxposedX/core/extensions/context_extensions.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_pointer_action_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_pointer_query_provider.dart';
@@ -88,20 +89,39 @@ class MemoryToolPointerTab extends HookConsumerWidget {
       return null;
     }, [taskStateAsync, pointerController, ref]);
 
+    Future<void> previewAndOpenBrowse(
+      Future<void> Function() previewAction,
+    ) async {
+      try {
+        await previewAction();
+        onOpenBrowseTab();
+      } catch (_) {
+        if (!context.mounted) {
+          return;
+        }
+        await ToastOverlayMessage.show(
+          context.l10n.memoryToolOffsetPreviewUnreadable,
+          duration: const Duration(milliseconds: 1200),
+        );
+      }
+    }
+
     Future<void> jumpToTarget(PointerScanResult result) async {
       final layer = pointerState.currentLayer;
       if (layer == null) {
         return;
       }
 
-      onOpenBrowseTab();
-      await ref.read(memoryToolBrowseControllerProvider.notifier).previewFromAddress(
-        sourceResult: buildSearchResultFromPointerResult(
-          result: result,
-          pointerWidth: layer.request.pointerWidth,
-        ),
-        sourceDisplayValue: formatMemoryToolSearchResultAddress(result.baseAddress),
-        targetAddress: result.targetAddress,
+      await previewAndOpenBrowse(
+        () => ref
+            .read(memoryToolBrowseControllerProvider.notifier)
+            .previewFromAddress(
+              sourceResult: buildSearchResultFromPointerResult(
+                result: result,
+                pointerWidth: layer.request.pointerWidth,
+              ),
+              targetAddress: result.targetAddress,
+            ),
       );
     }
 

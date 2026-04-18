@@ -6,6 +6,7 @@ import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/me
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_tool_browse_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_tool_pointer_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_tool_saved_items_provider.dart';
+import 'package:JsxposedX/features/memory_tool_overlay/presentation/utils/memory_tool_pointer_utils.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_browse_result_list.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_batch_edit_dialog.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_result_calculator_dialog.dart';
@@ -181,6 +182,39 @@ class MemoryToolBrowseTab extends HookConsumerWidget {
       await showSavedToast(resultList.length);
     }
 
+    Future<void> jumpToPointer(
+      SearchResult result,
+      MemoryValuePreview? preview,
+      String displayValue,
+    ) async {
+      final targetAddress = decodeMemoryToolPointerAddress(
+        preview?.rawBytes ?? result.rawBytes,
+      );
+      if (targetAddress == null) {
+        await ToastOverlayMessage.show(
+          context.l10n.memoryToolOffsetPreviewUnreadable,
+          duration: const Duration(milliseconds: 1200),
+        );
+        return;
+      }
+
+      try {
+        await browseNotifier.previewFromAddress(
+          sourceResult: result,
+          sourcePreview: preview,
+          targetAddress: targetAddress,
+        );
+      } catch (error) {
+        if (!context.mounted) {
+          return;
+        }
+        await ToastOverlayMessage.show(
+          context.l10n.memoryToolOffsetPreviewUnreadable,
+          duration: const Duration(milliseconds: 1200),
+        );
+      }
+    }
+
     final resultList = browseState.hasAnchor
         ? MemoryToolBrowseResultList(
             listStorageKey: PageStorageKey<String>(
@@ -198,7 +232,7 @@ class MemoryToolBrowseTab extends HookConsumerWidget {
             initialFrozenStateByAddress: <int, bool>{
               for (final address in currentFrozenAddresses) address: true,
             },
-            onPreviewMemoryAddress:
+            onNavigateToAddress:
                 (
                   result,
                   preview,
@@ -208,10 +242,10 @@ class MemoryToolBrowseTab extends HookConsumerWidget {
                   await browseNotifier.previewFromAddress(
                     sourceResult: result,
                     sourcePreview: preview,
-                  sourceDisplayValue: displayValue,
-                  targetAddress: targetAddress,
-                );
-              },
+                    targetAddress: targetAddress,
+                  );
+                },
+            onJumpToPointer: jumpToPointer,
             onStartPointerScan: (PointerScanRequest request) async {
               onOpenPointerTab();
               await ref
