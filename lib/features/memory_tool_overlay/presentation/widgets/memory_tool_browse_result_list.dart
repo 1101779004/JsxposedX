@@ -4,6 +4,7 @@ import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/me
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_tool_saved_items_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/utils/memory_tool_search_result_presenter.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_copy_value_dialog.dart';
+import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_offset_preview_dialog.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_search_result_action_dialog.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_search_result_dialog.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_search_result_tile.dart';
@@ -30,6 +31,7 @@ class MemoryToolBrowseResultList extends HookConsumerWidget {
     required this.previousValueByAddress,
     this.processPid,
     this.initialFrozenStateByAddress = const <int, bool>{},
+    this.onPreviewMemoryAddress,
   });
 
   final PageStorageKey<String> listStorageKey;
@@ -43,6 +45,12 @@ class MemoryToolBrowseResultList extends HookConsumerWidget {
   final Map<int, String> previousValueByAddress;
   final int? processPid;
   final Map<int, bool> initialFrozenStateByAddress;
+  final Future<void> Function(
+    SearchResult result,
+    MemoryValuePreview? preview,
+    String displayValue,
+    int targetAddress,
+  )? onPreviewMemoryAddress;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -51,6 +59,8 @@ class MemoryToolBrowseResultList extends HookConsumerWidget {
     final activeResultActionDialog =
         useState<({SearchResult result, String displayValue})?>(null);
     final activeCopyValueDialog =
+        useState<({SearchResult result, String displayValue})?>(null);
+    final activeOffsetPreviewDialog =
         useState<({SearchResult result, String displayValue})?>(null);
     final anchorExtent = useState<double>(94.r);
     final centerSliverKey = useMemoized(
@@ -212,6 +222,18 @@ class MemoryToolBrowseResultList extends HookConsumerWidget {
           Positioned.fill(
             child: MemoryToolSearchResultActionDialog(
               actions: <MemoryToolSearchResultActionItemData>[
+                if (onPreviewMemoryAddress != null)
+                  MemoryToolSearchResultActionItemData(
+                    icon: Icons.calculate_rounded,
+                    title: context.l10n.memoryToolResultActionOffsetPreview,
+                    onTap: () async {
+                      activeResultActionDialog.value = null;
+                      activeOffsetPreviewDialog.value = (
+                        result: dialog.result,
+                        displayValue: dialog.displayValue,
+                      );
+                    },
+                  ),
                 MemoryToolSearchResultActionItemData(
                   icon: Icons.save_alt_rounded,
                   title: context.l10n.memoryToolResultActionSaveToSaved,
@@ -273,6 +295,26 @@ class MemoryToolBrowseResultList extends HookConsumerWidget {
               ],
               onClose: () {
                 activeResultActionDialog.value = null;
+              },
+            ),
+          ),
+        if (activeOffsetPreviewDialog.value case final dialog?)
+          Positioned.fill(
+            child: MemoryToolOffsetPreviewDialog(
+              result: dialog.result,
+              displayValue: dialog.displayValue,
+              livePreviewsAsync: livePreviewsAsync,
+              onConfirm: (targetAddress) async {
+                activeOffsetPreviewDialog.value = null;
+                await onPreviewMemoryAddress!(
+                  dialog.result,
+                  resolvePreview(dialog.result),
+                  dialog.displayValue,
+                  targetAddress,
+                );
+              },
+              onClose: () {
+                activeOffsetPreviewDialog.value = null;
               },
             ),
           ),

@@ -191,6 +191,20 @@ class MemoryToolBrowseTab extends HookConsumerWidget {
             initialFrozenStateByAddress: <int, bool>{
               for (final address in currentFrozenAddresses) address: true,
             },
+            onPreviewMemoryAddress:
+                (
+                  result,
+                  preview,
+                  displayValue,
+                  targetAddress,
+                ) async {
+                  await browseNotifier.previewFromAddress(
+                    sourceResult: result,
+                    sourcePreview: preview,
+                    sourceDisplayValue: displayValue,
+                    targetAddress: targetAddress,
+                  );
+                },
           )
         : _MemoryToolBrowseEmptyState(
             message: context.l10n.memoryToolBrowseEmpty,
