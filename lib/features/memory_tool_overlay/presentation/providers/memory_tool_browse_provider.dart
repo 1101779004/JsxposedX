@@ -70,184 +70,55 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
     MemoryValuePreview? preview,
     required String displayValue,
   }) async {
+    await previewFromAddress(
+      sourceResult: result,
+      sourcePreview: preview,
+      sourceDisplayValue: displayValue,
+      targetAddress: result.address,
+    );
+  }
+
+  Future<void> previewFromAddress({
+    required SearchResult sourceResult,
+    MemoryValuePreview? sourcePreview,
+    required String sourceDisplayValue,
+    required int targetAddress,
+  }) async {
     final selectedProcess = ref.read(memoryToolSelectedProcessProvider);
     if (selectedProcess == null) {
       return;
     }
 
-    final anchorRawBytes = _resolveAnchorRawBytes(
-      preview: preview,
-      result: result,
+    final sourceRawBytes = _resolveAnchorRawBytes(
+      preview: sourcePreview,
+      result: sourceResult,
     );
-    final nextAnchorResult = _resolveNextAnchorResult(
-      currentResults: state.results,
-      result: result,
-      preview: preview,
-      displayValue: displayValue,
-      rawBytes: anchorRawBytes,
+    final targetPreview = await _readTargetPreviewOrNull(
+      address: targetAddress,
+      bytesLength: sourceRawBytes.length,
     );
-    final nextAnchorRegion = _resolveRegionForAddress(
-      regions: state.regions,
-      address: nextAnchorResult.address,
-      strideBytes: nextAnchorResult.rawBytes.isEmpty
-          ? 1
-          : nextAnchorResult.rawBytes.length,
+    final targetRawBytes =
+        targetPreview?.rawBytes ??
+        Uint8List(sourceRawBytes.isEmpty ? 1 : sourceRawBytes.length);
+    final nextAnchorResult = SearchResult(
+      address: targetAddress,
+      regionStart: sourceResult.regionStart,
+      regionTypeKey: sourceResult.regionTypeKey,
+      type: sourceResult.type,
+      rawBytes: targetRawBytes,
+      displayValue: targetPreview == null
+          ? sourceDisplayValue
+          : resolveMemoryToolSearchResultValueByType(
+              type: sourceResult.type,
+              rawBytes: targetPreview.rawBytes,
+              fallbackDisplayValue: sourceDisplayValue,
+            ),
     );
-    if (_canReuseCurrentWindow(
-      state: state,
+
+    await _previewAnchorResult(
+      selectedPid: selectedProcess.pid,
       anchorResult: nextAnchorResult,
-    )) {
-      final nextHiddenAddresses = <int>{
-        ...state.hiddenAddresses,
-      }..remove(nextAnchorResult.address);
-      final nextResults = _replaceBrowseResult(
-        state.results,
-        nextAnchorResult,
-      );
-      final paginationState = _resolveBrowsePaginationState(
-        anchorAddress: nextAnchorResult.address,
-        strideBytes: nextAnchorResult.rawBytes.isEmpty
-            ? 1
-            : nextAnchorResult.rawBytes.length,
-        regions: state.regions,
-        loadedResults: nextResults,
-      );
-      state = state.copyWith(
-        anchorResult: nextAnchorResult,
-        results: nextResults,
-        hiddenAddresses: nextHiddenAddresses,
-        selectionState: const MemoryToolResultSelectionState(),
-        focusRequestId: state.focusRequestId + 1,
-        isInitializing: false,
-        isLoadingAbove: false,
-        isLoadingBelow: false,
-        topNextStep: paginationState.topNextStep,
-        bottomNextStep: paginationState.bottomNextStep,
-        reachedTopBoundary: paginationState.reachedTopBoundary,
-        reachedBottomBoundary: paginationState.reachedBottomBoundary,
-        clearErrorText: true,
-      );
-      return;
-    }
-
-    if (_canReuseCurrentRegion(
-      state: state,
-      anchorResult: nextAnchorResult,
-      anchorRegion: nextAnchorRegion,
-    )) {
-      try {
-        final nextResults = await _extendResultsAroundAnchor(
-          anchorResult: nextAnchorResult,
-          anchorRegion: nextAnchorRegion!,
-          existingResults: state.results,
-        );
-        final nextHiddenAddresses = <int>{
-          ...state.hiddenAddresses,
-        }..remove(nextAnchorResult.address);
-        final paginationState = _resolveBrowsePaginationState(
-          anchorAddress: nextAnchorResult.address,
-          strideBytes: nextAnchorResult.rawBytes.isEmpty
-              ? 1
-              : nextAnchorResult.rawBytes.length,
-          regions: state.regions,
-          loadedResults: nextResults,
-        );
-        state = state.copyWith(
-          anchorResult: nextAnchorResult,
-          results: nextResults,
-          hiddenAddresses: nextHiddenAddresses,
-          selectionState: const MemoryToolResultSelectionState(),
-          focusRequestId: state.focusRequestId + 1,
-          isInitializing: false,
-          isLoadingAbove: false,
-          isLoadingBelow: false,
-          topNextStep: paginationState.topNextStep,
-          bottomNextStep: paginationState.bottomNextStep,
-          reachedTopBoundary: paginationState.reachedTopBoundary,
-          reachedBottomBoundary: paginationState.reachedBottomBoundary,
-          clearErrorText: true,
-        );
-        return;
-      } catch (error) {
-        state = state.copyWith(errorText: error.toString());
-      }
-    }
-
-    if (_canReuseKnownRegions(
-      state: state,
-      anchorResult: nextAnchorResult,
-      anchorRegion: nextAnchorRegion,
-    )) {
-      final nextHiddenAddresses = <int>{
-        ...state.hiddenAddresses,
-      }..remove(nextAnchorResult.address);
-      state = state.copyWith(
-        isInitializing: true,
-        isLoadingAbove: false,
-        isLoadingBelow: false,
-        clearErrorText: true,
-      );
-      try {
-        final nextState = await _buildWindowState(
-          anchorResult: nextAnchorResult,
-          readableRegions: state.regions,
-          preservedHiddenAddresses: nextHiddenAddresses,
-        );
-        state = nextState.copyWith(
-          isInitializing: false,
-          clearErrorText: true,
-          focusRequestId: state.focusRequestId + 1,
-        );
-        return;
-      } catch (error) {
-        state = state.copyWith(
-          isInitializing: false,
-          errorText: error.toString(),
-        );
-      }
-    }
-
-    state = state.copyWith(
-      isInitializing: true,
-      isLoadingAbove: false,
-      isLoadingBelow: false,
-      clearErrorText: true,
     );
-
-    try {
-      final readableRegions = await _loadReadableRegions(
-        pid: selectedProcess.pid,
-      );
-      if (readableRegions.isEmpty) {
-        state = state.copyWith(
-          results: const <SearchResult>[],
-          regions: const <MemoryRegion>[],
-          selectionState: const MemoryToolResultSelectionState(),
-          hiddenAddresses: const <int>{},
-          isInitializing: false,
-          reachedTopBoundary: true,
-          reachedBottomBoundary: true,
-          errorText: 'No readable memory region.',
-        );
-        return;
-      }
-
-      final nextState = await _buildWindowState(
-        anchorResult: nextAnchorResult,
-        readableRegions: readableRegions,
-        preservedHiddenAddresses: const <int>{},
-      );
-      state = nextState.copyWith(
-        isInitializing: false,
-        clearErrorText: true,
-        focusRequestId: state.focusRequestId + 1,
-      );
-    } catch (error) {
-      state = state.copyWith(
-        isInitializing: false,
-        errorText: error.toString(),
-      );
-    }
   }
 
   Future<void> recenter() async {
@@ -670,27 +541,228 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
       <SearchResult>[...aboveResults, anchorResult, ...belowResults],
     );
   }
+
+  Future<void> _previewAnchorResult({
+    required int selectedPid,
+    required SearchResult anchorResult,
+  }) async {
+    final nextAnchorRegion = _resolveRegionForAddress(
+      regions: state.regions,
+      address: anchorResult.address,
+      strideBytes: anchorResult.rawBytes.isEmpty ? 1 : anchorResult.rawBytes.length,
+    );
+    final resolvedAnchorResult = nextAnchorRegion == null
+        ? anchorResult
+        : _resolveAnchorResultWithRegion(
+            anchorResult: anchorResult,
+            region: nextAnchorRegion,
+          );
+
+    if (_canReuseCurrentWindow(
+      state: state,
+      anchorResult: resolvedAnchorResult,
+    )) {
+      final nextHiddenAddresses = <int>{
+        ...state.hiddenAddresses,
+      }..remove(resolvedAnchorResult.address);
+      final nextResults = _replaceBrowseResult(
+        state.results,
+        resolvedAnchorResult,
+      );
+      final paginationState = _resolveBrowsePaginationState(
+        anchorAddress: resolvedAnchorResult.address,
+        strideBytes: resolvedAnchorResult.rawBytes.isEmpty
+            ? 1
+            : resolvedAnchorResult.rawBytes.length,
+        regions: state.regions,
+        loadedResults: nextResults,
+      );
+      state = state.copyWith(
+        anchorResult: resolvedAnchorResult,
+        results: nextResults,
+        hiddenAddresses: nextHiddenAddresses,
+        selectionState: const MemoryToolResultSelectionState(),
+        focusRequestId: state.focusRequestId + 1,
+        isInitializing: false,
+        isLoadingAbove: false,
+        isLoadingBelow: false,
+        topNextStep: paginationState.topNextStep,
+        bottomNextStep: paginationState.bottomNextStep,
+        reachedTopBoundary: paginationState.reachedTopBoundary,
+        reachedBottomBoundary: paginationState.reachedBottomBoundary,
+        clearErrorText: true,
+      );
+      return;
+    }
+
+    if (_canReuseCurrentRegion(
+      state: state,
+      anchorResult: resolvedAnchorResult,
+      anchorRegion: nextAnchorRegion,
+    )) {
+      try {
+        final nextResults = await _extendResultsAroundAnchor(
+          anchorResult: resolvedAnchorResult,
+          anchorRegion: nextAnchorRegion!,
+          existingResults: state.results,
+        );
+        final nextHiddenAddresses = <int>{
+          ...state.hiddenAddresses,
+        }..remove(resolvedAnchorResult.address);
+        final paginationState = _resolveBrowsePaginationState(
+          anchorAddress: resolvedAnchorResult.address,
+          strideBytes: resolvedAnchorResult.rawBytes.isEmpty
+              ? 1
+              : resolvedAnchorResult.rawBytes.length,
+          regions: state.regions,
+          loadedResults: nextResults,
+        );
+        state = state.copyWith(
+          anchorResult: resolvedAnchorResult,
+          results: nextResults,
+          hiddenAddresses: nextHiddenAddresses,
+          selectionState: const MemoryToolResultSelectionState(),
+          focusRequestId: state.focusRequestId + 1,
+          isInitializing: false,
+          isLoadingAbove: false,
+          isLoadingBelow: false,
+          topNextStep: paginationState.topNextStep,
+          bottomNextStep: paginationState.bottomNextStep,
+          reachedTopBoundary: paginationState.reachedTopBoundary,
+          reachedBottomBoundary: paginationState.reachedBottomBoundary,
+          clearErrorText: true,
+        );
+        return;
+      } catch (error) {
+        state = state.copyWith(errorText: error.toString());
+      }
+    }
+
+    if (_canReuseKnownRegions(
+      state: state,
+      anchorResult: resolvedAnchorResult,
+      anchorRegion: nextAnchorRegion,
+    )) {
+      final nextHiddenAddresses = <int>{
+        ...state.hiddenAddresses,
+      }..remove(resolvedAnchorResult.address);
+      state = state.copyWith(
+        isInitializing: true,
+        isLoadingAbove: false,
+        isLoadingBelow: false,
+        clearErrorText: true,
+      );
+      try {
+        final nextState = await _buildWindowState(
+          anchorResult: resolvedAnchorResult,
+          readableRegions: state.regions,
+          preservedHiddenAddresses: nextHiddenAddresses,
+        );
+        state = nextState.copyWith(
+          isInitializing: false,
+          clearErrorText: true,
+          focusRequestId: state.focusRequestId + 1,
+        );
+        return;
+      } catch (error) {
+        state = state.copyWith(
+          isInitializing: false,
+          errorText: error.toString(),
+        );
+      }
+    }
+
+    state = state.copyWith(
+      isInitializing: true,
+      isLoadingAbove: false,
+      isLoadingBelow: false,
+      clearErrorText: true,
+    );
+
+    try {
+      final readableRegions = await _loadReadableRegions(pid: selectedPid);
+      if (readableRegions.isEmpty) {
+        state = state.copyWith(
+          results: const <SearchResult>[],
+          regions: const <MemoryRegion>[],
+          selectionState: const MemoryToolResultSelectionState(),
+          hiddenAddresses: const <int>{},
+          isInitializing: false,
+          reachedTopBoundary: true,
+          reachedBottomBoundary: true,
+          errorText: 'No readable memory region.',
+        );
+        return;
+      }
+
+      final finalAnchorRegion = _resolveRegionForAddress(
+        regions: readableRegions,
+        address: resolvedAnchorResult.address,
+        strideBytes: resolvedAnchorResult.rawBytes.isEmpty
+            ? 1
+            : resolvedAnchorResult.rawBytes.length,
+      );
+      final finalAnchorResult = finalAnchorRegion == null
+          ? resolvedAnchorResult
+          : _resolveAnchorResultWithRegion(
+              anchorResult: resolvedAnchorResult,
+              region: finalAnchorRegion,
+            );
+      final nextState = await _buildWindowState(
+        anchorResult: finalAnchorResult,
+        readableRegions: readableRegions,
+        preservedHiddenAddresses: const <int>{},
+      );
+      state = nextState.copyWith(
+        isInitializing: false,
+        clearErrorText: true,
+        focusRequestId: state.focusRequestId + 1,
+      );
+    } catch (error) {
+      state = state.copyWith(
+        isInitializing: false,
+        errorText: error.toString(),
+      );
+    }
+  }
+
+  Future<MemoryValuePreview?> _readTargetPreviewOrNull({
+    required int address,
+    required int bytesLength,
+  }) async {
+    try {
+      final previews = await ref
+          .read(memoryQueryRepositoryProvider)
+          .readMemoryValues(
+            requests: <MemoryReadRequest>[
+              MemoryReadRequest(
+                address: address,
+                type: SearchValueType.bytes,
+                length: bytesLength < 1 ? 1 : bytesLength,
+              ),
+            ],
+          );
+      if (previews.isEmpty) {
+        return null;
+      }
+      return previews.first;
+    } catch (_) {
+      return null;
+    }
+  }
 }
 
-SearchResult _resolveNextAnchorResult({
-  required List<SearchResult> currentResults,
-  required SearchResult result,
-  required MemoryValuePreview? preview,
-  required String displayValue,
-  required Uint8List rawBytes,
+SearchResult _resolveAnchorResultWithRegion({
+  required SearchResult anchorResult,
+  required MemoryRegion region,
 }) {
-  final matchedResult = currentResults
-      .where((item) => item.address == result.address)
-      .isEmpty
-      ? null
-      : currentResults.firstWhere((item) => item.address == result.address);
   return SearchResult(
-    address: result.address,
-    regionStart: matchedResult?.regionStart ?? result.regionStart,
-    regionTypeKey: matchedResult?.regionTypeKey ?? result.regionTypeKey,
-    type: preview?.type ?? result.type,
-    rawBytes: rawBytes,
-    displayValue: preview?.displayValue ?? displayValue,
+    address: anchorResult.address,
+    regionStart: region.startAddress,
+    regionTypeKey: _mapBrowseRegionTypeKey(region),
+    type: anchorResult.type,
+    rawBytes: anchorResult.rawBytes,
+    displayValue: anchorResult.displayValue,
   );
 }
 

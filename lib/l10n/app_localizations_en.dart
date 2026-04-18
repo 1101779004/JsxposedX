@@ -2105,10 +2105,35 @@ class AppLocalizationsEn extends AppLocalizations {
   String get memoryToolResultActionPreviewMemoryBlock => 'Preview Memory Block';
 
   @override
+  String get memoryToolResultActionOffsetPreview => 'Calculate Offset';
+
+  @override
   String get memoryToolResultActionCopyHex => 'Copy Hexadecimal';
 
   @override
   String get memoryToolResultActionCopyReverseHex => 'Copy Reverse Hexadecimal';
+
+  @override
+  String get memoryToolOffsetPreviewTitle => 'Offset Preview';
+
+  @override
+  String get memoryToolOffsetPreviewOffsetLabel => 'Offset';
+
+  @override
+  String get memoryToolOffsetPreviewHexLabel => 'HEX';
+
+  @override
+  String get memoryToolOffsetPreviewTargetAddress => 'Target Address';
+
+  @override
+  String get memoryToolOffsetPreviewTargetValue => 'Target Value';
+
+  @override
+  String get memoryToolOffsetPreviewInvalid => 'Enter a valid offset.';
+
+  @override
+  String get memoryToolOffsetPreviewUnreadable =>
+      'Target address is unreadable.';
 
   @override
   String get memoryToolBrowseEmpty =>

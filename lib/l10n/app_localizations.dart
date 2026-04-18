@@ -4082,6 +4082,12 @@ abstract class AppLocalizations {
   /// **'预览内存块'**
   String get memoryToolResultActionPreviewMemoryBlock;
 
+  /// No description provided for @memoryToolResultActionOffsetPreview.
+  ///
+  /// In zh, this message translates to:
+  /// **'偏移量计算'**
+  String get memoryToolResultActionOffsetPreview;
+
   /// No description provided for @memoryToolResultActionCopyHex.
   ///
   /// In zh, this message translates to:
@@ -4093,6 +4099,48 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'复制反十六进制'**
   String get memoryToolResultActionCopyReverseHex;
+
+  /// No description provided for @memoryToolOffsetPreviewTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'偏移量计算'**
+  String get memoryToolOffsetPreviewTitle;
+
+  /// No description provided for @memoryToolOffsetPreviewOffsetLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'偏移量'**
+  String get memoryToolOffsetPreviewOffsetLabel;
+
+  /// No description provided for @memoryToolOffsetPreviewHexLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'HEX'**
+  String get memoryToolOffsetPreviewHexLabel;
+
+  /// No description provided for @memoryToolOffsetPreviewTargetAddress.
+  ///
+  /// In zh, this message translates to:
+  /// **'目标地址'**
+  String get memoryToolOffsetPreviewTargetAddress;
+
+  /// No description provided for @memoryToolOffsetPreviewTargetValue.
+  ///
+  /// In zh, this message translates to:
+  /// **'目标数值'**
+  String get memoryToolOffsetPreviewTargetValue;
+
+  /// No description provided for @memoryToolOffsetPreviewInvalid.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入有效偏移量'**
+  String get memoryToolOffsetPreviewInvalid;
+
+  /// No description provided for @memoryToolOffsetPreviewUnreadable.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前地址不可读'**
+  String get memoryToolOffsetPreviewUnreadable;
 
   /// No description provided for @memoryToolBrowseEmpty.
   ///

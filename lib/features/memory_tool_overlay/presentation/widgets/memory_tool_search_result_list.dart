@@ -4,6 +4,7 @@ import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/me
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_tool_saved_items_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/utils/memory_tool_search_result_presenter.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_copy_value_dialog.dart';
+import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_offset_preview_dialog.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_search_result_action_dialog.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_search_result_dialog.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_search_result_tile.dart';
@@ -29,7 +30,7 @@ class MemoryToolSearchResultList extends HookConsumerWidget {
     this.initialFrozenStateByAddress = const <int, bool>{},
     this.highlightedAddress,
     this.scrollController,
-    this.onPreviewMemoryBlock,
+    this.onPreviewMemoryAddress,
     this.itemKeyBuilder,
   });
 
@@ -49,7 +50,8 @@ class MemoryToolSearchResultList extends HookConsumerWidget {
     SearchResult result,
     MemoryValuePreview? preview,
     String displayValue,
-  )? onPreviewMemoryBlock;
+    int targetAddress,
+  )? onPreviewMemoryAddress;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -58,6 +60,8 @@ class MemoryToolSearchResultList extends HookConsumerWidget {
     final activeResultActionDialog =
         useState<({SearchResult result, String displayValue})?>(null);
     final activeCopyValueDialog =
+        useState<({SearchResult result, String displayValue})?>(null);
+    final activeOffsetPreviewDialog =
         useState<({SearchResult result, String displayValue})?>(null);
     final savedItemsNotifier = ref.read(memoryToolSavedItemsProvider.notifier);
 
@@ -184,15 +188,28 @@ class MemoryToolSearchResultList extends HookConsumerWidget {
                     );
                   },
                 ),
-                if (onPreviewMemoryBlock != null)
+                if (onPreviewMemoryAddress != null)
+                  MemoryToolSearchResultActionItemData(
+                    icon: Icons.calculate_rounded,
+                    title: context.l10n.memoryToolResultActionOffsetPreview,
+                    onTap: () async {
+                      activeResultActionDialog.value = null;
+                      activeOffsetPreviewDialog.value = (
+                        result: dialog.result,
+                        displayValue: dialog.displayValue,
+                      );
+                    },
+                  ),
+                if (onPreviewMemoryAddress != null)
                   MemoryToolSearchResultActionItemData(
                     icon: Icons.preview_rounded,
                     title: context.l10n.memoryToolResultActionPreviewMemoryBlock,
                     onTap: () async {
-                      await onPreviewMemoryBlock!(
+                      await onPreviewMemoryAddress!(
                         dialog.result,
                         resolvePreview(dialog.result),
                         dialog.displayValue,
+                        dialog.result.address,
                       );
                       activeResultActionDialog.value = null;
                     },
@@ -228,6 +245,26 @@ class MemoryToolSearchResultList extends HookConsumerWidget {
               ],
               onClose: () {
                 activeResultActionDialog.value = null;
+              },
+            ),
+          ),
+        if (activeOffsetPreviewDialog.value case final dialog?)
+          Positioned.fill(
+            child: MemoryToolOffsetPreviewDialog(
+              result: dialog.result,
+              displayValue: dialog.displayValue,
+              livePreviewsAsync: livePreviewsAsync,
+              onConfirm: (targetAddress) async {
+                activeOffsetPreviewDialog.value = null;
+                await onPreviewMemoryAddress!(
+                  dialog.result,
+                  resolvePreview(dialog.result),
+                  dialog.displayValue,
+                  targetAddress,
+                );
+              },
+              onClose: () {
+                activeOffsetPreviewDialog.value = null;
               },
             ),
           ),

@@ -2063,10 +2063,34 @@ class AppLocalizationsZh extends AppLocalizations {
   String get memoryToolResultActionPreviewMemoryBlock => '预览内存块';
 
   @override
+  String get memoryToolResultActionOffsetPreview => '偏移量计算';
+
+  @override
   String get memoryToolResultActionCopyHex => '复制十六进制';
 
   @override
   String get memoryToolResultActionCopyReverseHex => '复制反十六进制';
+
+  @override
+  String get memoryToolOffsetPreviewTitle => '偏移量计算';
+
+  @override
+  String get memoryToolOffsetPreviewOffsetLabel => '偏移量';
+
+  @override
+  String get memoryToolOffsetPreviewHexLabel => 'HEX';
+
+  @override
+  String get memoryToolOffsetPreviewTargetAddress => '目标地址';
+
+  @override
+  String get memoryToolOffsetPreviewTargetValue => '目标数值';
+
+  @override
+  String get memoryToolOffsetPreviewInvalid => '请输入有效偏移量';
+
+  @override
+  String get memoryToolOffsetPreviewUnreadable => '当前地址不可读';
 
   @override
   String get memoryToolBrowseEmpty => '从搜索结果长按并选择预览内存块';

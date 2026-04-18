@@ -299,20 +299,22 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
                               for (final address in frozenAddresses)
                                 address: true,
                             },
-                            onPreviewMemoryBlock: (
+                            onPreviewMemoryAddress: (
                               result,
                               preview,
                               displayValue,
+                              targetAddress,
                             ) async {
                               onOpenBrowseTab();
                               await ref
                                   .read(
                                     memoryToolBrowseControllerProvider.notifier,
                                   )
-                                  .previewFromSearchResult(
-                                    result: result,
-                                    preview: preview,
-                                    displayValue: displayValue,
+                                  .previewFromAddress(
+                                    sourceResult: result,
+                                    sourcePreview: preview,
+                                    sourceDisplayValue: displayValue,
+                                    targetAddress: targetAddress,
                                   );
                             },
                           );
@@ -337,10 +339,11 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
                                 for (final address in frozenAddresses)
                                   address: true,
                               },
-                              onPreviewMemoryBlock: (
+                              onPreviewMemoryAddress: (
                                 result,
                                 preview,
                                 displayValue,
+                                targetAddress,
                               ) async {
                                 onOpenBrowseTab();
                                 await ref
@@ -348,10 +351,11 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
                                       memoryToolBrowseControllerProvider
                                           .notifier,
                                     )
-                                    .previewFromSearchResult(
-                                      result: result,
-                                      preview: preview,
-                                      displayValue: displayValue,
+                                    .previewFromAddress(
+                                      sourceResult: result,
+                                      sourcePreview: preview,
+                                      sourceDisplayValue: displayValue,
+                                      targetAddress: targetAddress,
                                     );
                               },
                             );
