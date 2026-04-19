@@ -4,6 +4,7 @@ import 'package:JsxposedX/features/memory_tool_overlay/presentation/models/memor
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_query_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/states/memory_tool_browse_state.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/states/memory_tool_result_selection_state.dart';
+import 'package:JsxposedX/features/memory_tool_overlay/presentation/utils/memory_tool_selection_limit_feedback.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/utils/memory_tool_search_result_presenter.dart';
 import 'package:JsxposedX/features/overlay_window/presentation/providers/overlay_window_host_runtime_provider.dart';
 import 'package:JsxposedX/generated/memory_tool.g.dart';
@@ -541,6 +542,11 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
         ..add(address);
     } else if (selected.length < state.selectionState.selectionLimit) {
       selected.add(address);
+    } else {
+      showMemoryToolSelectionLimitToast(
+        ref,
+        state.selectionState.selectionLimit,
+      );
     }
 
     state = state.copyWith(
@@ -551,6 +557,12 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
   }
 
   void selectVisible(List<MemoryToolDisplayItem> results) {
+    if (results.length > state.selectionState.selectionLimit) {
+      showMemoryToolSelectionLimitToast(
+        ref,
+        state.selectionState.selectionLimit,
+      );
+    }
     state = state.copyWith(
       selectionState: state.selectionState.copyWith(
         selectedAddresses: results
@@ -568,12 +580,22 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
         .toList(growable: false);
     final selectedVisible = state.selectionState.selectedAddresses.toSet();
     final nextSelected = <int>[...preserved];
+    var reachedSelectionLimit = false;
     for (final result in results) {
-      if (selectedVisible.contains(result.address) ||
-          nextSelected.length >= state.selectionState.selectionLimit) {
+      if (selectedVisible.contains(result.address)) {
         continue;
       }
+      if (nextSelected.length >= state.selectionState.selectionLimit) {
+        reachedSelectionLimit = true;
+        break;
+      }
       nextSelected.add(result.address);
+    }
+    if (reachedSelectionLimit) {
+      showMemoryToolSelectionLimitToast(
+        ref,
+        state.selectionState.selectionLimit,
+      );
     }
 
     state = state.copyWith(
