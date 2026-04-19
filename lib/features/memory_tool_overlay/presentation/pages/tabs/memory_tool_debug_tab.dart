@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:JsxposedX/common/pages/toast.dart';
 import 'package:JsxposedX/core/extensions/context_extensions.dart';
+import 'package:JsxposedX/features/memory_tool_overlay/presentation/models/memory_tool_saved_item.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/pages/tabs/debug_tabs/memory_tool_debug_breakpoints_tab.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/pages/tabs/debug_tabs/memory_tool_debug_detail_tab.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/pages/tabs/debug_tabs/memory_tool_debug_writers_tab.dart';
@@ -12,7 +13,6 @@ import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/me
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_tool_browse_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_tool_instruction_history_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_tool_pointer_provider.dart';
-import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_tool_saved_instruction_patches_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_tool_saved_items_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/utils/memory_tool_debug_presenter.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/utils/memory_tool_search_result_presenter.dart';
@@ -54,10 +54,8 @@ class MemoryToolDebugTab extends HookConsumerWidget {
     final pointerNotifier = ref.read(
       memoryToolPointerControllerProvider.notifier,
     );
+    final savedItems = ref.watch(savedItemsForSelectedProcessProvider);
     final savedItemsNotifier = ref.read(memoryToolSavedItemsProvider.notifier);
-    final savedInstructionPatchesNotifier = ref.read(
-      memoryToolSavedInstructionPatchesProvider.notifier,
-    );
     final selectedWriterKey = useState<String?>(null);
     final selectedHitKey = useState<String?>(null);
     final breakpointEnabledOverrides = useState<Map<String, bool>>(
@@ -103,14 +101,10 @@ class MemoryToolDebugTab extends HookConsumerWidget {
     final breakpoints =
         breakpointsAsync.asData?.value ?? const <MemoryBreakpoint>[];
     final allHits = hitsAsync.asData?.value ?? const <MemoryBreakpointHit>[];
-    final savedInstructionPatches = ref.watch(
-      memoryToolSavedInstructionPatchesProvider.select(
-        (state) => pid == null
-            ? const <int, MemoryToolSavedInstructionPatch>{}
-            : (state.patchesByPid[pid] ??
-                  const <int, MemoryToolSavedInstructionPatch>{}),
-      ),
-    );
+    final savedInstructionItems = <int, MemoryToolSavedItem>{
+      for (final item in savedItems)
+        if (item.isInstructionPatch) item.address: item,
+    };
 
     useEffect(() {
       selectedWriterKey.value = null;
@@ -173,8 +167,8 @@ class MemoryToolDebugTab extends HookConsumerWidget {
               .toList(growable: false);
     final rawWriterGroups = buildMemoryToolDebugWriterGroups(hits);
     final effectivePatchedInstructionTexts = <int, String>{
-      for (final entry in savedInstructionPatches.entries)
-        entry.key: entry.value.instructionText,
+      for (final entry in savedInstructionItems.entries)
+        entry.key: entry.value.effectiveInstructionText,
       for (final entry in patchedInstructions.value.entries)
         entry.key: entry.value.instructionText,
     };
@@ -593,7 +587,7 @@ class MemoryToolDebugTab extends HookConsumerWidget {
       required String currentValue,
     }) {
       final trimmedCurrent = currentValue.trim();
-      final savedPatch = savedInstructionPatches[address];
+      final savedPatch = savedInstructionItems[address];
       return <MemoryToolSearchResultActionItemData>[
         if (trimmedCurrent.isNotEmpty)
           MemoryToolSearchResultActionItemData(
@@ -623,8 +617,8 @@ class MemoryToolDebugTab extends HookConsumerWidget {
                 final preview = previews.isEmpty ? null : previews.first;
                 savedResult = SearchResult(
                   address: address,
-                  regionStart: address,
-                  regionTypeKey: 'other',
+                  regionStart: savedPatch?.regionStart ?? address,
+                  regionTypeKey: savedPatch?.regionTypeKey ?? 'other',
                   type: SearchValueType.bytes,
                   rawBytes: preview?.rawBytes ?? Uint8List(0),
                   displayValue: preview?.instructionText ?? trimmedCurrent,
@@ -632,18 +626,19 @@ class MemoryToolDebugTab extends HookConsumerWidget {
               } catch (_) {
                 savedResult = SearchResult(
                   address: address,
-                  regionStart: address,
-                  regionTypeKey: 'other',
+                  regionStart: savedPatch?.regionStart ?? address,
+                  regionTypeKey: savedPatch?.regionTypeKey ?? 'other',
                   type: SearchValueType.bytes,
                   rawBytes: Uint8List(0),
                   displayValue: trimmedCurrent,
                 );
               }
-              savedInstructionPatchesNotifier.saveOne(
+              savedItemsNotifier.saveOne(
                 pid: pid,
-                address: address,
-                instructionText: trimmedCurrent,
                 result: savedResult,
+                isFrozen: false,
+                isInstructionPatch: true,
+                instructionText: trimmedCurrent,
               );
               activeDetailActions.value = null;
               await ToastOverlayMessage.show(
@@ -657,10 +652,13 @@ class MemoryToolDebugTab extends HookConsumerWidget {
             icon: Icons.remove_circle_outline_rounded,
             title: context.isZh ? '从暂存区移除' : 'Remove from Saved',
             onTap: () async {
-              savedInstructionPatchesNotifier.removeOne(
+              savedItemsNotifier.removeOne(
                 pid: pid,
                 address: address,
               );
+              ref
+                  .read(memoryToolInstructionHistoryProvider.notifier)
+                  .remove(pid: pid, address: address);
               activeDetailActions.value = null;
               await ToastOverlayMessage.show(
                 context.isZh ? '已从暂存区移除' : 'Removed from saved patches',

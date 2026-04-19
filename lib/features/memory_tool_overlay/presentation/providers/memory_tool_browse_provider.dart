@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:JsxposedX/features/memory_tool_overlay/presentation/models/memory_tool_display_item.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_query_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/states/memory_tool_browse_state.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/states/memory_tool_result_selection_state.dart';
@@ -16,7 +17,7 @@ const int _memoryToolBrowseLoadMoreCount = 20;
 const int _memoryToolBrowseRegionPageSize = 200;
 
 @riverpod
-List<SearchResult> currentBrowseResults(Ref ref) {
+List<MemoryToolDisplayItem> currentBrowseResults(Ref ref) {
   final results = ref.watch(
     memoryToolBrowseControllerProvider.select((state) => state.results),
   );
@@ -24,7 +25,7 @@ List<SearchResult> currentBrowseResults(Ref ref) {
     memoryToolBrowseControllerProvider.select((state) => state.hiddenAddresses),
   );
   return results
-      .where((result) => !hiddenAddresses.contains(result.address))
+      .where((item) => !hiddenAddresses.contains(item.address))
       .toList(growable: false);
 }
 
@@ -58,8 +59,17 @@ Future<Map<int, MemoryValuePreview>> currentBrowseResultLivePreviews(
               (result) => MemoryReadRequest(
                 pid: selectedProcess.pid,
                 address: result.address,
-                type: result.type,
-                length: result.rawBytes.length,
+                type: result.isInstruction
+                    ? SearchValueType.bytes
+                    : result.type,
+                length: resolveMemoryToolReadLengthForType(
+                  type: result.isInstruction
+                      ? SearchValueType.bytes
+                      : result.type,
+                  bytesLength: result.rawBytes.isEmpty
+                      ? 1
+                      : result.rawBytes.length,
+                ),
               ),
             )
             .toList(growable: false),
@@ -152,7 +162,7 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
       throw Exception('Target address is unreadable.');
     }
 
-    final anchorResult = SearchResult(
+    final anchorItem = MemoryToolDisplayItem(
       address: targetAddress,
       regionStart: targetRegion.startAddress,
       regionTypeKey: _mapBrowseRegionTypeKey(targetRegion),
@@ -167,7 +177,7 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
 
     await _previewAnchorResult(
       selectedPid: selectedProcess.pid,
-      anchorResult: anchorResult,
+      anchorItem: anchorItem,
       knownReadableRegions: readableRegions,
     );
   }
@@ -176,11 +186,14 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
     required SearchResult result,
     MemoryValuePreview? preview,
     required String displayValue,
+    bool preferInstructionMode = false,
   }) async {
     await previewFromAddress(
       sourceResult: result,
       sourcePreview: preview,
       targetAddress: result.address,
+      anchorDisplayValue: displayValue,
+      preferInstructionMode: preferInstructionMode,
     );
   }
 
@@ -188,68 +201,118 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
     required SearchResult sourceResult,
     MemoryValuePreview? sourcePreview,
     required int targetAddress,
+    String? anchorDisplayValue,
+    bool preferInstructionMode = false,
   }) async {
     final selectedProcess = ref.read(memoryToolSelectedProcessProvider);
     if (selectedProcess == null) {
       return;
     }
 
+    final shouldUseInstructionMode =
+        preferInstructionMode ||
+        isMemoryToolInstructionDisplayValue(
+          anchorDisplayValue ?? sourceResult.displayValue,
+        );
     final sourceRawBytes = _resolveAnchorRawBytes(
       preview: sourcePreview,
       result: sourceResult,
     );
     final strideBytes = sourceRawBytes.isEmpty ? 1 : sourceRawBytes.length;
     var readableRegions = _resolveCachedReadableRegions(pid: selectedProcess.pid);
-    var targetRegion = _resolveRegionForAddress(
-      regions: readableRegions,
-      address: targetAddress,
-      strideBytes: strideBytes,
-    );
-    if (targetRegion == null) {
-      readableRegions = await ensureReadableRegions(pid: selectedProcess.pid);
-      targetRegion = _resolveRegionForAddress(
+    MemoryToolDisplayItem nextAnchorItem;
+    if (shouldUseInstructionMode) {
+      final instructionPreview = await _readInstructionPreviewOrNull(
+        selectedPid: selectedProcess.pid,
+        address: targetAddress,
+      );
+      if (instructionPreview == null) {
+        throw Exception('Target address is unreadable.');
+      }
+      var targetRegion = _resolveRegionForAddress(
+        regions: readableRegions,
+        address: targetAddress,
+        strideBytes: instructionPreview.rawBytes.isEmpty
+            ? 1
+            : instructionPreview.rawBytes.length,
+      );
+      if (targetRegion == null) {
+        readableRegions = await ensureReadableRegions(pid: selectedProcess.pid);
+        targetRegion = _resolveRegionForAddress(
+          regions: readableRegions,
+          address: targetAddress,
+          strideBytes: instructionPreview.rawBytes.isEmpty
+              ? 1
+              : instructionPreview.rawBytes.length,
+        );
+      }
+      if (targetRegion == null) {
+        throw Exception('Target address is unreadable.');
+      }
+      nextAnchorItem = MemoryToolDisplayItem(
+        address: targetAddress,
+        regionStart: targetRegion.startAddress,
+        regionTypeKey: _mapBrowseRegionTypeKey(targetRegion),
+        type: SearchValueType.bytes,
+        rawBytes: instructionPreview.rawBytes,
+        displayValue: instructionPreview.instructionText,
+        kind: MemoryToolDisplayItemKind.instruction,
+        instructionText: instructionPreview.instructionText,
+      );
+    } else {
+      var targetRegion = _resolveRegionForAddress(
         regions: readableRegions,
         address: targetAddress,
         strideBytes: strideBytes,
       );
-    }
-    if (targetRegion == null) {
-      throw Exception('Target address is unreadable.');
-    }
+      if (targetRegion == null) {
+        readableRegions = await ensureReadableRegions(pid: selectedProcess.pid);
+        targetRegion = _resolveRegionForAddress(
+          regions: readableRegions,
+          address: targetAddress,
+          strideBytes: strideBytes,
+        );
+      }
+      if (targetRegion == null) {
+        throw Exception('Target address is unreadable.');
+      }
 
-    final targetPreview = await _readTargetPreviewOrNull(
-      selectedPid: selectedProcess.pid,
-      address: targetAddress,
-      bytesLength: strideBytes,
-    );
-    if (targetPreview == null) {
-      throw Exception('Target address is unreadable.');
-    }
+      final targetPreview = await _readTargetPreviewOrNull(
+        selectedPid: selectedProcess.pid,
+        address: targetAddress,
+        bytesLength: strideBytes,
+      );
+      if (targetPreview == null) {
+        throw Exception('Target address is unreadable.');
+      }
 
-    final nextAnchorResult = SearchResult(
-      address: targetAddress,
-      regionStart: targetRegion.startAddress,
-      regionTypeKey: _mapBrowseRegionTypeKey(targetRegion),
-      type: sourceResult.type,
-      rawBytes: targetPreview.rawBytes,
-      displayValue: resolveMemoryToolSearchResultValueByType(
+      final resolvedAnchorDisplayValue = resolveMemoryToolSearchResultValueByType(
         type: sourceResult.type,
         rawBytes: targetPreview.rawBytes,
         fallbackDisplayValue: targetPreview.displayValue,
-      ),
-    );
+      );
+
+      nextAnchorItem = MemoryToolDisplayItem(
+        address: targetAddress,
+        regionStart: targetRegion.startAddress,
+        regionTypeKey: _mapBrowseRegionTypeKey(targetRegion),
+        type: sourceResult.type,
+        rawBytes: targetPreview.rawBytes,
+        displayValue: resolvedAnchorDisplayValue,
+      );
+    }
 
     await _previewAnchorResult(
       selectedPid: selectedProcess.pid,
-      anchorResult: nextAnchorResult,
+      anchorItem: nextAnchorItem,
       knownReadableRegions: readableRegions,
     );
   }
 
   Future<void> recenter() async {
-    final anchorResult = state.anchorResult;
+    final anchorItem = state.anchorItem;
     final selectedProcess = ref.read(memoryToolSelectedProcessProvider);
-    if (anchorResult == null || state.regions.isEmpty || selectedProcess == null) {
+    if (anchorItem == null || state.regions.isEmpty || selectedProcess == null) {
       return;
     }
 
@@ -263,7 +326,7 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
     try {
       final nextState = await _buildWindowState(
         selectedPid: selectedProcess.pid,
-        anchorResult: anchorResult,
+        anchorItem: anchorItem,
         readableRegions: state.regions,
         preservedHiddenAddresses: state.hiddenAddresses,
       );
@@ -281,9 +344,9 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
   }
 
   Future<void> loadMoreAbove() async {
-    final anchorResult = state.anchorResult;
+    final anchorItem = state.anchorItem;
     final selectedProcess = ref.read(memoryToolSelectedProcessProvider);
-    if (anchorResult == null ||
+    if (anchorItem == null ||
         state.regions.isEmpty ||
         selectedProcess == null ||
         state.isLoadingAbove ||
@@ -295,7 +358,7 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
 
     try {
       final collected = _collectAlignedAddresses(
-        anchorAddress: anchorResult.address,
+        anchorAddress: anchorItem.address,
         strideBytes: state.strideBytes,
         startStep: state.topNextStep,
         targetCount: _memoryToolBrowseLoadMoreCount,
@@ -304,7 +367,7 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
       );
       final loadedResults = await _readBrowseResults(
         selectedPid: selectedProcess.pid,
-        anchorResult: anchorResult,
+        anchorItem: anchorItem,
         readableRegions: state.regions,
         addresses: collected.addresses.reversed.toList(growable: false),
       );
@@ -323,9 +386,9 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
   }
 
   Future<void> loadMoreBelow() async {
-    final anchorResult = state.anchorResult;
+    final anchorItem = state.anchorItem;
     final selectedProcess = ref.read(memoryToolSelectedProcessProvider);
-    if (anchorResult == null ||
+    if (anchorItem == null ||
         state.regions.isEmpty ||
         selectedProcess == null ||
         state.isLoadingBelow ||
@@ -337,7 +400,7 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
 
     try {
       final collected = _collectAlignedAddresses(
-        anchorAddress: anchorResult.address,
+        anchorAddress: anchorItem.address,
         strideBytes: state.strideBytes,
         startStep: state.bottomNextStep,
         targetCount: _memoryToolBrowseLoadMoreCount,
@@ -346,7 +409,7 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
       );
       final loadedResults = await _readBrowseResults(
         selectedPid: selectedProcess.pid,
-        anchorResult: anchorResult,
+        anchorItem: anchorItem,
         readableRegions: state.regions,
         addresses: collected.addresses,
       );
@@ -375,7 +438,7 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
     state = state.copyWith(selectionState: nextSelectionState);
   }
 
-  void toggle(SearchResult result) {
+  void toggle(MemoryToolDisplayItem result) {
     final selected = List<int>.from(state.selectionState.selectedAddresses);
     final address = result.address;
     final existingIndex = selected.indexOf(address);
@@ -396,7 +459,7 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
     );
   }
 
-  void selectVisible(List<SearchResult> results) {
+  void selectVisible(List<MemoryToolDisplayItem> results) {
     state = state.copyWith(
       selectionState: state.selectionState.copyWith(
         selectedAddresses: results
@@ -407,7 +470,7 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
     );
   }
 
-  void invertVisible(List<SearchResult> results) {
+  void invertVisible(List<MemoryToolDisplayItem> results) {
     final visibleAddresses = results.map((result) => result.address).toSet();
     final preserved = state.selectionState.selectedAddresses
         .where((address) => !visibleAddresses.contains(address))
@@ -500,25 +563,25 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
 
   Future<MemoryToolBrowseState> _buildWindowState({
     required int selectedPid,
-    required SearchResult anchorResult,
+    required MemoryToolDisplayItem anchorItem,
     required List<MemoryRegion> readableRegions,
     required Set<int> preservedHiddenAddresses,
   }) async {
     final aboveCollected = _collectAlignedAddresses(
-      anchorAddress: anchorResult.address,
-      strideBytes: anchorResult.rawBytes.isEmpty
+      anchorAddress: anchorItem.address,
+      strideBytes: anchorItem.rawBytes.isEmpty
           ? 1
-          : anchorResult.rawBytes.length,
+          : anchorItem.rawBytes.length,
       startStep: 1,
       targetCount: _memoryToolBrowseInitialExpandCount,
       isAbove: true,
       regions: readableRegions,
     );
     final belowCollected = _collectAlignedAddresses(
-      anchorAddress: anchorResult.address,
-      strideBytes: anchorResult.rawBytes.isEmpty
+      anchorAddress: anchorItem.address,
+      strideBytes: anchorItem.rawBytes.isEmpty
           ? 1
-          : anchorResult.rawBytes.length,
+          : anchorItem.rawBytes.length,
       startStep: 1,
       targetCount: _memoryToolBrowseInitialExpandCount,
       isAbove: false,
@@ -526,21 +589,21 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
     );
     final aboveResults = await _readBrowseResults(
       selectedPid: selectedPid,
-      anchorResult: anchorResult,
+      anchorItem: anchorItem,
       readableRegions: readableRegions,
       addresses: aboveCollected.addresses.reversed.toList(growable: false),
     );
     final belowResults = await _readBrowseResults(
       selectedPid: selectedPid,
-      anchorResult: anchorResult,
+      anchorItem: anchorItem,
       readableRegions: readableRegions,
       addresses: belowCollected.addresses,
     );
 
     return MemoryToolBrowseState(
-      anchorResult: anchorResult,
+      anchorItem: anchorItem,
       regions: readableRegions,
-      results: <SearchResult>[...aboveResults, anchorResult, ...belowResults],
+      results: <MemoryToolDisplayItem>[...aboveResults, anchorItem, ...belowResults],
       hiddenAddresses: preservedHiddenAddresses,
       selectionState: const MemoryToolResultSelectionState(),
       topNextStep: aboveCollected.nextStep,
@@ -579,19 +642,53 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
     return regions;
   }
 
-  Future<List<SearchResult>> _readBrowseResults({
+  Future<List<MemoryToolDisplayItem>> _readBrowseResults({
     required int selectedPid,
-    required SearchResult anchorResult,
+    required MemoryToolDisplayItem anchorItem,
     required List<MemoryRegion> readableRegions,
     required List<int> addresses,
   }) async {
     if (addresses.isEmpty) {
-      return const <SearchResult>[];
+      return const <MemoryToolDisplayItem>[];
     }
 
-    final strideBytes = anchorResult.rawBytes.isEmpty
+    final strideBytes = anchorItem.rawBytes.isEmpty
         ? 1
-        : anchorResult.rawBytes.length;
+        : anchorItem.rawBytes.length;
+    if (anchorItem.isInstruction) {
+      final instructions = await ref
+          .read(memoryQueryRepositoryProvider)
+          .disassembleMemory(pid: selectedPid, addresses: addresses);
+      final instructionByAddress = <int, MemoryInstructionPreview>{
+        for (final instruction in instructions) instruction.address: instruction,
+      };
+      final results = <MemoryToolDisplayItem>[];
+      for (final address in addresses) {
+        final instruction = instructionByAddress[address];
+        final region = _resolveRegionForAddress(
+          regions: readableRegions,
+          address: address,
+          strideBytes: strideBytes,
+        );
+        if (instruction == null || region == null) {
+          continue;
+        }
+        results.add(
+          MemoryToolDisplayItem(
+            address: address,
+            regionStart: region.startAddress,
+            regionTypeKey: _mapBrowseRegionTypeKey(region),
+            type: anchorItem.type,
+            rawBytes: instruction.rawBytes,
+            displayValue: instruction.instructionText,
+            kind: MemoryToolDisplayItemKind.instruction,
+            instructionText: instruction.instructionText,
+          ),
+        );
+      }
+      return results;
+    }
+
     final previews = await ref
         .read(memoryQueryRepositoryProvider)
         .readMemoryValues(
@@ -611,7 +708,7 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
       for (final preview in previews) preview.address: preview,
     };
 
-    final results = <SearchResult>[];
+    final results = <MemoryToolDisplayItem>[];
     for (final address in addresses) {
       final preview = previewByAddress[address];
       final region = _resolveRegionForAddress(
@@ -624,16 +721,16 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
       }
 
       results.add(
-        SearchResult(
+        MemoryToolDisplayItem(
           address: address,
           regionStart: region.startAddress,
           regionTypeKey: _mapBrowseRegionTypeKey(region),
-          type: anchorResult.type,
+          type: anchorItem.type,
           rawBytes: preview.rawBytes,
           displayValue: resolveMemoryToolSearchResultValueByType(
-            type: anchorResult.type,
+            type: anchorItem.type,
             rawBytes: preview.rawBytes,
-            fallbackDisplayValue: anchorResult.displayValue,
+            fallbackDisplayValue: anchorItem.displayValue,
           ),
         ),
       );
@@ -641,18 +738,18 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
     return results;
   }
 
-  Future<List<SearchResult>> _extendResultsAroundAnchor({
+  Future<List<MemoryToolDisplayItem>> _extendResultsAroundAnchor({
     required int selectedPid,
-    required SearchResult anchorResult,
+    required MemoryToolDisplayItem anchorItem,
     required MemoryRegion anchorRegion,
-    required List<SearchResult> existingResults,
+    required List<MemoryToolDisplayItem> existingResults,
   }) async {
-    final strideBytes = anchorResult.rawBytes.isEmpty
+    final strideBytes = anchorItem.rawBytes.isEmpty
         ? 1
-        : anchorResult.rawBytes.length;
+        : anchorItem.rawBytes.length;
     final localRegions = <MemoryRegion>[anchorRegion];
     final aboveCollected = _collectAlignedAddresses(
-      anchorAddress: anchorResult.address,
+      anchorAddress: anchorItem.address,
       strideBytes: strideBytes,
       startStep: 1,
       targetCount: _memoryToolBrowseInitialExpandCount,
@@ -660,7 +757,7 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
       regions: localRegions,
     );
     final belowCollected = _collectAlignedAddresses(
-      anchorAddress: anchorResult.address,
+      anchorAddress: anchorItem.address,
       strideBytes: strideBytes,
       startStep: 1,
       targetCount: _memoryToolBrowseInitialExpandCount,
@@ -669,42 +766,42 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
     );
     final aboveResults = await _readBrowseResults(
       selectedPid: selectedPid,
-      anchorResult: anchorResult,
+      anchorItem: anchorItem,
       readableRegions: localRegions,
       addresses: aboveCollected.addresses.reversed.toList(growable: false),
     );
     final belowResults = await _readBrowseResults(
       selectedPid: selectedPid,
-      anchorResult: anchorResult,
+      anchorItem: anchorItem,
       readableRegions: localRegions,
       addresses: belowCollected.addresses,
     );
     return _mergeBrowseResults(
       existingResults,
-      <SearchResult>[...aboveResults, anchorResult, ...belowResults],
+      <MemoryToolDisplayItem>[...aboveResults, anchorItem, ...belowResults],
     );
   }
 
   Future<void> _previewAnchorResult({
     required int selectedPid,
-    required SearchResult anchorResult,
+    required MemoryToolDisplayItem anchorItem,
     List<MemoryRegion>? knownReadableRegions,
   }) async {
     final nextAnchorRegion = _resolveRegionForAddress(
       regions: state.regions,
-      address: anchorResult.address,
-      strideBytes: anchorResult.rawBytes.isEmpty ? 1 : anchorResult.rawBytes.length,
+      address: anchorItem.address,
+      strideBytes: anchorItem.rawBytes.isEmpty ? 1 : anchorItem.rawBytes.length,
     );
     final resolvedAnchorResult = nextAnchorRegion == null
-        ? anchorResult
+        ? anchorItem
         : _resolveAnchorResultWithRegion(
-            anchorResult: anchorResult,
+            anchorItem: anchorItem,
             region: nextAnchorRegion,
           );
 
     if (_canReuseCurrentWindow(
       state: state,
-      anchorResult: resolvedAnchorResult,
+      anchorItem: resolvedAnchorResult,
     )) {
       final nextHiddenAddresses = <int>{
         ...state.hiddenAddresses,
@@ -722,7 +819,7 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
         loadedResults: nextResults,
       );
       state = state.copyWith(
-        anchorResult: resolvedAnchorResult,
+        anchorItem: resolvedAnchorResult,
         results: nextResults,
         hiddenAddresses: nextHiddenAddresses,
         selectionState: const MemoryToolResultSelectionState(),
@@ -741,13 +838,13 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
 
     if (_canReuseCurrentRegion(
       state: state,
-      anchorResult: resolvedAnchorResult,
+      anchorItem: resolvedAnchorResult,
       anchorRegion: nextAnchorRegion,
     )) {
       try {
         final nextResults = await _extendResultsAroundAnchor(
           selectedPid: selectedPid,
-          anchorResult: resolvedAnchorResult,
+          anchorItem: resolvedAnchorResult,
           anchorRegion: nextAnchorRegion!,
           existingResults: state.results,
         );
@@ -763,7 +860,7 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
           loadedResults: nextResults,
         );
         state = state.copyWith(
-          anchorResult: resolvedAnchorResult,
+          anchorItem: resolvedAnchorResult,
           results: nextResults,
           hiddenAddresses: nextHiddenAddresses,
           selectionState: const MemoryToolResultSelectionState(),
@@ -785,7 +882,7 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
 
     if (_canReuseKnownRegions(
       state: state,
-      anchorResult: resolvedAnchorResult,
+      anchorItem: resolvedAnchorResult,
       anchorRegion: nextAnchorRegion,
     )) {
       final nextHiddenAddresses = <int>{
@@ -800,7 +897,7 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
       try {
         final nextState = await _buildWindowState(
           selectedPid: selectedPid,
-          anchorResult: resolvedAnchorResult,
+          anchorItem: resolvedAnchorResult,
           readableRegions: state.regions,
           preservedHiddenAddresses: nextHiddenAddresses,
         );
@@ -835,7 +932,7 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
       if (readableRegions.isEmpty) {
         _updateReadableRegionCache(pid: selectedPid, regions: readableRegions);
         state = state.copyWith(
-          results: const <SearchResult>[],
+          results: const <MemoryToolDisplayItem>[],
           regions: const <MemoryRegion>[],
           selectionState: const MemoryToolResultSelectionState(),
           hiddenAddresses: const <int>{},
@@ -857,12 +954,12 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
       final finalAnchorResult = finalAnchorRegion == null
           ? resolvedAnchorResult
           : _resolveAnchorResultWithRegion(
-              anchorResult: resolvedAnchorResult,
+              anchorItem: resolvedAnchorResult,
               region: finalAnchorRegion,
             );
       final nextState = await _buildWindowState(
         selectedPid: selectedPid,
-        anchorResult: finalAnchorResult,
+        anchorItem: finalAnchorResult,
         readableRegions: readableRegions,
         preservedHiddenAddresses: const <int>{},
       );
@@ -910,6 +1007,26 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
     }
   }
 
+  Future<MemoryInstructionPreview?> _readInstructionPreviewOrNull({
+    required int selectedPid,
+    required int address,
+  }) async {
+    try {
+      final previews = await ref
+          .read(memoryQueryRepositoryProvider)
+          .disassembleMemory(
+            pid: selectedPid,
+            addresses: <int>[address],
+          );
+      if (previews.isEmpty) {
+        return null;
+      }
+      return previews.first;
+    } catch (_) {
+      return null;
+    }
+  }
+
   List<MemoryRegion> _resolveCachedReadableRegions({required int pid}) {
     if (_cachedReadableRegionsPid == pid && _cachedReadableRegions != null) {
       return _cachedReadableRegions!;
@@ -932,23 +1049,19 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
   }
 }
 
-SearchResult _resolveAnchorResultWithRegion({
-  required SearchResult anchorResult,
+MemoryToolDisplayItem _resolveAnchorResultWithRegion({
+  required MemoryToolDisplayItem anchorItem,
   required MemoryRegion region,
 }) {
-  return SearchResult(
-    address: anchorResult.address,
+  return anchorItem.copyWith(
     regionStart: region.startAddress,
     regionTypeKey: _mapBrowseRegionTypeKey(region),
-    type: anchorResult.type,
-    rawBytes: anchorResult.rawBytes,
-    displayValue: anchorResult.displayValue,
   );
 }
 
 bool _canReuseCurrentWindow({
   required MemoryToolBrowseState state,
-  required SearchResult anchorResult,
+  required MemoryToolDisplayItem anchorItem,
 }) {
   if (!state.hasAnchor ||
       state.regions.isEmpty ||
@@ -957,39 +1070,40 @@ bool _canReuseCurrentWindow({
     return false;
   }
 
-  if (state.browseType != anchorResult.type ||
-      state.strideBytes != anchorResult.rawBytes.length) {
+  if (state.isInstructionMode != anchorItem.isInstruction ||
+      state.browseType != anchorItem.type ||
+      state.strideBytes != anchorItem.rawBytes.length) {
     return false;
   }
 
-  return state.results.any((result) => result.address == anchorResult.address);
+  return state.results.any((result) => result.address == anchorItem.address);
 }
 
 bool _canReuseCurrentRegion({
   required MemoryToolBrowseState state,
-  required SearchResult anchorResult,
+  required MemoryToolDisplayItem anchorItem,
   required MemoryRegion? anchorRegion,
 }) {
-  if (!_hasCompatibleBrowseShape(state: state, anchorResult: anchorResult) ||
+  if (!_hasCompatibleBrowseShape(state: state, anchorItem: anchorItem) ||
       anchorRegion == null ||
-      state.anchorResult == null) {
+      state.anchorItem == null) {
     return false;
   }
-  return anchorRegion.startAddress == state.anchorResult!.regionStart;
+  return anchorRegion.startAddress == state.anchorItem!.regionStart;
 }
 
 bool _canReuseKnownRegions({
   required MemoryToolBrowseState state,
-  required SearchResult anchorResult,
+  required MemoryToolDisplayItem anchorItem,
   required MemoryRegion? anchorRegion,
 }) {
-  return _hasCompatibleBrowseShape(state: state, anchorResult: anchorResult) &&
+  return _hasCompatibleBrowseShape(state: state, anchorItem: anchorItem) &&
       anchorRegion != null;
 }
 
 bool _hasCompatibleBrowseShape({
   required MemoryToolBrowseState state,
-  required SearchResult anchorResult,
+  required MemoryToolDisplayItem anchorItem,
 }) {
   if (!state.hasAnchor ||
       state.regions.isEmpty ||
@@ -998,17 +1112,18 @@ bool _hasCompatibleBrowseShape({
     return false;
   }
 
-  if (state.browseType != anchorResult.type ||
-      state.strideBytes != anchorResult.rawBytes.length) {
+  if (state.isInstructionMode != anchorItem.isInstruction ||
+      state.browseType != anchorItem.type ||
+      state.strideBytes != anchorItem.rawBytes.length) {
     return false;
   }
 
   return true;
 }
 
-List<SearchResult> _replaceBrowseResult(
-  List<SearchResult> results,
-  SearchResult nextResult,
+List<MemoryToolDisplayItem> _replaceBrowseResult(
+  List<MemoryToolDisplayItem> results,
+  MemoryToolDisplayItem nextResult,
 ) {
   return results
       .map(
@@ -1026,7 +1141,7 @@ List<SearchResult> _replaceBrowseResult(
   required int anchorAddress,
   required int strideBytes,
   required List<MemoryRegion> regions,
-  required List<SearchResult> loadedResults,
+  required List<MemoryToolDisplayItem> loadedResults,
 }) {
   final loadedAddresses = loadedResults.map((result) => result.address).toSet();
   final aboveState = _resolveNextStep(
@@ -1248,11 +1363,11 @@ Uint8List _resolveAnchorRawBytes({
   return Uint8List(fallbackLength);
 }
 
-List<SearchResult> _mergeBrowseResults(
-  List<SearchResult> leading,
-  List<SearchResult> trailing,
+List<MemoryToolDisplayItem> _mergeBrowseResults(
+  List<MemoryToolDisplayItem> leading,
+  List<MemoryToolDisplayItem> trailing,
 ) {
-  final merged = <int, SearchResult>{
+  final merged = <int, MemoryToolDisplayItem>{
     for (final result in leading) result.address: result,
     for (final result in trailing) result.address: result,
   };

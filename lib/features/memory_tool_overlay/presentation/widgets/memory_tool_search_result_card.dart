@@ -9,6 +9,7 @@ import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/me
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_tool_saved_items_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_tool_search_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/utils/memory_tool_pointer_utils.dart';
+import 'package:JsxposedX/features/memory_tool_overlay/presentation/utils/memory_tool_search_result_presenter.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_batch_edit_dialog.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_result_calculator_dialog.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_result_selection_bar.dart';
@@ -192,6 +193,9 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
               sourceResult: result,
               sourcePreview: preview,
               targetAddress: targetAddress,
+              preferInstructionMode: isMemoryToolInstructionDisplayValue(
+                displayValue,
+              ),
             ),
       );
     }
@@ -371,68 +375,76 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
                               for (final address in frozenAddresses)
                                 address: true,
                             },
-                            onPreviewMemoryBlock: (
-                              result,
-                              preview,
-                              displayValue,
-                            ) async {
-                              await previewAndOpenBrowse(
-                                () => ref
-                                    .read(
-                                      memoryToolBrowseControllerProvider
-                                          .notifier,
-                                    )
-                                    .previewFromSearchResult(
-                                      result: result,
-                                      preview: preview,
-                                      displayValue: displayValue,
-                                    ),
-                              );
-                            },
-                            onNavigateToAddress: (
-                              result,
-                              preview,
-                              displayValue,
-                              targetAddress,
-                            ) async {
-                              await previewAndOpenBrowse(
-                                () => ref
-                                    .read(
-                                      memoryToolBrowseControllerProvider
-                                          .notifier,
-                                    )
-                                    .previewFromAddress(
-                                      sourceResult: result,
-                                      sourcePreview: preview,
-                                      targetAddress: targetAddress,
-                                    ),
-                              );
-                            },
-                            onJumpToPointer: jumpToPointer,
-                            onStartAutoChase: (
-                              PointerScanRequest request,
-                              int maxDepth,
-                            ) async {
-                              onOpenPointerTab();
-                              await ref
-                                  .read(
-                                    memoryToolPointerControllerProvider.notifier,
-                                  )
-                                  .startAutoChase(
-                                    request: request,
-                                    maxDepth: maxDepth,
+                            onPreviewMemoryBlock:
+                                (result, preview, displayValue) async {
+                                  await previewAndOpenBrowse(
+                                    () => ref
+                                        .read(
+                                          memoryToolBrowseControllerProvider
+                                              .notifier,
+                                        )
+                                        .previewFromSearchResult(
+                                          result: result,
+                                          preview: preview,
+                                          displayValue: displayValue,
+                                          preferInstructionMode:
+                                              isMemoryToolInstructionDisplayValue(
+                                                displayValue,
+                                              ),
+                                        ),
                                   );
-                            },
-                            onStartPointerScan: (
-                              PointerScanRequest request,
-                            ) async {
-                              onOpenPointerTab();
-                              await ref
-                                  .read(
-                                    memoryToolPointerControllerProvider.notifier,
-                                  )
-                                    .startRootScan(request: request);
-                            },
+                                },
+                            onNavigateToAddress:
+                                (
+                                  result,
+                                  preview,
+                                  displayValue,
+                                  targetAddress,
+                                ) async {
+                                  await previewAndOpenBrowse(
+                                    () => ref
+                                        .read(
+                                          memoryToolBrowseControllerProvider
+                                              .notifier,
+                                        )
+                                        .previewFromAddress(
+                                          sourceResult: result,
+                                          sourcePreview: preview,
+                                          targetAddress: targetAddress,
+                                          preferInstructionMode:
+                                              isMemoryToolInstructionDisplayValue(
+                                                displayValue,
+                                              ),
+                                        ),
+                                  );
+                                },
+                            onJumpToPointer: jumpToPointer,
+                            onStartAutoChase:
+                                (
+                                  PointerScanRequest request,
+                                  int maxDepth,
+                                ) async {
+                                  onOpenPointerTab();
+                                  await ref
+                                      .read(
+                                        memoryToolPointerControllerProvider
+                                            .notifier,
+                                      )
+                                      .startAutoChase(
+                                        request: request,
+                                        maxDepth: maxDepth,
+                                      );
+                                },
+                            onStartPointerScan:
+                                (PointerScanRequest request) async {
+                                  onOpenPointerTab();
+                                  await ref
+                                      .read(
+                                        memoryToolPointerControllerProvider
+                                            .notifier,
+                                      )
+                                      .startRootScan(request: request);
+                                },
                             onOpenDebugTab: onOpenDebugTab,
                           );
                         },
@@ -456,70 +468,76 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
                                 for (final address in frozenAddresses)
                                   address: true,
                               },
-                              onPreviewMemoryBlock: (
-                                result,
-                                preview,
-                                displayValue,
-                              ) async {
-                                await previewAndOpenBrowse(
-                                  () => ref
-                                      .read(
-                                        memoryToolBrowseControllerProvider
-                                            .notifier,
-                                      )
-                                      .previewFromSearchResult(
-                                        result: result,
-                                        preview: preview,
-                                        displayValue: displayValue,
-                                      ),
-                                );
-                              },
-                              onNavigateToAddress: (
-                                result,
-                                preview,
-                                displayValue,
-                                targetAddress,
-                              ) async {
-                                await previewAndOpenBrowse(
-                                  () => ref
-                                      .read(
-                                        memoryToolBrowseControllerProvider
-                                            .notifier,
-                                      )
-                                      .previewFromAddress(
-                                        sourceResult: result,
-                                        sourcePreview: preview,
-                                        targetAddress: targetAddress,
-                                      ),
-                                );
-                              },
-                              onJumpToPointer: jumpToPointer,
-                              onStartAutoChase: (
-                                PointerScanRequest request,
-                                int maxDepth,
-                              ) async {
-                                onOpenPointerTab();
-                                await ref
-                                    .read(
-                                      memoryToolPointerControllerProvider
-                                          .notifier,
-                                    )
-                                    .startAutoChase(
-                                      request: request,
-                                      maxDepth: maxDepth,
+                              onPreviewMemoryBlock:
+                                  (result, preview, displayValue) async {
+                                    await previewAndOpenBrowse(
+                                      () => ref
+                                          .read(
+                                            memoryToolBrowseControllerProvider
+                                                .notifier,
+                                          )
+                                          .previewFromSearchResult(
+                                            result: result,
+                                            preview: preview,
+                                            displayValue: displayValue,
+                                            preferInstructionMode:
+                                                isMemoryToolInstructionDisplayValue(
+                                                  displayValue,
+                                                ),
+                                          ),
                                     );
-                              },
-                              onStartPointerScan: (
-                                PointerScanRequest request,
-                              ) async {
-                                onOpenPointerTab();
-                                await ref
-                                    .read(
-                                      memoryToolPointerControllerProvider
-                                          .notifier,
-                                      )
-                                      .startRootScan(request: request);
-                              },
+                                  },
+                              onNavigateToAddress:
+                                  (
+                                    result,
+                                    preview,
+                                    displayValue,
+                                    targetAddress,
+                                  ) async {
+                                    await previewAndOpenBrowse(
+                                      () => ref
+                                          .read(
+                                            memoryToolBrowseControllerProvider
+                                                .notifier,
+                                          )
+                                          .previewFromAddress(
+                                            sourceResult: result,
+                                            sourcePreview: preview,
+                                            targetAddress: targetAddress,
+                                            preferInstructionMode:
+                                                isMemoryToolInstructionDisplayValue(
+                                                  displayValue,
+                                                ),
+                                          ),
+                                    );
+                                  },
+                              onJumpToPointer: jumpToPointer,
+                              onStartAutoChase:
+                                  (
+                                    PointerScanRequest request,
+                                    int maxDepth,
+                                  ) async {
+                                    onOpenPointerTab();
+                                    await ref
+                                        .read(
+                                          memoryToolPointerControllerProvider
+                                              .notifier,
+                                        )
+                                        .startAutoChase(
+                                          request: request,
+                                          maxDepth: maxDepth,
+                                        );
+                                  },
+                              onStartPointerScan:
+                                  (PointerScanRequest request) async {
+                                    onOpenPointerTab();
+                                    await ref
+                                        .read(
+                                          memoryToolPointerControllerProvider
+                                              .notifier,
+                                        )
+                                        .startRootScan(request: request);
+                                  },
                               onOpenDebugTab: onOpenDebugTab,
                             );
                           }

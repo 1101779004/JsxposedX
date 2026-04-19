@@ -1,12 +1,14 @@
 import 'package:JsxposedX/common/pages/toast.dart';
 import 'package:JsxposedX/common/widgets/loading.dart';
 import 'package:JsxposedX/core/extensions/context_extensions.dart';
+import 'package:JsxposedX/features/memory_tool_overlay/presentation/models/memory_tool_display_item.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_action_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_query_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_tool_browse_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_tool_pointer_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_tool_saved_items_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/utils/memory_tool_pointer_utils.dart';
+import 'package:JsxposedX/features/memory_tool_overlay/presentation/utils/memory_tool_search_result_presenter.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_assembly_preview_dialog.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_browse_result_list.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_batch_edit_dialog.dart';
@@ -151,9 +153,22 @@ class MemoryToolBrowseTab extends HookConsumerWidget {
     final selectedResults = visibleResults
         .where((result) => browseState.selectionState.contains(result.address))
         .toList(growable: false);
-    final canRestorePrevious = browseState.selectionState.selectedAddresses.any(
-      valueHistoryState.containsKey,
-    );
+    final selectedInstructionResults = selectedResults
+        .where((result) => result.isInstruction)
+        .toList(growable: false);
+    final selectedValueResults = selectedResults
+        .where((result) => !result.isInstruction)
+        .toList(growable: false);
+    final hasInstructionSelection = selectedInstructionResults.isNotEmpty;
+    final canEditSelectedValues =
+        selectedValueResults.isNotEmpty && !hasInstructionSelection;
+    final canCalculateSelectedValues =
+        selectedValueResults.length >= 2 && !hasInstructionSelection;
+    final canRestorePrevious =
+        !hasInstructionSelection &&
+        browseState.selectionState.selectedAddresses.any(
+          valueHistoryState.containsKey,
+        );
     final visibleResultCount = browseState.results
         .where(
           (result) => !browseState.hiddenAddresses.contains(result.address),
@@ -171,23 +186,42 @@ class MemoryToolBrowseTab extends HookConsumerWidget {
       );
     }
 
-    Future<void> saveResultsToSaved(Iterable<SearchResult> results) async {
+    Future<void> saveResultsToSaved(
+      Iterable<MemoryToolDisplayItem> results,
+    ) async {
       final resultList = results.toList(growable: false);
       if (resultList.isEmpty) {
         return;
       }
 
-      savedItemsNotifier.saveMany(
-        pid: selectedProcess.pid,
-        results: resultList,
-        previewsByAddress: resolvedPreviewMap,
-        frozenAddresses: currentFrozenAddresses,
-      );
+      final valueResults = <SearchResult>[];
+      for (final result in resultList) {
+        if (result.isInstruction) {
+          savedItemsNotifier.saveOne(
+            pid: selectedProcess.pid,
+            result: result.toSearchResult(),
+            preview: resolvedPreviewMap[result.address],
+            isFrozen: currentFrozenAddresses.contains(result.address),
+            isInstructionPatch: true,
+            instructionText: result.effectiveDisplayValue,
+          );
+        } else {
+          valueResults.add(result.toSearchResult());
+        }
+      }
+      if (valueResults.isNotEmpty) {
+        savedItemsNotifier.saveMany(
+          pid: selectedProcess.pid,
+          results: valueResults,
+          previewsByAddress: resolvedPreviewMap,
+          frozenAddresses: currentFrozenAddresses,
+        );
+      }
       await showSavedToast(resultList.length);
     }
 
     Future<void> jumpToPointer(
-      SearchResult result,
+      MemoryToolDisplayItem result,
       MemoryValuePreview? preview,
       String displayValue,
     ) async {
@@ -204,9 +238,10 @@ class MemoryToolBrowseTab extends HookConsumerWidget {
 
       try {
         await browseNotifier.previewFromAddress(
-          sourceResult: result,
+          sourceResult: result.toSearchResult(),
           sourcePreview: preview,
           targetAddress: targetAddress,
+          preferInstructionMode: result.isInstruction,
         );
       } catch (error) {
         if (!context.mounted) {
@@ -244,9 +279,10 @@ class MemoryToolBrowseTab extends HookConsumerWidget {
                   targetAddress,
                 ) async {
                   await browseNotifier.previewFromAddress(
-                    sourceResult: result,
+                    sourceResult: result.toSearchResult(),
                     sourcePreview: preview,
                     targetAddress: targetAddress,
+                    preferInstructionMode: result.isInstruction,
                   );
                 },
             onJumpToPointer: jumpToPointer,
@@ -352,7 +388,7 @@ class MemoryToolBrowseTab extends HookConsumerWidget {
                   ),
                   MemoryToolResultSelectionActionData(
                     icon: Icons.calculate_outlined,
-                    onTap: selectedResults.length >= 2
+                    onTap: canCalculateSelectedValues
                         ? () {
                             isCalculatorVisible.value = true;
                           }
@@ -370,11 +406,11 @@ class MemoryToolBrowseTab extends HookConsumerWidget {
                   ),
                   MemoryToolResultSelectionActionData(
                     icon: Icons.edit_rounded,
-                    onTap: selectedResults.isEmpty
-                        ? null
-                        : () {
+                    onTap: canEditSelectedValues
+                        ? () {
                             isBatchEditVisible.value = true;
-                          },
+                          }
+                        : null,
                   ),
                   MemoryToolResultSelectionActionData(
                     icon: Icons.undo_rounded,
@@ -479,7 +515,9 @@ class MemoryToolBrowseTab extends HookConsumerWidget {
         if (isBatchEditVisible.value)
           Positioned.fill(
             child: MemoryToolBatchEditDialog(
-              results: selectedResults,
+              results: selectedValueResults
+                  .map((result) => result.toSearchResult())
+                  .toList(growable: false),
               livePreviewsAsync: resolvedLivePreviewsAsync,
               savedSyncMode: MemoryToolBatchEditSavedSyncMode.frozenOnly,
               onClose: () {
@@ -490,7 +528,9 @@ class MemoryToolBrowseTab extends HookConsumerWidget {
         if (isCalculatorVisible.value)
           Positioned.fill(
             child: MemoryToolResultCalculatorDialog(
-              results: selectedResults,
+              results: selectedValueResults
+                  .map((result) => result.toSearchResult())
+                  .toList(growable: false),
               livePreviewsAsync: resolvedLivePreviewsAsync,
               onClose: () {
                 isCalculatorVisible.value = false;

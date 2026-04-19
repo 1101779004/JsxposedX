@@ -1,5 +1,6 @@
 import 'package:JsxposedX/common/pages/toast.dart';
 import 'package:JsxposedX/core/extensions/context_extensions.dart';
+import 'package:JsxposedX/features/memory_tool_overlay/presentation/models/memory_tool_display_item.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_breakpoint_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_query_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_tool_saved_items_provider.dart';
@@ -14,7 +15,7 @@ import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memo
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_search_result_tile.dart';
 import 'package:JsxposedX/features/overlay_window/presentation/providers/overlay_window_host_runtime_provider.dart';
 import 'package:JsxposedX/generated/memory_tool.g.dart'
-    show MemoryValuePreview, PointerScanRequest, SearchResult;
+    show MemoryValuePreview, PointerScanRequest;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_overlay_window/flutter_overlay_window.dart';
@@ -46,22 +47,22 @@ class MemoryToolBrowseResultList extends HookConsumerWidget {
   final PageStorageKey<String> listStorageKey;
   final int focusRequestId;
   final ScrollController scrollController;
-  final List<SearchResult> results;
+  final List<MemoryToolDisplayItem> results;
   final int? anchorAddress;
   final bool Function(int address) isSelected;
-  final void Function(SearchResult result) onToggleSelection;
+  final void Function(MemoryToolDisplayItem result) onToggleSelection;
   final AsyncValue<Map<int, MemoryValuePreview>> livePreviewsAsync;
   final Map<int, String> previousValueByAddress;
   final int? processPid;
   final Map<int, bool> initialFrozenStateByAddress;
   final Future<void> Function(
-    SearchResult result,
+    MemoryToolDisplayItem result,
     MemoryValuePreview? preview,
     String displayValue,
     int targetAddress,
   )? onNavigateToAddress;
   final Future<void> Function(
-    SearchResult result,
+    MemoryToolDisplayItem result,
     MemoryValuePreview? preview,
     String displayValue,
   )? onJumpToPointer;
@@ -73,16 +74,16 @@ class MemoryToolBrowseResultList extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final activeResultDialog =
-        useState<({SearchResult result, String displayValue})?>(null);
+        useState<({MemoryToolDisplayItem result, String displayValue})?>(null);
     final activeResultActionDialog =
-        useState<({SearchResult result, String displayValue})?>(null);
+        useState<({MemoryToolDisplayItem result, String displayValue})?>(null);
     final activeCopyValueDialog =
-        useState<({SearchResult result, String displayValue})?>(null);
+        useState<({MemoryToolDisplayItem result, String displayValue})?>(null);
     final activeOffsetPreviewDialog =
-        useState<({SearchResult result, String displayValue})?>(null);
-    final activeAutoChaseDialog = useState<SearchResult?>(null);
-    final activePointerScanDialog = useState<SearchResult?>(null);
-    final activeBreakpointDialog = useState<SearchResult?>(null);
+        useState<({MemoryToolDisplayItem result, String displayValue})?>(null);
+    final activeAutoChaseDialog = useState<MemoryToolDisplayItem?>(null);
+    final activePointerScanDialog = useState<MemoryToolDisplayItem?>(null);
+    final activeBreakpointDialog = useState<MemoryToolDisplayItem?>(null);
     final anchorExtent = useState<double>(94.r);
     final centerSliverKey = useMemoized(
       () => GlobalKey(debugLabel: 'memory_tool_browse_center_$focusRequestId'),
@@ -97,7 +98,7 @@ class MemoryToolBrowseResultList extends HookConsumerWidget {
       );
     }
 
-    Future<void> saveResultToSaved(SearchResult result) async {
+    Future<void> saveResultToSaved(MemoryToolDisplayItem result) async {
       final selectedPid = ref.read(memoryToolSelectedProcessProvider)?.pid;
       if (selectedPid == null) {
         return;
@@ -105,9 +106,11 @@ class MemoryToolBrowseResultList extends HookConsumerWidget {
 
       savedItemsNotifier.saveOne(
         pid: selectedPid,
-        result: result,
+        result: result.toSearchResult(),
         preview: livePreviewsAsync.asData?.value[result.address],
         isFrozen: initialFrozenStateByAddress[result.address] ?? false,
+        isInstructionPatch: result.isInstruction,
+        instructionText: result.isInstruction ? result.effectiveDisplayValue : null,
       );
       await ToastOverlayMessage.show(
         context.l10n.memoryToolSavedToSavedMessage(1),
@@ -115,17 +118,17 @@ class MemoryToolBrowseResultList extends HookConsumerWidget {
       );
     }
 
-    MemoryValuePreview? resolvePreview(SearchResult result) {
+    MemoryValuePreview? resolvePreview(MemoryToolDisplayItem result) {
       return livePreviewsAsync.asData?.value[result.address];
     }
 
-    Widget buildResultTile(SearchResult result) {
+    Widget buildResultTile(MemoryToolDisplayItem result) {
       final displayValue = resolveMemoryToolSearchResultDisplayValue(
-        result: result,
+        result: result.toSearchResult(),
         livePreviewsAsync: livePreviewsAsync,
       );
       return MemoryToolSearchResultTile(
-        result: result,
+        result: result.toSearchResult(),
         displayValue: displayValue,
         previousDisplayValue: previousValueByAddress[result.address],
         isFrozen: initialFrozenStateByAddress[result.address] ?? false,
@@ -151,7 +154,7 @@ class MemoryToolBrowseResultList extends HookConsumerWidget {
       );
     }
 
-    Widget buildMeasuredAnchorTile(SearchResult result) {
+    Widget buildMeasuredAnchorTile(MemoryToolDisplayItem result) {
       return _MeasureSize(
         onChange: (size) {
           if ((anchorExtent.value - size.height).abs() <= 0.5) {
@@ -228,7 +231,7 @@ class MemoryToolBrowseResultList extends HookConsumerWidget {
         if (activeResultDialog.value case final dialog?)
           Positioned.fill(
             child: MemoryToolSearchResultDialog(
-              result: dialog.result,
+              result: dialog.result.toSearchResult(),
               displayValue: dialog.displayValue,
               livePreviewsAsync: livePreviewsAsync,
               processPid: processPid,
@@ -394,7 +397,7 @@ class MemoryToolBrowseResultList extends HookConsumerWidget {
           Positioned.fill(
             child: MemoryToolBreakpointConfigDialog(
               pid: processPid!,
-              result: result,
+              result: result.toSearchResult(),
               preview: resolvePreview(result),
               onConfirm: (request) async {
                 final created = await ref
@@ -414,7 +417,7 @@ class MemoryToolBrowseResultList extends HookConsumerWidget {
         if (activeOffsetPreviewDialog.value case final dialog?)
           Positioned.fill(
             child: MemoryToolOffsetPreviewDialog(
-              result: dialog.result,
+              result: dialog.result.toSearchResult(),
               displayValue: dialog.displayValue,
               livePreviewsAsync: livePreviewsAsync,
               onConfirm: (targetAddress) async {
@@ -434,7 +437,7 @@ class MemoryToolBrowseResultList extends HookConsumerWidget {
         if (activeCopyValueDialog.value case final dialog?)
           Positioned.fill(
             child: MemoryToolCopyValueDialog(
-              result: dialog.result,
+              result: dialog.result.toSearchResult(),
               displayValue: dialog.displayValue,
               livePreviewsAsync: livePreviewsAsync,
               onClose: () {
