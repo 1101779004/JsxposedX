@@ -11,6 +11,8 @@ class MemoryToolDebugBreakpointsTab extends StatelessWidget {
     super.key,
     required this.breakpointsAsync,
     required this.selectedBreakpointId,
+    required this.breakpointEnabledOverrides,
+    required this.pendingBreakpointIds,
     required this.onSelect,
     required this.onToggleEnabled,
     required this.onRemove,
@@ -18,8 +20,11 @@ class MemoryToolDebugBreakpointsTab extends StatelessWidget {
 
   final AsyncValue<List<MemoryBreakpoint>> breakpointsAsync;
   final String? selectedBreakpointId;
+  final Map<String, bool> breakpointEnabledOverrides;
+  final Set<String> pendingBreakpointIds;
   final ValueChanged<String> onSelect;
-  final Future<void> Function(MemoryBreakpoint breakpoint) onToggleEnabled;
+  final Future<void> Function(MemoryBreakpoint breakpoint, bool enabled)
+  onToggleEnabled;
   final Future<void> Function(MemoryBreakpoint breakpoint) onRemove;
 
   @override
@@ -49,6 +54,12 @@ class MemoryToolDebugBreakpointsTab extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final breakpoint = breakpoints[index];
                   final isSelected = breakpoint.id == selectedBreakpointId;
+                  final effectiveEnabled =
+                      breakpointEnabledOverrides[breakpoint.id] ??
+                      breakpoint.enabled;
+                  final isTogglePending = pendingBreakpointIds.contains(
+                    breakpoint.id,
+                  );
                   return MemoryToolDebugListItemShell(
                     selected: isSelected,
                     onTap: () {
@@ -68,10 +79,10 @@ class MemoryToolDebugBreakpointsTab extends StatelessWidget {
                               ),
                             ),
                             MemoryToolDebugInlineChip(
-                              text: breakpoint.enabled
+                              text: effectiveEnabled
                                   ? context.l10n.memoryToolDebugEnabled
                                   : context.l10n.memoryToolDebugDisabled,
-                              active: breakpoint.enabled,
+                              active: effectiveEnabled,
                             ),
                           ],
                         ),
@@ -122,17 +133,32 @@ class MemoryToolDebugBreakpointsTab extends StatelessWidget {
                         Row(
                           children: <Widget>[
                             Switch.adaptive(
-                              value: breakpoint.enabled,
-                              onChanged: (_) async {
-                                await onToggleEnabled(breakpoint);
-                              },
+                              value: effectiveEnabled,
+                              onChanged: isTogglePending
+                                  ? null
+                                  : (value) async {
+                                      await onToggleEnabled(breakpoint, value);
+                                    },
                             ),
+                            if (isTogglePending) ...<Widget>[
+                              SizedBox(width: 8.r),
+                              SizedBox(
+                                width: 16.r,
+                                height: 16.r,
+                                child:
+                                    const CircularProgressIndicator.adaptive(
+                                      strokeWidth: 2,
+                                    ),
+                              ),
+                            ],
                             const Spacer(),
                             IconButton(
                               visualDensity: VisualDensity.compact,
-                              onPressed: () async {
-                                await onRemove(breakpoint);
-                              },
+                              onPressed: isTogglePending
+                                  ? null
+                                  : () async {
+                                      await onRemove(breakpoint);
+                                    },
                               icon: const Icon(Icons.delete_outline_rounded),
                             ),
                           ],
