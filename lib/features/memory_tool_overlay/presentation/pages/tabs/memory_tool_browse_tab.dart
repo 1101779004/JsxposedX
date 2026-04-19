@@ -167,7 +167,28 @@ class MemoryToolBrowseTab extends HookConsumerWidget {
             const <int, MemoryToolInstructionHistoryEntry>{},
       ),
     );
-    final selectedResults = visibleResults
+    List<MemoryToolDisplayItem> resolveDisplayOrderedResults(
+      List<MemoryToolDisplayItem> results,
+    ) {
+      final anchorAddress = browseState.anchorAddress;
+      if (anchorAddress == null) {
+        return results;
+      }
+      final anchorIndex = results.indexWhere(
+        (result) => result.address == anchorAddress,
+      );
+      if (anchorIndex < 0 || anchorIndex >= results.length) {
+        return results;
+      }
+      return <MemoryToolDisplayItem>[
+        ...results.take(anchorIndex).toList(growable: false).reversed,
+        results[anchorIndex],
+        ...results.skip(anchorIndex + 1),
+      ];
+    }
+
+    final displayOrderedResults = resolveDisplayOrderedResults(visibleResults);
+    final selectedResults = displayOrderedResults
         .where((result) => browseState.selectionState.contains(result.address))
         .toList(growable: false);
     final selectedInstructionResults = selectedResults
@@ -220,14 +241,9 @@ class MemoryToolBrowseTab extends HookConsumerWidget {
     }
 
     String resolveBatchInstructionInitialValue() {
-      final uniqueInstructions = selectedInstructionResults
+      return selectedInstructionResults
           .map((result) => result.effectiveDisplayValue.trim())
-          .where((value) => value.isNotEmpty)
-          .toSet();
-      if (uniqueInstructions.length == 1) {
-        return uniqueInstructions.first;
-      }
-      return '';
+          .join('\n');
     }
 
     Future<void> saveResultsToSaved(
@@ -299,9 +315,34 @@ class MemoryToolBrowseTab extends HookConsumerWidget {
     }
 
     Future<String?> patchSelectedInstructions(String value) async {
-      final trimmedValue = value.trim();
-      if (trimmedValue.isEmpty) {
-        return context.l10n.error;
+      final rawLines = value
+          .split('\n')
+          .map((line) => line.trim())
+          .toList(growable: false);
+      final nonEmptyLines = rawLines
+          .where((line) => line.isNotEmpty)
+          .toList(growable: false);
+      if (nonEmptyLines.isEmpty) {
+        return context.isZh ? '指令不能为空' : 'Instruction is required';
+      }
+      if (rawLines.any((line) => line.isEmpty) && nonEmptyLines.length > 1) {
+        return context.isZh
+            ? '每一行都要有指令'
+            : 'Each line must contain an instruction';
+      }
+
+      late final List<String> instructions;
+      if (nonEmptyLines.length == 1) {
+        instructions = List<String>.filled(
+          selectedInstructionResults.length,
+          nonEmptyLines.first,
+        );
+      } else if (nonEmptyLines.length == selectedInstructionResults.length) {
+        instructions = nonEmptyLines;
+      } else {
+        return context.isZh
+            ? '请输入1行，或与选中条目数一致的指令行数'
+            : 'Enter one line, or the same number of instruction lines as selected items';
       }
 
       var patchedCount = 0;
@@ -309,7 +350,13 @@ class MemoryToolBrowseTab extends HookConsumerWidget {
       final historyNotifier = ref.read(
         memoryToolInstructionHistoryProvider.notifier,
       );
-      for (final result in selectedInstructionResults) {
+      for (
+        var index = 0;
+        index < selectedInstructionResults.length;
+        index += 1
+      ) {
+        final result = selectedInstructionResults[index];
+        final instruction = instructions[index];
         try {
           final patchResult = await ref
               .read(memoryValueActionProvider.notifier)
@@ -317,7 +364,7 @@ class MemoryToolBrowseTab extends HookConsumerWidget {
                 request: MemoryInstructionPatchRequest(
                   pid: selectedProcess.pid,
                   address: result.address,
-                  instruction: trimmedValue,
+                  instruction: instruction,
                 ),
               );
           historyNotifier.record(

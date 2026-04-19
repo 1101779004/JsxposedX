@@ -30,15 +30,20 @@ class MemoryToolDebugInstructionEditorDialog extends HookWidget {
     useListenable(controller);
     final isSaving = useState(false);
     final errorText = useState<String?>(null);
-    final trimmedValue = controller.text.trim();
-    final lineCount = '\n'.allMatches(controller.text).length + 1;
+    final rawValue = controller.text;
+    final normalizedValue = rawValue.trim();
+    final normalizedInitialValue = initialValue.trim();
+    final lineCount = '\n'.allMatches(rawValue).length + 1;
     final visibleMaxLines = lineCount.clamp(1, 4);
-    final canSave = !isSaving.value && trimmedValue != initialValue.trim();
+    final canSave =
+        !isSaving.value &&
+        normalizedValue.isNotEmpty &&
+        normalizedValue != normalizedInitialValue;
 
     useEffect(() {
       errorText.value = null;
       return null;
-    }, [trimmedValue]);
+    }, [rawValue]);
 
     return OverlayPanelDialog.card(
       onClose: onClose,
@@ -98,7 +103,7 @@ class MemoryToolDebugInstructionEditorDialog extends HookWidget {
                           ? () async {
                               isSaving.value = true;
                               try {
-                                errorText.value = await onSave(trimmedValue);
+                                errorText.value = await onSave(rawValue);
                               } finally {
                                 if (context.mounted) {
                                   isSaving.value = false;
