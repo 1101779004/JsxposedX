@@ -243,11 +243,22 @@ bool IsBetterPointerResult(const PointerScanResultEntry& candidate,
     return candidate.pointer_address < current.pointer_address;
 }
 
-const PointerScanResultEntry* SelectBestPointerResult(
-    const std::vector<PointerScanResultEntry>& results) {
+bool IsSamePointerResult(const PointerScanResultEntry& left,
+                         const PointerScanResultEntry& right) {
+    return left.pointer_address == right.pointer_address &&
+           left.base_address == right.base_address &&
+           left.target_address == right.target_address &&
+           left.offset == right.offset &&
+           left.region_start == right.region_start &&
+           left.region_type_key == right.region_type_key;
+}
+
+const PointerScanResultEntry* SelectBestPointerResultImpl(
+    const std::vector<PointerScanResultEntry>& results,
+    bool recommended_only) {
     const PointerScanResultEntry* best_entry = nullptr;
     for (const PointerScanResultEntry& entry : results) {
-        if (!IsPointerRecommendedRegionKey(entry.region_type_key)) {
+        if (recommended_only && !IsPointerRecommendedRegionKey(entry.region_type_key)) {
             continue;
         }
         if (best_entry == nullptr || IsBetterPointerResult(entry, *best_entry)) {
@@ -255,6 +266,16 @@ const PointerScanResultEntry* SelectBestPointerResult(
         }
     }
     return best_entry;
+}
+
+const PointerScanResultEntry* SelectBestPointerResult(
+    const std::vector<PointerScanResultEntry>& results) {
+    if (const PointerScanResultEntry* best_recommended =
+            SelectBestPointerResultImpl(results, true);
+        best_recommended != nullptr) {
+        return best_recommended;
+    }
+    return SelectBestPointerResultImpl(results, false);
 }
 
 template <typename ProgressCallback>
@@ -545,11 +566,24 @@ PointerAutoChaseLayerStateView BuildPointerAutoChaseLayer(
     layer.is_terminal_layer = is_terminal_layer;
     layer.stop_reason_key = stop_reason_key;
     layer.results = results;
-    const size_t initial_count =
-        std::min(results.size(), static_cast<size_t>(kPointerAutoChaseInitialResultLimit));
-    layer.initial_results.assign(results.begin(),
-                                 results.begin() + static_cast<std::ptrdiff_t>(initial_count));
     if (const PointerScanResultEntry* best_entry = SelectBestPointerResult(results);
+        best_entry != nullptr) {
+        const auto selected_iterator = std::find_if(
+            layer.results.begin(),
+            layer.results.end(),
+            [best_entry](const PointerScanResultEntry& entry) {
+                return IsSamePointerResult(entry, *best_entry);
+            });
+        if (selected_iterator != layer.results.end() &&
+            selected_iterator != layer.results.begin()) {
+            std::iter_swap(layer.results.begin(), selected_iterator);
+        }
+    }
+    const size_t initial_count =
+        std::min(layer.results.size(), static_cast<size_t>(kPointerAutoChaseInitialResultLimit));
+    layer.initial_results.assign(layer.results.begin(),
+                                 layer.results.begin() + static_cast<std::ptrdiff_t>(initial_count));
+    if (const PointerScanResultEntry* best_entry = SelectBestPointerResult(layer.results);
         best_entry != nullptr) {
         layer.has_selected_pointer_address = true;
         layer.selected_pointer_address = best_entry->pointer_address;

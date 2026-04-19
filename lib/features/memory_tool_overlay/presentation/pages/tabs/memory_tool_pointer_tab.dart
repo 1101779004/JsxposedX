@@ -85,8 +85,10 @@ class MemoryToolPointerTab extends HookConsumerWidget {
     useEffect(() {
       taskStateAsync.whenData((taskState) {
         final previousStatus = previousTaskStatus.value;
-        if (previousStatus == SearchTaskStatus.running &&
-            taskState.status != SearchTaskStatus.running) {
+        final shouldHandleTerminalTransition =
+            taskState.status != SearchTaskStatus.running &&
+            (previousStatus == SearchTaskStatus.running || isManualScanLoading);
+        if (shouldHandleTerminalTransition) {
           ref.invalidate(getPointerScanSessionStateProvider);
           ref.invalidate(getPointerScanResultsProvider);
           if (taskState.status == SearchTaskStatus.completed) {
@@ -102,7 +104,7 @@ class MemoryToolPointerTab extends HookConsumerWidget {
         previousTaskStatus.value = taskState.status;
       });
       return null;
-    }, [taskStateAsync, pointerController, ref]);
+    }, [taskStateAsync, pointerController, ref, isManualScanLoading]);
 
     final availableRegionTypeKeys = <String>[
       if (currentLayer != null)
@@ -387,15 +389,6 @@ class _MemoryToolPointerTaskMask extends StatelessWidget {
                             fontWeight: FontWeight.w800,
                           ),
                         ),
-                        SizedBox(height: 6.r),
-                        Text(
-                          context.l10n.memoryToolTaskRunningHint,
-                          style: context.textTheme.bodySmall?.copyWith(
-                            color: context.colorScheme.onSurface.withValues(
-                              alpha: 0.68,
-                            ),
-                          ),
-                        ),
                         SizedBox(height: 14.r),
                         progress == null
                             ? SizedBox(
@@ -546,93 +539,151 @@ class _MemoryToolPointerAutoChaseMask extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final processedRegions = taskState?.processedRegions ?? 0;
-    final totalRegions = taskState?.totalRegions ?? 0;
-    final processedEntries = taskState?.processedEntries ?? 0;
-    final totalEntries = taskState?.totalEntries ?? 0;
-    final resultCount = taskState?.resultCount ?? 0;
-    final progressPercent = totalEntries > 0
-        ? ((processedEntries / totalEntries) * 100).clamp(0, 100).toStringAsFixed(0)
-        : null;
+    final progress = _resolvePointerTaskProgress(taskState);
+    final resolvedMessage = message?.trim() ?? '';
 
     return ColoredBox(
-      color: Colors.black.withValues(alpha: 0.22),
-      child: Center(
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: context.colorScheme.surface.withValues(alpha: 0.96),
-            borderRadius: BorderRadius.circular(18.r),
-          ),
-          child: Padding(
-            padding: EdgeInsets.all(16.r),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  context.l10n.memoryToolPointerAutoChaseTitle,
-                  style: context.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
+      color: Colors.black.withValues(alpha: 0.34),
+      child: SafeArea(
+        minimum: EdgeInsets.all(12.r),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final maxPanelHeight = (constraints.maxHeight - 12.r)
+                .clamp(220.r, double.infinity)
+                .toDouble();
+
+            return Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: 340.r,
+                  minWidth: 240.r,
+                  maxHeight: maxPanelHeight,
+                ),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: context.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(20.r),
+                    boxShadow: <BoxShadow>[
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.18),
+                        blurRadius: 18.r,
+                        offset: Offset(0, 10.r),
+                      ),
+                    ],
                   ),
-                ),
-                SizedBox(height: 10.r),
-                SizedBox(
-                  width: 28.r,
-                  height: 28.r,
-                  child: CircularProgressIndicator(strokeWidth: 2.4.r),
-                ),
-                SizedBox(height: 12.r),
-                Text(
-                  'L$currentDepth${maxDepth > 0 ? '/$maxDepth' : ''}${progressPercent == null ? '' : ' · $progressPercent%'}',
-                  style: context.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: context.colorScheme.primary,
-                  ),
-                ),
-                if (message != null && message!.isNotEmpty) ...<Widget>[
-                  SizedBox(height: 4.r),
-                  Text(
-                    message!,
-                    style: context.textTheme.bodySmall?.copyWith(
-                      color: context.colorScheme.onSurface.withValues(alpha: 0.72),
-                      fontWeight: FontWeight.w700,
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.all(16.r),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          context.l10n.memoryToolPointerAutoChaseTitle,
+                          style: context.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        SizedBox(height: 14.r),
+                        progress == null
+                            ? SizedBox(
+                                width: 28.r,
+                                height: 28.r,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.4.r,
+                                ),
+                              )
+                            : Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(999.r),
+                                    child: LinearProgressIndicator(
+                                      value: progress,
+                                      minHeight: 8.r,
+                                    ),
+                                  ),
+                                  SizedBox(height: 8.r),
+                                  Text(
+                                    '${(progress * 100).toStringAsFixed(1)}%',
+                                    style: context.textTheme.labelLarge
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                        if (resolvedMessage.isNotEmpty) ...<Widget>[
+                          SizedBox(height: 12.r),
+                          Text(
+                            resolvedMessage,
+                            style: context.textTheme.bodySmall?.copyWith(
+                              color: context.colorScheme.onSurface.withValues(
+                                alpha: 0.72,
+                              ),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                        SizedBox(height: 14.r),
+                        Wrap(
+                          spacing: 8.r,
+                          runSpacing: 8.r,
+                          children: <Widget>[
+                            _MemoryToolPointerTaskMetricChip(
+                              label: 'L',
+                              value:
+                                  '$currentDepth${maxDepth > 0 ? '/$maxDepth' : ''}',
+                            ),
+                            if ((taskState?.elapsedMilliseconds ?? 0) > 0)
+                              _MemoryToolPointerTaskMetricChip(
+                                label: context.l10n.memoryToolTaskElapsedLabel,
+                                value: formatDurationShort(
+                                  taskState!.elapsedMilliseconds,
+                                ),
+                              ),
+                            if ((taskState?.totalRegions ?? 0) > 0)
+                              _MemoryToolPointerTaskMetricChip(
+                                label: context.l10n.memoryToolTaskRegionsLabel,
+                                value:
+                                    '${taskState!.processedRegions}/${taskState!.totalRegions}',
+                              ),
+                            if ((taskState?.totalEntries ?? 0) > 0)
+                              _MemoryToolPointerTaskMetricChip(
+                                label: context.l10n.memoryToolTaskEntriesLabel,
+                                value:
+                                    '${taskState!.processedEntries}/${taskState!.totalEntries}',
+                              ),
+                            if ((taskState?.totalBytes ?? 0) > 0)
+                              _MemoryToolPointerTaskMetricChip(
+                                label: context.l10n.memoryToolTaskBytesLabel,
+                                value:
+                                    '${formatBytesCompact(taskState!.processedBytes)}/${formatBytesCompact(taskState!.totalBytes)}',
+                              ),
+                            _MemoryToolPointerTaskMetricChip(
+                              label: context.l10n.memoryToolTaskResultCountLabel,
+                              value: (taskState?.resultCount ?? 0).toString(),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 14.r),
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton.tonal(
+                            onPressed: taskState?.canCancel ?? true
+                                ? onCancel
+                                : null,
+                            child: Text(
+                              context.l10n.memoryToolTaskCancelAction,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-                SizedBox(height: 4.r),
-                Text(
-                  '${context.l10n.memoryToolTaskRegionsLabel}: $processedRegions/$totalRegions',
-                  style: context.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
                 ),
-                SizedBox(height: 4.r),
-                Text(
-                  '${context.l10n.memoryToolTaskResultCountLabel}: $resultCount',
-                  style: context.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                if (totalEntries > 0) ...<Widget>[
-                  SizedBox(height: 4.r),
-                  Text(
-                    '地址: $processedEntries/$totalEntries',
-                    style: context.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-                SizedBox(height: 12.r),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: OutlinedButton(
-                    onPressed: onCancel,
-                    child: Text(context.l10n.memoryToolTaskCancelAction),
-                  ),
-                ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -659,26 +710,6 @@ class _MemoryToolPointerJumpLoadingMask extends StatelessWidget {
                   offset: const Offset(0, 6),
                 ),
               ],
-            ),
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20.r, vertical: 14.r),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  SizedBox(
-                    width: 28.r,
-                    height: 28.r,
-                    child: CircularProgressIndicator(strokeWidth: 2.4.r),
-                  ),
-                  SizedBox(height: 10.r),
-                  Text(
-                    context.l10n.loading,
-                    style: context.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
             ),
           ),
         ),
