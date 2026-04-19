@@ -15,8 +15,13 @@ import '../../bubble_toolbar/bubble_toolbar.dart';
 class AiCodeElementBuilder extends MarkdownElementBuilder {
   final BubbleState state;
   final BaseBubbleToolbarPart toolbarPart;
+  final double? initialFontSize;
 
-  AiCodeElementBuilder({required this.state, required this.toolbarPart});
+  AiCodeElementBuilder({
+    required this.state,
+    required this.toolbarPart,
+    this.initialFontSize,
+  });
 
   @override
   Widget? visitElementAfter(md.Element element, TextStyle? preferredStyle) {
@@ -68,7 +73,7 @@ class AiCodeElementBuilder extends MarkdownElementBuilder {
         controller: controller,
         language: language,
         readOnly: true,
-        initialFontSize: 13.sp,
+        initialFontSize: initialFontSize ?? 13.sp,
         extraActions: extraActions,
       );
     }
@@ -79,7 +84,7 @@ class AiCodeElementBuilder extends MarkdownElementBuilder {
         controller: controller,
         language: language,
         readOnly: true,
-        initialFontSize: 13.sp,
+        initialFontSize: initialFontSize ?? 13.sp,
         extraActions: extraActions,
       ),
     );

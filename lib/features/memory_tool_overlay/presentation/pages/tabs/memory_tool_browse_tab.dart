@@ -100,6 +100,10 @@ class MemoryToolBrowseTab extends HookConsumerWidget {
             return;
           }
           final position = scrollController.position;
+          final shouldAutoFillViewport = position.maxScrollExtent <= 0;
+          if (!shouldAutoFillViewport) {
+            return;
+          }
           if (position.extentBefore <= 180.r &&
               !browseState.isLoadingAbove &&
               !browseState.reachedTopBoundary) {
@@ -119,6 +123,7 @@ class MemoryToolBrowseTab extends HookConsumerWidget {
         browseState.isLoadingBelow,
         browseState.reachedTopBoundary,
         browseState.reachedBottomBoundary,
+        browseState.focusRequestId,
       ],
     );
 

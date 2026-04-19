@@ -463,10 +463,19 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
         readableRegions: state.regions,
         addresses: collected.addresses.reversed.toList(growable: false),
       );
+      final nextResults = _mergeBrowseResults(loadedResults, state.results);
+      final paginationState = _resolveBrowsePaginationState(
+        anchorAddress: anchorItem.address,
+        strideBytes: state.strideBytes,
+        regions: state.regions,
+        loadedResults: nextResults,
+      );
       state = state.copyWith(
-        results: _mergeBrowseResults(loadedResults, state.results),
-        topNextStep: collected.nextStep,
-        reachedTopBoundary: collected.reachedBoundary,
+        results: nextResults,
+        topNextStep: paginationState.topNextStep,
+        bottomNextStep: paginationState.bottomNextStep,
+        reachedTopBoundary: paginationState.reachedTopBoundary,
+        reachedBottomBoundary: paginationState.reachedBottomBoundary,
         isLoadingAbove: false,
       );
     } catch (error) {
@@ -505,10 +514,19 @@ class MemoryToolBrowseController extends _$MemoryToolBrowseController {
         readableRegions: state.regions,
         addresses: collected.addresses,
       );
+      final nextResults = _mergeBrowseResults(state.results, loadedResults);
+      final paginationState = _resolveBrowsePaginationState(
+        anchorAddress: anchorItem.address,
+        strideBytes: state.strideBytes,
+        regions: state.regions,
+        loadedResults: nextResults,
+      );
       state = state.copyWith(
-        results: _mergeBrowseResults(state.results, loadedResults),
-        bottomNextStep: collected.nextStep,
-        reachedBottomBoundary: collected.reachedBoundary,
+        results: nextResults,
+        topNextStep: paginationState.topNextStep,
+        bottomNextStep: paginationState.bottomNextStep,
+        reachedTopBoundary: paginationState.reachedTopBoundary,
+        reachedBottomBoundary: paginationState.reachedBottomBoundary,
         isLoadingBelow: false,
       );
     } catch (error) {
