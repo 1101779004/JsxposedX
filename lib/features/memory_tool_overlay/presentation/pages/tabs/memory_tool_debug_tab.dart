@@ -37,6 +37,7 @@ class MemoryToolDebugTab extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    useAutomaticKeepAlive();
     final selectedProcess = ref.watch(memoryToolSelectedProcessProvider);
     final pid = selectedProcess?.pid;
     final selectedBreakpointId = ref.watch(memoryBreakpointSelectedIdProvider);
@@ -46,6 +47,10 @@ class MemoryToolDebugTab extends HookConsumerWidget {
     final savedItemsNotifier = ref.read(memoryToolSavedItemsProvider.notifier);
     final selectedWriterKey = useState<String?>(null);
     final selectedHitKey = useState<String?>(null);
+    final breakpointEnabledOverrides = useState<Map<String, bool>>(
+      <String, bool>{},
+    );
+    final pendingBreakpointIds = useState<Set<String>>(<String>{});
     final activePointerScanAddress = useState<int?>(null);
     final activeAutoChaseAddress = useState<int?>(null);
     final activeDetailActions =
@@ -153,6 +158,37 @@ class MemoryToolDebugTab extends HookConsumerWidget {
       }
       return null;
     }, [pid, selectedBreakpoint?.id, writerGroups, selectedWriterKey.value]);
+
+    useEffect(() {
+      final nextOverrides = <String, bool>{};
+      for (final entry in breakpointEnabledOverrides.value.entries) {
+        MemoryBreakpoint? matchedBreakpoint;
+        for (final breakpoint in breakpoints) {
+          if (breakpoint.id == entry.key) {
+            matchedBreakpoint = breakpoint;
+            break;
+          }
+        }
+        if (matchedBreakpoint != null && matchedBreakpoint.enabled != entry.value) {
+          nextOverrides[entry.key] = entry.value;
+        }
+      }
+      if (nextOverrides.length != breakpointEnabledOverrides.value.length) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          breakpointEnabledOverrides.value = nextOverrides;
+        });
+      }
+
+      final nextPending = pendingBreakpointIds.value
+          .where((breakpointId) => nextOverrides.containsKey(breakpointId))
+          .toSet();
+      if (nextPending.length != pendingBreakpointIds.value.length) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          pendingBreakpointIds.value = nextPending;
+        });
+      }
+      return null;
+    }, [breakpoints, breakpointEnabledOverrides.value, pendingBreakpointIds.value]);
 
     final selectedWriterGroup = resolveMemoryToolDebugSelectedWriterGroup(
       groups: writerGroups,
@@ -483,6 +519,8 @@ class MemoryToolDebugTab extends HookConsumerWidget {
             final breakpointTab = MemoryToolDebugBreakpointsTab(
               breakpointsAsync: breakpointsAsync,
               selectedBreakpointId: selectedBreakpoint?.id,
+              breakpointEnabledOverrides: breakpointEnabledOverrides.value,
+              pendingBreakpointIds: pendingBreakpointIds.value,
               onSelect: (breakpointId) {
                 ref
                     .read(memoryBreakpointSelectedIdProvider.notifier)
@@ -493,14 +531,34 @@ class MemoryToolDebugTab extends HookConsumerWidget {
                   compactTabController.animateTo(1);
                 }
               },
-              onToggleEnabled: (breakpoint) async {
-                await ref
-                    .read(memoryBreakpointActionProvider.notifier)
-                    .setMemoryBreakpointEnabled(
-                      pid: pid,
-                      breakpointId: breakpoint.id,
-                      enabled: !breakpoint.enabled,
-                    );
+              onToggleEnabled: (breakpoint, enabled) async {
+                breakpointEnabledOverrides.value = <String, bool>{
+                  ...breakpointEnabledOverrides.value,
+                  breakpoint.id: enabled,
+                };
+                pendingBreakpointIds.value = <String>{
+                  ...pendingBreakpointIds.value,
+                  breakpoint.id,
+                };
+                try {
+                  await ref
+                      .read(memoryBreakpointActionProvider.notifier)
+                      .setMemoryBreakpointEnabled(
+                        pid: pid,
+                        breakpointId: breakpoint.id,
+                        enabled: enabled,
+                      );
+                } catch (_) {
+                  final nextOverrides = <String, bool>{
+                    ...breakpointEnabledOverrides.value,
+                  };
+                  nextOverrides.remove(breakpoint.id);
+                  breakpointEnabledOverrides.value = nextOverrides;
+                  final nextPending = <String>{...pendingBreakpointIds.value};
+                  nextPending.remove(breakpoint.id);
+                  pendingBreakpointIds.value = nextPending;
+                  rethrow;
+                }
               },
               onRemove: (breakpoint) async {
                 await ref
