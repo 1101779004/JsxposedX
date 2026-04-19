@@ -65,7 +65,6 @@ class MemoryToolBrowseTab extends HookConsumerWidget {
     final isBatchEditVisible = useState(false);
     final isCalculatorVisible = useState(false);
     final activeInstructionBatchEditor = useState<String?>(null);
-    final assemblyPreviewAddresses = useState<List<int>?>(null);
     final scrollController = useMemoized(() => ScrollController(), [
       browseState.focusRequestId,
     ]);
@@ -618,16 +617,6 @@ class MemoryToolBrowseTab extends HookConsumerWidget {
                         : null,
                   ),
                   MemoryToolResultSelectionActionData(
-                    icon: Icons.code_rounded,
-                    onTap: selectedResults.isEmpty
-                        ? null
-                        : () {
-                            assemblyPreviewAddresses.value = selectedResults
-                                .map((result) => result.address)
-                                .toList(growable: false);
-                          },
-                  ),
-                  MemoryToolResultSelectionActionData(
                     icon: Icons.edit_rounded,
                     onTap: canEditSelectedValues
                         ? () {
@@ -778,16 +767,6 @@ class MemoryToolBrowseTab extends HookConsumerWidget {
               livePreviewsAsync: resolvedLivePreviewsAsync,
               onClose: () {
                 isCalculatorVisible.value = false;
-              },
-            ),
-          ),
-        if (assemblyPreviewAddresses.value != null)
-          Positioned.fill(
-            child: MemoryToolAssemblyPreviewDialog(
-              pid: selectedProcess.pid,
-              addresses: assemblyPreviewAddresses.value!,
-              onClose: () {
-                assemblyPreviewAddresses.value = null;
               },
             ),
           ),
