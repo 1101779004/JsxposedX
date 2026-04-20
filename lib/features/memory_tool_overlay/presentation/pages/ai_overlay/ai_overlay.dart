@@ -1,7 +1,11 @@
 ﻿import 'dart:math' as math;
 import 'dart:ui';
 
+import 'package:JsxposedX/common/widgets/custom_text_field.dart';
+import 'package:JsxposedX/common/widgets/overlay_window/overlay_panel_dialog.dart';
+import 'package:JsxposedX/common/widgets/overlay_window/overlay_text_input_context_menu.dart';
 import 'package:JsxposedX/core/extensions/context_extensions.dart';
+import 'package:JsxposedX/core/models/ai_session.dart';
 import 'package:JsxposedX/features/ai/domain/models/ai_session_init_state.dart';
 import 'package:JsxposedX/features/ai/presentation/providers/runtime/ai_chat_runtime_provider.dart';
 import 'package:JsxposedX/features/ai/presentation/runtime/ai_chat_environment_initializer.dart';
@@ -18,6 +22,7 @@ import 'package:JsxposedX/generated/memory_tool.g.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:intl/intl.dart';
 
 class AiOverlay extends HookConsumerWidget {
   const AiOverlay({super.key});
@@ -83,6 +88,7 @@ class _AiOverlayViewport extends HookConsumerWidget {
     final resizeStartGlobal = useRef<Offset?>(null);
     final resizeStartSize = useRef<Size?>(null);
     final isResizing = useRef(false);
+    final isCreateSessionDialogOpen = useState(false);
     final pendingBoundPid = useRef<int?>(null);
     final pendingLayoutKey = useRef<String?>(null);
     final environment = ref.watch(
@@ -100,6 +106,15 @@ class _AiOverlayViewport extends HookConsumerWidget {
     final chatState = ref.watch(
       aiChatRuntimeProvider(packageName: chatScopeId),
     );
+    final sessions = chatState.sessions;
+    final AiSession? currentSession = () {
+      for (final session in sessions) {
+        if (session.id == chatState.currentSessionId) {
+          return session;
+        }
+      }
+      return sessions.isNotEmpty ? sessions.first : null;
+    }();
     final scrollController = useScrollController();
     final collapsedDiameter = 44.0;
     final defaultExpandedSize = const Size(320.0, 420.0);
@@ -564,6 +579,17 @@ class _AiOverlayViewport extends HookConsumerWidget {
                                         ],
                                       ),
                                     ),
+                                    SizedBox(width: headerGap),
+                                    _AiOverlaySessionActions(
+                                      chatScopeId: chatScopeId,
+                                      sessions: sessions,
+                                      currentSession: currentSession,
+                                      isCompact: isCompactPanel,
+                                      contentScale: contentScale,
+                                      onCreateSession: () {
+                                        isCreateSessionDialogOpen.value = true;
+                                      },
+                                    ),
                                   ],
                                 ),
                               ),
@@ -669,10 +695,248 @@ class _AiOverlayViewport extends HookConsumerWidget {
                   ),
                 ),
               ),
+              if (isCreateSessionDialogOpen.value)
+                Positioned.fill(
+                  child: _AiOverlayCreateSessionDialog(
+                    chatScopeId: chatScopeId,
+                    initialName:
+                        '${context.l10n.aiNewSession} ${DateFormat('MM-dd HH:mm').format(DateTime.now())}',
+                    onClose: () {
+                      isCreateSessionDialogOpen.value = false;
+                    },
+                  ),
+                ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _AiOverlaySessionActions extends HookConsumerWidget {
+  const _AiOverlaySessionActions({
+    required this.chatScopeId,
+    required this.sessions,
+    required this.currentSession,
+    required this.isCompact,
+    required this.contentScale,
+    required this.onCreateSession,
+  });
+
+  final String chatScopeId;
+  final List<AiSession> sessions;
+  final AiSession? currentSession;
+  final bool isCompact;
+  final double contentScale;
+  final VoidCallback onCreateSession;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final borderRadius = BorderRadius.circular(12.0 * contentScale);
+    final surfaceColor = context.colorScheme.surface.withValues(alpha: 0.3);
+    final borderColor = context.colorScheme.outlineVariant.withValues(alpha: 0.34);
+    final foregroundColor = context.colorScheme.onSurface;
+    final labelFontSize = (isCompact ? 10.0 : 11.5) * contentScale;
+    final iconSize = (isCompact ? 14.0 : 16.0) * contentScale;
+    final currentName = currentSession?.name ?? context.l10n.aiNewSession;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Tooltip(
+          message: context.l10n.aiNewSession,
+          child: Material(
+            color: surfaceColor,
+            borderRadius: borderRadius,
+            child: InkWell(
+              borderRadius: borderRadius,
+              onTap: onCreateSession,
+              child: Padding(
+                padding: EdgeInsets.all((isCompact ? 6.0 : 7.0) * contentScale),
+                child: Icon(
+                  Icons.add_comment_rounded,
+                  size: iconSize,
+                  color: foregroundColor.withValues(alpha: 0.86),
+                ),
+              ),
+            ),
+          ),
+        ),
+        SizedBox(width: (isCompact ? 6.0 : 8.0) * contentScale),
+        PopupMenuButton<AiSession>(
+          enabled: sessions.isNotEmpty,
+          tooltip: context.l10n.aiSwitchSession,
+          onSelected: (session) async {
+            await ref
+                .read(aiChatRuntimeProvider(packageName: chatScopeId).notifier)
+                .switchSession(session.id);
+          },
+          itemBuilder: (menuContext) => sessions
+              .map(
+                (session) => PopupMenuItem<AiSession>(
+                  value: session,
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.chat_bubble_outline_rounded,
+                        size: iconSize,
+                        color: session.id == currentSession?.id
+                            ? context.colorScheme.primary
+                            : menuContext.colorScheme.onSurfaceVariant,
+                      ),
+                      SizedBox(width: (isCompact ? 6.0 : 8.0) * contentScale),
+                      Expanded(
+                        child: Text(
+                          session.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+              .toList(),
+          child: Container(
+            constraints: BoxConstraints(
+              minWidth: (isCompact ? 92.0 : 112.0) * contentScale,
+              maxWidth: (isCompact ? 128.0 : 160.0) * contentScale,
+            ),
+            padding: EdgeInsets.symmetric(
+              horizontal: (isCompact ? 8.0 : 10.0) * contentScale,
+              vertical: (isCompact ? 6.0 : 7.0) * contentScale,
+            ),
+            decoration: BoxDecoration(
+              color: surfaceColor,
+              borderRadius: borderRadius,
+              border: Border.all(color: borderColor),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    currentName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: labelFontSize,
+                      fontWeight: FontWeight.w600,
+                      color: foregroundColor.withValues(
+                        alpha: sessions.isEmpty ? 0.55 : 0.88,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(width: (isCompact ? 4.0 : 6.0) * contentScale),
+                Icon(
+                  Icons.arrow_drop_down_rounded,
+                  size: (isCompact ? 18.0 : 20.0) * contentScale,
+                  color: foregroundColor.withValues(alpha: 0.72),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _AiOverlayCreateSessionDialog extends HookConsumerWidget {
+  const _AiOverlayCreateSessionDialog({
+    required this.chatScopeId,
+    required this.initialName,
+    required this.onClose,
+  });
+
+  final String chatScopeId;
+  final String initialName;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final controller = useTextEditingController(text: initialName);
+    final isSubmitting = useState(false);
+    useListenable(controller);
+
+    final canConfirm =
+        !isSubmitting.value && controller.text.trim().isNotEmpty;
+
+    return OverlayPanelDialog.card(
+      onClose: isSubmitting.value ? null : onClose,
+      maxWidthPortrait: 360.0,
+      maxWidthLandscape: 400.0,
+      maxHeightPortrait: 250.0,
+      maxHeightLandscape: 250.0,
+      cardBorderRadius: 18.0,
+      childBuilder: (context, viewport, layout) {
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(14.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                context.l10n.aiNewSession,
+                style: context.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 12.0),
+              CustomTextField(
+                controller: controller,
+                labelText: context.l10n.aiSessionName,
+                hintText: context.l10n.aiSessionNameHint,
+                contextMenuBuilder: buildOverlayTextInputContextMenu,
+                fillColor: context.colorScheme.surfaceContainerHighest
+                    .withValues(alpha: 0.22),
+                focusedBorderColor: context.colorScheme.primary,
+                enabledBorderColor: context.colorScheme.outlineVariant
+                    .withValues(alpha: 0.34),
+              ),
+              const SizedBox(height: 14.0),
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: isSubmitting.value ? null : onClose,
+                      child: Text(context.l10n.cancel),
+                    ),
+                  ),
+                  const SizedBox(width: 10.0),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: canConfirm
+                          ? () async {
+                              isSubmitting.value = true;
+                              try {
+                                await ref
+                                    .read(
+                                      aiChatRuntimeProvider(
+                                        packageName: chatScopeId,
+                                      ).notifier,
+                                    )
+                                    .createSession(controller.text.trim());
+                                if (context.mounted) {
+                                  onClose();
+                                }
+                              } finally {
+                                if (context.mounted) {
+                                  isSubmitting.value = false;
+                                }
+                              }
+                            }
+                          : null,
+                      child: Text(context.l10n.confirm),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
