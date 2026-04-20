@@ -76,7 +76,7 @@ final class MemoryAiOverlayEnvironmentProvider
 }
 
 String _$memoryAiOverlayEnvironmentHash() =>
-    r'7b9e809b0895d6d45b0b0a135c8d1cf4a7002859';
+    r'48192581aafa453f2364b576ff5747fc2b092533';
 
 final class MemoryAiOverlayEnvironmentFamily extends $Family
     with

@@ -4,6 +4,7 @@ import 'package:JsxposedX/core/extensions/context_extensions.dart';
 import 'package:JsxposedX/core/utils/format_utils.dart';
 import 'package:JsxposedX/features/ai/presentation/widgets/ai_chat_compact_scope.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_pointer_auto_chase_query_provider.dart';
+import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_ai_pending_interaction_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_pointer_query_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_query_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/utils/memory_tool_search_task_progress_resolver.dart';
@@ -14,9 +15,14 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 class MemoryAiToolResultView extends StatelessWidget {
-  const MemoryAiToolResultView({super.key, required this.data});
+  const MemoryAiToolResultView({
+    super.key,
+    required this.data,
+    this.packageName,
+  });
 
   final MemoryAiToolResultData data;
+  final String? packageName;
 
   @override
   Widget build(BuildContext context) {
@@ -56,6 +62,11 @@ class MemoryAiToolResultView extends StatelessWidget {
       'continue_next_scan' => const _MemoryAiLiveSearchTaskCard(),
       'start_pointer_scan' => const _MemoryAiLivePointerScanTaskCard(),
       'start_pointer_auto_chase' => const _MemoryAiLivePointerAutoChaseCard(),
+      'add_memory_breakpoint' when packageName != null =>
+        _MemoryAiPendingInteractionCard(
+          scopeId: packageName!,
+          toolName: data.toolName!,
+        ),
       _ => null,
     };
   }
@@ -71,7 +82,9 @@ class MemoryAiToolResultView extends StatelessWidget {
               title.contains('指针扫描任务') ||
               title.contains('Pointer Scan Task') ||
               title.contains('自动追链') ||
-              title.contains('Auto Chase')) {
+              title.contains('Auto Chase') ||
+              title.contains('等待用户确认') ||
+              title.contains('Awaiting user confirmation')) {
             return false;
           }
           return true;
@@ -139,6 +152,167 @@ class _MemoryAiLivePointerAutoChaseCard extends HookConsumerWidget {
       data: (state) => _MemoryAiPointerAutoChaseCardFromState(state: state),
       loading: () => const _MemoryAiPendingLoadingCard(),
       error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+}
+
+class _MemoryAiPendingInteractionCard extends ConsumerWidget {
+  const _MemoryAiPendingInteractionCard({
+    required this.scopeId,
+    required this.toolName,
+  });
+
+  final String scopeId;
+  final String toolName;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final interaction = ref.watch(memoryAiPendingInteractionProvider(scopeId));
+    if (interaction == null || interaction.toolName != toolName) {
+      return const _MemoryAiPendingLoadingCard();
+    }
+
+    final scale = AiChatCompactScope.scaleOf(context);
+    final controller = ref.read(
+      memoryAiPendingInteractionProvider(scopeId).notifier,
+    );
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F9FF),
+        borderRadius: BorderRadius.circular(18 * scale),
+        border: Border.all(color: const Color(0xFF8BB8F8)),
+      ),
+      padding: EdgeInsets.all(14 * scale),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                Icons.touch_app_rounded,
+                size: 18 * scale,
+                color: const Color(0xFF2C7BE5),
+              ),
+              SizedBox(width: 8 * scale),
+              Expanded(
+                child: Text(
+                  interaction.title,
+                  style: TextStyle(
+                    fontSize: 12.2 * scale,
+                    fontWeight: FontWeight.w800,
+                    color: context.colorScheme.onSurface,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8 * scale),
+          Text(
+            interaction.description,
+            style: TextStyle(
+              fontSize: 11.2 * scale,
+              height: 1.45,
+              fontWeight: FontWeight.w600,
+              color: context.colorScheme.onSurface.withValues(alpha: 0.76),
+            ),
+          ),
+          SizedBox(height: 12 * scale),
+          ...interaction.options.map(
+            (option) => Padding(
+              padding: EdgeInsets.only(bottom: 8 * scale),
+              child: _MemoryAiPendingInteractionOptionButton(
+                option: option,
+                onPressed: () => controller.resolve(option.id),
+              ),
+            ),
+          ),
+          if (interaction.cancelLabel != null &&
+              interaction.cancelLabel!.trim().isNotEmpty) ...[
+            SizedBox(height: 4 * scale),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                onPressed: controller.cancel,
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 2 * scale,
+                    vertical: 4 * scale,
+                  ),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Text(interaction.cancelLabel!),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _MemoryAiPendingInteractionOptionButton extends StatelessWidget {
+  const _MemoryAiPendingInteractionOptionButton({
+    required this.option,
+    required this.onPressed,
+  });
+
+  final MemoryAiPendingInteractionOption option;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = AiChatCompactScope.scaleOf(context);
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          alignment: Alignment.centerLeft,
+          padding: EdgeInsets.symmetric(
+            horizontal: 12 * scale,
+            vertical: 12 * scale,
+          ),
+          side: BorderSide(
+            color: context.colorScheme.primary.withValues(alpha: 0.22),
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14 * scale),
+          ),
+          backgroundColor: context.colorScheme.surface.withValues(alpha: 0.92),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              option.label,
+              style: TextStyle(
+                fontSize: 11.6 * scale,
+                fontWeight: FontWeight.w800,
+                color: context.colorScheme.onSurface,
+              ),
+            ),
+            if (option.description != null &&
+                option.description!.trim().isNotEmpty) ...[
+              SizedBox(height: 4 * scale),
+              Text(
+                option.description!,
+                style: TextStyle(
+                  fontSize: 10.6 * scale,
+                  height: 1.4,
+                  fontWeight: FontWeight.w600,
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.72),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }

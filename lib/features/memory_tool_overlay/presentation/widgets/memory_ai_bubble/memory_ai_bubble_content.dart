@@ -27,6 +27,7 @@ class MemoryAiBubbleContentPart extends BaseBubbleContentPart {
         ),
         child: MemoryAiToolResultView(
           data: MemoryAiToolResultParser.parse(state.content),
+          packageName: state.packageName,
         ),
       );
     }

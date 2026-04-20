@@ -13,6 +13,7 @@ import 'package:JsxposedX/features/memory_tool_overlay/domain/repositories/memor
 import 'package:JsxposedX/features/memory_tool_overlay/domain/repositories/memory_pointer_query_repository.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/domain/repositories/memory_query_repository.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/models/memory_tool_saved_item.dart';
+import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_ai_pending_interaction_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_tool_instruction_history_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/states/memory_tool_value_history_state.dart';
 import 'package:JsxposedX/generated/memory_tool.g.dart';
@@ -43,6 +44,7 @@ class MemoryAiOverlayEnvironmentAdapter implements AiChatEnvironmentAdapter {
     required this.setMemoryFreezesAction,
     required this.restorePreviousValuesAction,
     required this.recordInstructionHistory,
+    required this.requestUserChoice,
   }) : _memoryQueryRepository = memoryQueryRepository,
        _memoryActionRepository = memoryActionRepository,
        _memoryPointerQueryRepository = memoryPointerQueryRepository,
@@ -79,10 +81,7 @@ class MemoryAiOverlayEnvironmentAdapter implements AiChatEnvironmentAdapter {
     Set<int> frozenAddresses,
   })
   saveSavedItems;
-  final void Function({
-    required int pid,
-    required Iterable<int> addresses,
-  })
+  final void Function({required int pid, required Iterable<int> addresses})
   removeSavedItems;
   final void Function(int pid) clearSavedItems;
   final Map<int, MemoryToolValueHistoryEntryState> Function()
@@ -103,13 +102,9 @@ class MemoryAiOverlayEnvironmentAdapter implements AiChatEnvironmentAdapter {
     required MemoryInstructionPatchRequest request,
   })
   patchMemoryInstructionAction;
-  final Future<void> Function({
-    required MemoryFreezeRequest request,
-  })
+  final Future<void> Function({required MemoryFreezeRequest request})
   setMemoryFreezeAction;
-  final Future<void> Function({
-    required List<MemoryFreezeRequest> requests,
-  })
+  final Future<void> Function({required List<MemoryFreezeRequest> requests})
   setMemoryFreezesAction;
   final Future<int> Function({
     required List<int> addresses,
@@ -123,6 +118,14 @@ class MemoryAiOverlayEnvironmentAdapter implements AiChatEnvironmentAdapter {
     required String previousDisplayValue,
   })
   recordInstructionHistory;
+  final Future<String> Function({
+    required String toolName,
+    required String title,
+    required String description,
+    required List<MemoryAiPendingInteractionOption> options,
+    String? cancelLabel,
+  })
+  requestUserChoice;
 
   @override
   String get scopeId =>
@@ -166,6 +169,7 @@ class MemoryAiOverlayEnvironmentAdapter implements AiChatEnvironmentAdapter {
       setMemoryFreezesAction: setMemoryFreezesAction,
       restorePreviousValuesAction: restorePreviousValuesAction,
       recordInstructionHistory: recordInstructionHistory,
+      requestUserChoice: requestUserChoice,
     );
 
     return AiChatEnvironmentSnapshot.ready(
@@ -192,7 +196,8 @@ class MemoryAiOverlayEnvironmentAdapter implements AiChatEnvironmentAdapter {
     }
 
     try {
-      final frozenValues = await _memoryActionRepository.getFrozenMemoryValues();
+      final frozenValues = await _memoryActionRepository
+          .getFrozenMemoryValues();
       final frozenCount = frozenValues
           .where((value) => value.pid == processInfo.pid)
           .length;
@@ -217,9 +222,8 @@ class MemoryAiOverlayEnvironmentAdapter implements AiChatEnvironmentAdapter {
     }
 
     try {
-      final breakpointState = await _memoryQueryRepository.getMemoryBreakpointState(
-        pid: processInfo.pid,
-      );
+      final breakpointState = await _memoryQueryRepository
+          .getMemoryBreakpointState(pid: processInfo.pid);
       lines.add(
         isZh
             ? '断点状态: active=${breakpointState.activeBreakpointCount}, pendingHits=${breakpointState.pendingHitCount}, arch=${breakpointState.architecture}'

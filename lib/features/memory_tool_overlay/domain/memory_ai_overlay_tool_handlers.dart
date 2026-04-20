@@ -11,6 +11,7 @@ import 'package:JsxposedX/features/memory_tool_overlay/domain/repositories/memor
 import 'package:JsxposedX/features/memory_tool_overlay/domain/repositories/memory_pointer_query_repository.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/domain/repositories/memory_query_repository.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/models/memory_tool_saved_item.dart';
+import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_ai_pending_interaction_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_tool_instruction_history_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/states/memory_tool_value_history_state.dart';
 import 'package:JsxposedX/generated/memory_tool.g.dart';
@@ -39,6 +40,7 @@ class MemoryAiOverlayToolRuntimeContext {
     required this.setMemoryFreezesAction,
     required this.restorePreviousValuesAction,
     required this.recordInstructionHistory,
+    required this.requestUserChoice,
   });
 
   final ProcessInfo processInfo;
@@ -68,10 +70,7 @@ class MemoryAiOverlayToolRuntimeContext {
     Set<int> frozenAddresses,
   })
   saveSavedItems;
-  final void Function({
-    required int pid,
-    required Iterable<int> addresses,
-  })
+  final void Function({required int pid, required Iterable<int> addresses})
   removeSavedItems;
   final void Function(int pid) clearSavedItems;
   final Map<int, MemoryToolValueHistoryEntryState> Function()
@@ -92,13 +91,9 @@ class MemoryAiOverlayToolRuntimeContext {
     required MemoryInstructionPatchRequest request,
   })
   patchMemoryInstructionAction;
-  final Future<void> Function({
-    required MemoryFreezeRequest request,
-  })
+  final Future<void> Function({required MemoryFreezeRequest request})
   setMemoryFreezeAction;
-  final Future<void> Function({
-    required List<MemoryFreezeRequest> requests,
-  })
+  final Future<void> Function({required List<MemoryFreezeRequest> requests})
   setMemoryFreezesAction;
   final Future<int> Function({
     required List<int> addresses,
@@ -112,6 +107,14 @@ class MemoryAiOverlayToolRuntimeContext {
     required String previousDisplayValue,
   })
   recordInstructionHistory;
+  final Future<String> Function({
+    required String toolName,
+    required String title,
+    required String description,
+    required List<MemoryAiPendingInteractionOption> options,
+    String? cancelLabel,
+  })
+  requestUserChoice;
 
   int get pid => processInfo.pid;
 }
@@ -137,8 +140,7 @@ Iterable<AiChatToolHandler> buildMemoryAiOverlayToolHandlers({
       if (regions.isEmpty) {
         return '未找到符合条件的内存区。';
       }
-      final buffer = StringBuffer()
-        ..writeln('共 ${regions.length} 个内存区：');
+      final buffer = StringBuffer()..writeln('共 ${regions.length} 个内存区：');
       for (final region in regions) {
         buffer.writeln(_formatRegion(region));
       }
@@ -148,7 +150,8 @@ Iterable<AiChatToolHandler> buildMemoryAiOverlayToolHandlers({
   yield _MemoryAiOverlayCallbackToolHandler(
     toolName: 'get_search_overview',
     onHandle: (call) async {
-      final session = await context.memoryQueryRepository.getSearchSessionState();
+      final session = await context.memoryQueryRepository
+          .getSearchSessionState();
       final task = await context.memoryQueryRepository.getSearchTaskState();
       final buffer = StringBuffer()
         ..writeln('搜索会话：')
@@ -200,7 +203,8 @@ Iterable<AiChatToolHandler> buildMemoryAiOverlayToolHandlers({
         startTracker: startTracker,
       );
       startTracker.throwIfFailed();
-      final session = await context.memoryQueryRepository.getSearchSessionState();
+      final session = await context.memoryQueryRepository
+          .getSearchSessionState();
       return _buildSearchTaskCompletionResult(
         context: context,
         title: '首次搜索',
@@ -226,7 +230,8 @@ Iterable<AiChatToolHandler> buildMemoryAiOverlayToolHandlers({
         startTracker: startTracker,
       );
       startTracker.throwIfFailed();
-      final session = await context.memoryQueryRepository.getSearchSessionState();
+      final session = await context.memoryQueryRepository
+          .getSearchSessionState();
       return _buildSearchTaskCompletionResult(
         context: context,
         title: '继续筛选',
@@ -328,7 +333,8 @@ Iterable<AiChatToolHandler> buildMemoryAiOverlayToolHandlers({
           existingItemsByAddress: existingSavedItems,
         );
         for (final preview in previews) {
-          final metadata = metadataByAddress[preview.address] ??
+          final metadata =
+              metadataByAddress[preview.address] ??
               _AddressMetadata(
                 regionStart: preview.address,
                 regionTypeKey: 'other',
@@ -379,7 +385,8 @@ Iterable<AiChatToolHandler> buildMemoryAiOverlayToolHandlers({
         existingItemsByAddress: existingSavedItems,
       );
       for (final preview in previews) {
-        final metadata = metadataByAddress[preview.address] ??
+        final metadata =
+            metadataByAddress[preview.address] ??
             _AddressMetadata(
               regionStart: preview.address,
               regionTypeKey: 'other',
@@ -487,10 +494,7 @@ Iterable<AiChatToolHandler> buildMemoryAiOverlayToolHandlers({
         context,
         address: address,
         type: value.type,
-        length: _resolveReadLength(
-          value.type,
-          _resolveWriteValueLength(value),
-        ),
+        length: _resolveReadLength(value.type, _resolveWriteValueLength(value)),
       );
       await context.writeMemoryValueAction(
         request: MemoryWriteRequest(address: address, value: value),
@@ -522,7 +526,9 @@ Iterable<AiChatToolHandler> buildMemoryAiOverlayToolHandlers({
           valueType: _normalizeLower(_getRequiredString(call, 'valueType')),
           rawValue: resolvedValues[index],
           littleEndian: _getOptionalBool(call, 'littleEndian', true),
-          bytesMode: _normalizeLower(_getOptionalString(call, 'bytesMode', 'auto')),
+          bytesMode: _normalizeLower(
+            _getOptionalString(call, 'bytesMode', 'auto'),
+          ),
         );
         requests.add(
           MemoryWriteRequest(address: addresses[index], value: value),
@@ -587,8 +593,9 @@ Iterable<AiChatToolHandler> buildMemoryAiOverlayToolHandlers({
   yield _MemoryAiOverlayCallbackToolHandler(
     toolName: 'list_value_history',
     onHandle: (call) async {
-      final entries = context.listValueHistoryEntries().values.toList(growable: false)
-        ..sort((left, right) => left.address.compareTo(right.address));
+      final entries = context.listValueHistoryEntries().values.toList(
+        growable: false,
+      )..sort((left, right) => left.address.compareTo(right.address));
       final page = _slicePage(
         entries,
         offset: _getOptionalInt(call, 'offset', 0),
@@ -620,9 +627,7 @@ Iterable<AiChatToolHandler> buildMemoryAiOverlayToolHandlers({
         addresses: addresses,
         littleEndian: littleEndian,
       );
-      return restoredCount > 0
-          ? '已恢复 $restoredCount 个地址的旧值。'
-          : '没有可恢复的旧值历史。';
+      return restoredCount > 0 ? '已恢复 $restoredCount 个地址的旧值。' : '没有可恢复的旧值历史。';
     },
   );
   yield _MemoryAiOverlayCallbackToolHandler(
@@ -686,7 +691,8 @@ Iterable<AiChatToolHandler> buildMemoryAiOverlayToolHandlers({
   yield _MemoryAiOverlayCallbackToolHandler(
     toolName: 'list_frozen_memory_values',
     onHandle: (call) async {
-      final allValues = await context.memoryActionRepository.getFrozenMemoryValues();
+      final allValues = await context.memoryActionRepository
+          .getFrozenMemoryValues();
       final values = allValues
           .where((value) => value.pid == context.pid)
           .toList(growable: false);
@@ -712,9 +718,7 @@ Iterable<AiChatToolHandler> buildMemoryAiOverlayToolHandlers({
         limit: _getOptionalInt(call, 'limit', 50),
       );
       if (page.isEmpty) {
-        return entries.isEmpty
-            ? '当前没有指令补丁历史。'
-            : '该分页范围内没有指令补丁历史。';
+        return entries.isEmpty ? '当前没有指令补丁历史。' : '该分页范围内没有指令补丁历史。';
       }
       final buffer = StringBuffer()
         ..writeln('当前共有 ${entries.length} 条指令补丁历史，本次返回 ${page.length} 条：');
@@ -799,22 +803,21 @@ Iterable<AiChatToolHandler> buildMemoryAiOverlayToolHandlers({
   yield _MemoryAiOverlayCallbackToolHandler(
     toolName: 'get_breakpoint_overview',
     onHandle: (call) async {
-      final state = await context.memoryQueryRepository.getMemoryBreakpointState(
-        pid: context.pid,
-      );
+      final state = await context.memoryQueryRepository
+          .getMemoryBreakpointState(pid: context.pid);
       return _formatBreakpointState(state);
     },
   );
   yield _MemoryAiOverlayCallbackToolHandler(
     toolName: 'list_memory_breakpoints',
     onHandle: (call) async {
-      final breakpoints = await context.memoryQueryRepository.listMemoryBreakpoints(
-        pid: context.pid,
-      );
+      final breakpoints = await context.memoryQueryRepository
+          .listMemoryBreakpoints(pid: context.pid);
       if (breakpoints.isEmpty) {
         return '当前进程没有断点。';
       }
-      final buffer = StringBuffer()..writeln('当前进程共有 ${breakpoints.length} 个断点：');
+      final buffer = StringBuffer()
+        ..writeln('当前进程共有 ${breakpoints.length} 个断点：');
       for (final breakpoint in breakpoints) {
         buffer.writeln(_formatBreakpoint(breakpoint));
       }
@@ -841,7 +844,7 @@ Iterable<AiChatToolHandler> buildMemoryAiOverlayToolHandlers({
   );
   yield _MemoryAiOverlayCallbackToolHandler(
     toolName: 'add_memory_breakpoint',
-    onHandle: (call) async {
+    onHandleWithProgress: (call, {onProgress}) async {
       final valueType = _parseRawSearchValueType(
         _getRequiredString(call, 'valueType'),
       );
@@ -849,19 +852,24 @@ Iterable<AiChatToolHandler> buildMemoryAiOverlayToolHandlers({
         valueType,
         _getOptionalIntOrNull(call, 'length'),
       );
-      final breakpoint = await context.memoryActionRepository.addMemoryBreakpoint(
-        request: AddMemoryBreakpointRequest(
-          pid: context.pid,
-          address: _parseRequiredAddress(call, 'address'),
-          type: valueType,
-          length: length,
-          accessType: _parseBreakpointAccessType(
-            _getRequiredString(call, 'accessType'),
-          ),
-          enabled: _getOptionalBool(call, 'enabled', true),
-          pauseProcessOnHit: _getOptionalBool(call, 'pauseProcessOnHit', true),
-        ),
+      final pauseProcessOnHit = await _resolveBreakpointPauseProcessOnHit(
+        context,
+        onProgress: onProgress,
       );
+      final breakpoint = await context.memoryActionRepository
+          .addMemoryBreakpoint(
+            request: AddMemoryBreakpointRequest(
+              pid: context.pid,
+              address: _parseRequiredAddress(call, 'address'),
+              type: valueType,
+              length: length,
+              accessType: _parseBreakpointAccessType(
+                _getRequiredString(call, 'accessType'),
+              ),
+              enabled: _getOptionalBool(call, 'enabled', true),
+              pauseProcessOnHit: pauseProcessOnHit,
+            ),
+          );
       return '断点已创建：\n${_formatBreakpoint(breakpoint)}';
     },
   );
@@ -884,9 +892,7 @@ Iterable<AiChatToolHandler> buildMemoryAiOverlayToolHandlers({
         breakpointId: breakpointId,
         enabled: enabled,
       );
-      return enabled
-          ? '断点 $breakpointId 已启用。'
-          : '断点 $breakpointId 已禁用。';
+      return enabled ? '断点 $breakpointId 已启用。' : '断点 $breakpointId 已禁用。';
     },
   );
   yield _MemoryAiOverlayCallbackToolHandler(
@@ -901,7 +907,9 @@ Iterable<AiChatToolHandler> buildMemoryAiOverlayToolHandlers({
   yield _MemoryAiOverlayCallbackToolHandler(
     toolName: 'resume_after_breakpoint',
     onHandle: (call) async {
-      await context.memoryActionRepository.resumeAfterBreakpoint(pid: context.pid);
+      await context.memoryActionRepository.resumeAfterBreakpoint(
+        pid: context.pid,
+      );
       return '已从断点暂停状态恢复进程执行。';
     },
   );
@@ -1051,14 +1059,16 @@ Iterable<AiChatToolHandler> buildMemoryAiOverlayToolHandlers({
   yield _MemoryAiOverlayCallbackToolHandler(
     toolName: 'cancel_pointer_auto_chase',
     onHandle: (call) async {
-      await context.memoryPointerAutoChaseActionRepository.cancelPointerAutoChase();
+      await context.memoryPointerAutoChaseActionRepository
+          .cancelPointerAutoChase();
       return '自动指针追链已取消。';
     },
   );
   yield _MemoryAiOverlayCallbackToolHandler(
     toolName: 'reset_pointer_auto_chase',
     onHandle: (call) async {
-      await context.memoryPointerAutoChaseActionRepository.resetPointerAutoChase();
+      await context.memoryPointerAutoChaseActionRepository
+          .resetPointerAutoChase();
       return '自动指针追链状态已重置。';
     },
   );
@@ -1071,7 +1081,8 @@ class _MemoryAiOverlayCallbackToolHandler implements AiChatToolHandler {
     Future<String> Function(
       AiToolCall call, {
       AiToolProgressCallback? onProgress,
-    })? onHandleWithProgress,
+    })?
+    onHandleWithProgress,
   }) : _onHandle = onHandle,
        _onHandleWithProgress = onHandleWithProgress;
 
@@ -1082,7 +1093,8 @@ class _MemoryAiOverlayCallbackToolHandler implements AiChatToolHandler {
   final Future<String> Function(
     AiToolCall call, {
     AiToolProgressCallback? onProgress,
-  })? _onHandleWithProgress;
+  })?
+  _onHandleWithProgress;
 
   @override
   Future<String> handle(
@@ -1112,18 +1124,87 @@ class _MemoryAiOverlayToolException implements Exception {
   String toString() => message;
 }
 
+const String _breakpointPauseOnHitOptionId = 'pause_process_on_hit';
+const String _breakpointContinueOnHitOptionId = 'keep_process_running';
+
+Future<bool> _resolveBreakpointPauseProcessOnHit(
+  MemoryAiOverlayToolRuntimeContext context, {
+  AiToolProgressCallback? onProgress,
+}) async {
+  final title = context.isZh ? '等待用户确认' : 'Awaiting user confirmation';
+  final description = context.isZh
+      ? '断点命中后，是否立即暂停目标应用进程？'
+      : 'Should the target process pause immediately when this breakpoint hits?';
+  final options = <MemoryAiPendingInteractionOption>[
+    MemoryAiPendingInteractionOption(
+      id: _breakpointPauseOnHitOptionId,
+      label: context.isZh ? '命中就暂停' : 'Pause on hit',
+      description: context.isZh
+          ? '每次命中断点都暂停目标进程，便于立即检查寄存器和上下文。'
+          : 'Pause the target process on every hit so you can inspect context immediately.',
+    ),
+    MemoryAiPendingInteractionOption(
+      id: _breakpointContinueOnHitOptionId,
+      label: context.isZh ? '只记录不暂停' : 'Log only',
+      description: context.isZh
+          ? '断点继续记录命中，但不打断目标进程运行。'
+          : 'Keep recording hits without interrupting the target process.',
+    ),
+  ];
+
+  onProgress?.call(
+    _buildPendingInteractionProgress(
+      context,
+      title: title,
+      description: description,
+      options: options,
+    ),
+  );
+
+  final selectedOptionId = await context.requestUserChoice(
+    toolName: 'add_memory_breakpoint',
+    title: title,
+    description: description,
+    options: options,
+    cancelLabel: context.isZh ? '取消本次创建' : 'Cancel breakpoint creation',
+  );
+
+  return selectedOptionId == _breakpointPauseOnHitOptionId;
+}
+
+String _buildPendingInteractionProgress(
+  MemoryAiOverlayToolRuntimeContext context, {
+  required String title,
+  required String description,
+  required List<MemoryAiPendingInteractionOption> options,
+}) {
+  final buffer = StringBuffer()
+    ..writeln('$title：')
+    ..writeln('- ${context.isZh ? "工具" : "Tool"}: add_memory_breakpoint')
+    ..writeln('- ${context.isZh ? "说明" : "Description"}: $description')
+    ..writeln()
+    ..writeln(context.isZh ? '可选项：' : 'Options:');
+  for (final option in options) {
+    buffer.writeln(
+      '- ${option.label}${option.description == null || option.description!.trim().isEmpty ? '' : ': ${option.description}'}',
+    );
+  }
+  return buffer.toString().trim();
+}
+
 Future<String> _buildProcessSummary(
   MemoryAiOverlayToolRuntimeContext context,
 ) async {
   final processPausedFuture = context.memoryActionRepository.isProcessPaused(
     pid: context.pid,
   );
-  final frozenValuesFuture = context.memoryActionRepository.getFrozenMemoryValues();
-  final searchSessionFuture = context.memoryQueryRepository.getSearchSessionState();
+  final frozenValuesFuture = context.memoryActionRepository
+      .getFrozenMemoryValues();
+  final searchSessionFuture = context.memoryQueryRepository
+      .getSearchSessionState();
   final searchTaskFuture = context.memoryQueryRepository.getSearchTaskState();
-  final breakpointStateFuture = context.memoryQueryRepository.getMemoryBreakpointState(
-    pid: context.pid,
-  );
+  final breakpointStateFuture = context.memoryQueryRepository
+      .getMemoryBreakpointState(pid: context.pid);
   final pointerSessionFuture = context.memoryPointerQueryRepository
       .getPointerScanSessionState();
   final pointerTaskFuture = context.memoryPointerQueryRepository
@@ -1173,16 +1254,16 @@ SearchValue _buildSearchValueFromToolCall(
   required bool isFirstScan,
 }) {
   final valueType = _normalizeLower(_getRequiredString(call, 'valueType'));
-  final matchMode = _normalizeLower(_getOptionalString(call, 'matchMode', 'exact'));
+  final matchMode = _normalizeLower(
+    _getOptionalString(call, 'matchMode', 'exact'),
+  );
   final littleEndian = _getOptionalBool(call, 'littleEndian', true);
   final value = _getOptionalString(call, 'value', '').trim();
-  final bytesMode = _normalizeLower(_getOptionalString(call, 'bytesMode', 'auto'));
+  final bytesMode = _normalizeLower(
+    _getOptionalString(call, 'bytesMode', 'auto'),
+  );
   final fuzzyMode = _normalizeLower(
-    _getOptionalString(
-      call,
-      'fuzzyMode',
-      isFirstScan ? 'unknown' : 'changed',
-    ),
+    _getOptionalString(call, 'fuzzyMode', isFirstScan ? 'unknown' : 'changed'),
   );
 
   if (matchMode == 'fuzzy') {
@@ -1209,7 +1290,8 @@ SearchValue _buildSearchValueFromToolCall(
 
   switch (valueType) {
     case 'text':
-      final bytes = bytesMode == 'utf16le' || (bytesMode == 'auto' && littleEndian)
+      final bytes =
+          bytesMode == 'utf16le' || (bytesMode == 'auto' && littleEndian)
           ? _encodeUtf16Le(value)
           : Uint8List.fromList(utf8.encode(value));
       final prefix =
@@ -1251,7 +1333,8 @@ SearchValue _buildSearchValueFromToolCall(
           : Uint8List.fromList(utf8.encode(value));
       return SearchValue(
         type: SearchValueType.bytes,
-        textValue: '${isUtf16Le ? "__jsx_text_utf16le__:" : "__jsx_text_utf8__:"}$value',
+        textValue:
+            '${isUtf16Le ? "__jsx_text_utf16le__:" : "__jsx_text_utf8__:"}$value',
         bytesValue: bytes,
         littleEndian: littleEndian,
       );
@@ -1285,7 +1368,8 @@ SearchValue _buildWriteValue({
   }
 
   if (valueType == 'text') {
-    final useUtf16Le = bytesMode == 'utf16le' || (bytesMode == 'auto' && littleEndian);
+    final useUtf16Le =
+        bytesMode == 'utf16le' || (bytesMode == 'auto' && littleEndian);
     final bytes = useUtf16Le
         ? _encodeUtf16Le(value)
         : Uint8List.fromList(utf8.encode(value));
@@ -1429,7 +1513,11 @@ PointerScanRequest _buildPointerScanRequest(
     maxOffset: maxOffset,
     alignment: alignment,
     rangeSectionKeys: _getStringList(call, 'rangeSectionKeys'),
-    scanAllReadableRegions: _getOptionalBool(call, 'scanAllReadableRegions', true),
+    scanAllReadableRegions: _getOptionalBool(
+      call,
+      'scanAllReadableRegions',
+      true,
+    ),
   );
 }
 
@@ -1457,9 +1545,7 @@ List<String> _resolveParallelStringValues({
     return List<String>.filled(addresses.length, rawValues.first);
   }
   if (rawValues.length != addresses.length) {
-    throw ArgumentError(
-      '$argumentName 长度必须为 1，或与 addresses 长度一致',
-    );
+    throw ArgumentError('$argumentName 长度必须为 1，或与 addresses 长度一致');
   }
   return rawValues;
 }
@@ -1695,9 +1781,7 @@ String _formatValueHistoryEntry(MemoryToolValueHistoryEntryState entry) {
   ].join(' | ');
 }
 
-String _formatInstructionHistoryEntry(
-  MemoryToolInstructionHistoryEntry entry,
-) {
+String _formatInstructionHistoryEntry(MemoryToolInstructionHistoryEntry entry) {
   return [
     _formatAddress(entry.address),
     'previous=${entry.previousDisplayValue}',
@@ -1712,7 +1796,8 @@ String _formatBreakpointState(MemoryBreakpointState state) {
     '- activeBreakpointCount: ${state.activeBreakpointCount}',
     '- pendingHitCount: ${state.pendingHitCount}',
     '- architecture: ${state.architecture}',
-    if (state.lastError.trim().isNotEmpty) '- lastError: ${state.lastError.trim()}',
+    if (state.lastError.trim().isNotEmpty)
+      '- lastError: ${state.lastError.trim()}',
   ].join('\n');
 }
 
@@ -1873,10 +1958,7 @@ int _resolveReadLength(SearchValueType type, int? explicitLength) {
 }
 
 int _parseRequiredAddress(AiToolCall call, String key) {
-  return _parseFlexibleInt(
-    _getRequiredString(call, key),
-    argumentName: key,
-  );
+  return _parseFlexibleInt(_getRequiredString(call, key), argumentName: key);
 }
 
 List<int> _parseAddressList(AiToolCall call, String key) {
@@ -1991,10 +2073,7 @@ List<String> _getStringList(AiToolCall call, String key) {
   return const <String>[];
 }
 
-int _parseFlexibleInt(
-  String rawValue, {
-  required String argumentName,
-}) {
+int _parseFlexibleInt(String rawValue, {required String argumentName}) {
   final value = rawValue.trim();
   if (value.isEmpty) {
     throw ArgumentError('$argumentName 不能为空');
@@ -2057,10 +2136,7 @@ Uint8List _parseHexBytes(String value) {
   }
   final bytes = <int>[];
   for (var index = 0; index < sanitized.length; index += 2) {
-    final byte = int.tryParse(
-      sanitized.substring(index, index + 2),
-      radix: 16,
-    );
+    final byte = int.tryParse(sanitized.substring(index, index + 2), radix: 16);
     if (byte == null) {
       throw const FormatException('非法字节序列');
     }
@@ -2230,10 +2306,9 @@ Future<PointerAutoChaseState> _waitForPointerAutoChaseToSettle(
 _BackgroundActionTracker _trackBackgroundAction(Future<void> future) {
   final tracker = _BackgroundActionTracker();
   unawaited(
-    future.then(tracker.complete).catchError(
-      tracker.completeError,
-      test: (_) => true,
-    ),
+    future
+        .then(tracker.complete)
+        .catchError(tracker.completeError, test: (_) => true),
   );
   return tracker;
 }
@@ -2351,20 +2426,12 @@ String _buildPointerScanProgressResult({
 
 String _buildPointerAutoChaseCompletionResult(PointerAutoChaseState state) {
   final summary = state.isRunning ? '自动指针追链仍在运行。' : '自动指针追链已完成。';
-  return [
-    summary,
-    '自动追链：',
-    _formatPointerAutoChaseState(state),
-  ].join('\n');
+  return [summary, '自动追链：', _formatPointerAutoChaseState(state)].join('\n');
 }
 
 String _buildPointerAutoChaseProgressResult(PointerAutoChaseState state) {
   final summary = state.isRunning ? '自动指针追链进行中。' : '自动指针追链已完成。';
-  return [
-    summary,
-    '自动追链：',
-    _formatPointerAutoChaseState(state),
-  ].join('\n');
+  return [summary, '自动追链：', _formatPointerAutoChaseState(state)].join('\n');
 }
 
 enum _TaskMessageDomain { search, pointerScan, autoChase }

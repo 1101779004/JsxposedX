@@ -1,5 +1,6 @@
 import 'package:JsxposedX/features/memory_tool_overlay/domain/memory_ai_overlay_environment_adapter.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_action_provider.dart';
+import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_ai_pending_interaction_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_pointer_action_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_pointer_auto_chase_action_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_pointer_auto_chase_query_provider.dart';
@@ -37,12 +38,16 @@ MemoryAiOverlayEnvironmentAdapter memoryAiOverlayEnvironment(
   Ref ref,
   MemoryAiOverlayEnvironmentArgs args,
 ) {
+  final scopeId =
+      'memory_overlay_${args.processInfo.packageName}_${args.processInfo.pid}';
   return MemoryAiOverlayEnvironmentAdapter(
     processInfo: args.processInfo,
     isZh: args.isZh,
     memoryQueryRepository: ref.watch(memoryQueryRepositoryProvider),
     memoryActionRepository: ref.watch(memoryActionRepositoryProvider),
-    memoryPointerQueryRepository: ref.watch(memoryPointerQueryRepositoryProvider),
+    memoryPointerQueryRepository: ref.watch(
+      memoryPointerQueryRepositoryProvider,
+    ),
     memoryPointerActionRepository: ref.watch(
       memoryPointerActionRepositoryProvider,
     ),
@@ -63,40 +68,42 @@ MemoryAiOverlayEnvironmentAdapter memoryAiOverlayEnvironment(
         ..sort((left, right) => left.address.compareTo(right.address));
       return items;
     },
-    saveSavedItem: ({
-      required pid,
-      required result,
-      preview,
-      required isFrozen,
-      isInstructionPatch = false,
-      instructionText,
-    }) {
-      ref
-          .read(memoryToolSavedItemsProvider.notifier)
-          .saveOne(
-            pid: pid,
-            result: result,
-            preview: preview,
-            isFrozen: isFrozen,
-            isInstructionPatch: isInstructionPatch,
-            instructionText: instructionText,
-          );
-    },
-    saveSavedItems: ({
-      required pid,
-      required results,
-      previewsByAddress = const <int, MemoryValuePreview>{},
-      frozenAddresses = const <int>{},
-    }) {
-      ref
-          .read(memoryToolSavedItemsProvider.notifier)
-          .saveMany(
-            pid: pid,
-            results: results,
-            previewsByAddress: previewsByAddress,
-            frozenAddresses: frozenAddresses,
-          );
-    },
+    saveSavedItem:
+        ({
+          required pid,
+          required result,
+          preview,
+          required isFrozen,
+          isInstructionPatch = false,
+          instructionText,
+        }) {
+          ref
+              .read(memoryToolSavedItemsProvider.notifier)
+              .saveOne(
+                pid: pid,
+                result: result,
+                preview: preview,
+                isFrozen: isFrozen,
+                isInstructionPatch: isInstructionPatch,
+                instructionText: instructionText,
+              );
+        },
+    saveSavedItems:
+        ({
+          required pid,
+          required results,
+          previewsByAddress = const <int, MemoryValuePreview>{},
+          frozenAddresses = const <int>{},
+        }) {
+          ref
+              .read(memoryToolSavedItemsProvider.notifier)
+              .saveMany(
+                pid: pid,
+                results: results,
+                previewsByAddress: previewsByAddress,
+                frozenAddresses: frozenAddresses,
+              );
+        },
     removeSavedItems: ({required pid, required addresses}) {
       ref
           .read(memoryToolSavedItemsProvider.notifier)
@@ -117,15 +124,9 @@ MemoryAiOverlayEnvironmentAdapter memoryAiOverlayEnvironment(
     writeMemoryValueAction: ({required request, previousPreview}) {
       return ref
           .read(memoryValueActionProvider.notifier)
-          .writeMemoryValue(
-            request: request,
-            previousPreview: previousPreview,
-          );
+          .writeMemoryValue(request: request, previousPreview: previousPreview);
     },
-    writeMemoryValuesAction: ({
-      required requests,
-      required previousPreviews,
-    }) {
+    writeMemoryValuesAction: ({required requests, required previousPreviews}) {
       return ref
           .read(memoryValueActionProvider.notifier)
           .writeMemoryValues(
@@ -156,20 +157,39 @@ MemoryAiOverlayEnvironmentAdapter memoryAiOverlayEnvironment(
             littleEndian: littleEndian,
           );
     },
-    recordInstructionHistory: ({
-      required pid,
-      required address,
-      required previousBytes,
-      required previousDisplayValue,
-    }) {
-      ref
-          .read(memoryToolInstructionHistoryProvider.notifier)
-          .record(
-            pid: pid,
-            address: address,
-            previousBytes: previousBytes,
-            previousDisplayValue: previousDisplayValue,
-          );
-    },
+    recordInstructionHistory:
+        ({
+          required pid,
+          required address,
+          required previousBytes,
+          required previousDisplayValue,
+        }) {
+          ref
+              .read(memoryToolInstructionHistoryProvider.notifier)
+              .record(
+                pid: pid,
+                address: address,
+                previousBytes: previousBytes,
+                previousDisplayValue: previousDisplayValue,
+              );
+        },
+    requestUserChoice:
+        ({
+          required toolName,
+          required title,
+          required description,
+          required options,
+          cancelLabel,
+        }) {
+          return ref
+              .read(memoryAiPendingInteractionProvider(scopeId).notifier)
+              .requestSingleChoice(
+                toolName: toolName,
+                title: title,
+                description: description,
+                options: options,
+                cancelLabel: cancelLabel,
+              );
+        },
   );
 }
