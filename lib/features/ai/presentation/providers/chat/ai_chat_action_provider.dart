@@ -718,6 +718,7 @@ class AiChatAction extends _$AiChatAction {
         AiMessage.toolResult(
           toolCallId: result.toolCallId,
           content: result.content,
+          isError: !result.success,
         ),
       ];
       state = state.copyWith(
@@ -1403,21 +1404,94 @@ class AiChatAction extends _$AiChatAction {
   List<AiMessage> _buildDisplayMessagesFromProtocol(
     List<AiMessage> protocolMessages,
   ) {
-    return protocolMessages
-        .where((message) => message.shouldDisplayInChatList)
-        .map((message) {
-          if (message.role != 'assistant' ||
-              (message.reasoningContent?.trim().isEmpty ?? true)) {
-            return message;
+    final displayMessages = <AiMessage>[];
+    final pendingToolCalls = <String, AiToolCall>{};
+    final pendingToolOrder = <String>[];
+    final shouldHidePreToolDisplay = _shouldHidePreToolDisplayContent();
+
+    void flushPendingToolCalls() {
+      for (final toolCallId in pendingToolOrder) {
+        final call = pendingToolCalls[toolCallId];
+        if (call == null) {
+          continue;
+        }
+        displayMessages.add(
+          AiMessage(
+            id: 'tool-pending-$toolCallId',
+            role: 'assistant',
+            content: '⏳ `${call.name}`:',
+            isToolResultBubble: true,
+          ),
+        );
+      }
+      pendingToolCalls.clear();
+      pendingToolOrder.clear();
+    }
+
+    for (final message in protocolMessages) {
+      if (_isSessionSummary(message)) {
+        continue;
+      }
+
+      if (message.role == 'assistant' && message.hasToolCalls) {
+        flushPendingToolCalls();
+        final toolCalls = message.toolCalls
+            ?.map(AiToolCall.fromJson)
+            .where((call) => call.id.isNotEmpty)
+            .toList(growable: false) ??
+            const <AiToolCall>[];
+        if (!shouldHidePreToolDisplay) {
+          final assistantDisplayMessage = _buildAssistantDisplayMessage(message);
+          if (assistantDisplayMessage.content.trim().isNotEmpty) {
+            displayMessages.add(assistantDisplayMessage);
           }
-          return message.copyWith(
-            content: _composeDisplayContent(
-              thinkingContent: message.reasoningContent!,
-              answerContent: message.content,
+        }
+        for (final call in toolCalls) {
+          pendingToolCalls[call.id] = call;
+          pendingToolOrder.add(call.id);
+        }
+        continue;
+      }
+
+      if (message.role == 'tool') {
+        final toolCallId = message.toolCallId;
+        final call = toolCallId == null ? null : pendingToolCalls.remove(toolCallId);
+        if (call != null) {
+          pendingToolOrder.remove(toolCallId);
+          displayMessages.add(
+            AiMessage(
+              id: 'tool-result-${message.id}',
+              role: 'assistant',
+              content:
+                  '${message.isError ? '❌' : '✅'} `${call.name}`:\n\n${message.content}',
+              isToolResultBubble: true,
             ),
           );
-        })
-        .toList(growable: false);
+        }
+        continue;
+      }
+
+      flushPendingToolCalls();
+      if (message.shouldDisplayInChatList) {
+        displayMessages.add(_buildAssistantDisplayMessage(message));
+      }
+    }
+
+    flushPendingToolCalls();
+    return List<AiMessage>.unmodifiable(displayMessages);
+  }
+
+  AiMessage _buildAssistantDisplayMessage(AiMessage message) {
+    if (message.role != 'assistant' ||
+        (message.reasoningContent?.trim().isEmpty ?? true)) {
+      return message;
+    }
+    return message.copyWith(
+      content: _composeDisplayContent(
+        thinkingContent: message.reasoningContent!,
+        answerContent: message.content,
+      ),
+    );
   }
 
   Future<void> _beginUserTurn({
