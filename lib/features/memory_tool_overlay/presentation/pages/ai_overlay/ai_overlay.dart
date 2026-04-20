@@ -17,6 +17,7 @@ import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/ai
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_ai_overlay_environment_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/providers/memory_query_provider.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/ai_overlay_collapsed_ball.dart';
+import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_ai_message_bubble.dart';
 import 'package:JsxposedX/features/overlay_window/presentation/providers/overlay_window_host_runtime_provider.dart';
 import 'package:JsxposedX/generated/memory_tool.g.dart';
 import 'package:flutter/material.dart';
@@ -622,6 +623,48 @@ class _AiOverlayViewport extends HookConsumerWidget {
                                           ? '内存调试助手'
                                           : 'Memory Assistant',
                                       customSubtitle: displaySubtitle,
+                                      bubbleBuilder: ({
+                                        required message,
+                                        required retryLabel,
+                                        required onRetry,
+                                        required packageName,
+                                      }) => MemoryAiChatBubble(
+                                        key: ValueKey(message.id),
+                                        content: message.content,
+                                        role: message.role,
+                                        isError: message.isError,
+                                        isToolCalling:
+                                            message.isToolResultBubble &&
+                                            !message.content.startsWith('✅') &&
+                                            !message.content.startsWith('❌'),
+                                        isToolResultBubble:
+                                            message.isToolResultBubble,
+                                        retryLabel: retryLabel,
+                                        onRetry: onRetry,
+                                        packageName: packageName,
+                                      ),
+                                      streamingBubbleBuilder: ({
+                                        required message,
+                                        required retryLabel,
+                                        required onRetry,
+                                        required packageName,
+                                        required streamingContentStream,
+                                        required streamingThinkingStream,
+                                      }) => MemoryAiStreamingChatBubble(
+                                        key: ValueKey(message.id),
+                                        role: message.role,
+                                        isError: message.isError,
+                                        isToolCalling: message.isToolResultBubble,
+                                        isToolResultBubble:
+                                            message.isToolResultBubble,
+                                        retryLabel: retryLabel,
+                                        onRetry: onRetry,
+                                        packageName: packageName,
+                                        streamingContentStream:
+                                            streamingContentStream,
+                                        streamingThinkingStream:
+                                            streamingThinkingStream,
+                                      ),
                                     ),
                                   ),
                                   AiChatInput(

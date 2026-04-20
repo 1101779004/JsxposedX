@@ -9,6 +9,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+typedef AiChatBubbleBuilder = Widget Function({
+  required AiMessage message,
+  required String retryLabel,
+  required VoidCallback onRetry,
+  required String packageName,
+});
+
+typedef AiChatStreamingBubbleBuilder = Widget Function({
+  required AiMessage message,
+  required String retryLabel,
+  required VoidCallback onRetry,
+  required String packageName,
+  required Stream<String> streamingContentStream,
+  required Stream<bool> streamingThinkingStream,
+});
+
 class AiChatList extends HookConsumerWidget {
   const AiChatList({
     super.key,
@@ -19,6 +35,8 @@ class AiChatList extends HookConsumerWidget {
     this.systemPrompt,
     this.customTitle,
     this.customSubtitle,
+    this.bubbleBuilder,
+    this.streamingBubbleBuilder,
   });
 
   final List<AiMessage> messages;
@@ -28,6 +46,8 @@ class AiChatList extends HookConsumerWidget {
   final String? systemPrompt;
   final String? customTitle;
   final String? customSubtitle;
+  final AiChatBubbleBuilder? bubbleBuilder;
+  final AiChatStreamingBubbleBuilder? streamingBubbleBuilder;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -120,6 +140,18 @@ class AiChatList extends HookConsumerWidget {
             !message.isError;
 
         if (shouldShowStreaming) {
+          if (streamingBubbleBuilder != null) {
+            return RepaintBoundary(
+              child: streamingBubbleBuilder!(
+                message: message,
+                retryLabel: retryLabel,
+                onRetry: () => chatNotifier.retryByMessageId(message.id),
+                packageName: packageName,
+                streamingContentStream: chatNotifier.streamingContentStream,
+                streamingThinkingStream: chatNotifier.streamingThinkingStream,
+              ),
+            );
+          }
           return _StreamingAiChatBubble(
             key: ValueKey(message.id),
             role: message.role,
@@ -134,19 +166,26 @@ class AiChatList extends HookConsumerWidget {
         }
 
         return RepaintBoundary(
-          child: AiChatBubble(
-            key: ValueKey(message.id),
-            content: message.content,
-            role: message.role,
-            isError: message.isError,
-            isToolCalling:
-                message.isToolResultBubble &&
-                !message.content.startsWith('✅') &&
-                !message.content.startsWith('❌'),
-            retryLabel: retryLabel,
-            onRetry: () => chatNotifier.retryByMessageId(message.id),
-            packageName: packageName,
-          ),
+          child: bubbleBuilder != null
+              ? bubbleBuilder!(
+                  message: message,
+                  retryLabel: retryLabel,
+                  onRetry: () => chatNotifier.retryByMessageId(message.id),
+                  packageName: packageName,
+                )
+              : AiChatBubble(
+                  key: ValueKey(message.id),
+                  content: message.content,
+                  role: message.role,
+                  isError: message.isError,
+                  isToolCalling:
+                      message.isToolResultBubble &&
+                      !message.content.startsWith('✅') &&
+                      !message.content.startsWith('❌'),
+                  retryLabel: retryLabel,
+                  onRetry: () => chatNotifier.retryByMessageId(message.id),
+                  packageName: packageName,
+                ),
         );
       },
     );
