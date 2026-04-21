@@ -1,7 +1,9 @@
 import 'dart:convert';
 
+import 'package:JsxposedX/core/networks/http_service.dart';
 import 'package:JsxposedX/core/providers/pinia_provider.dart';
 import 'package:JsxposedX/features/ai/data/models/ai_config_dto.dart';
+import 'package:JsxposedX/features/ai/data/models/ai_model_dto.dart';
 import 'package:JsxposedX/features/ai/domain/constants/builtin_ai_config.dart';
 import 'package:uuid/uuid.dart';
 
@@ -10,8 +12,24 @@ class AiConfigQueryDatasource {
   static const _currentConfigStorageKey = "ai_config";
 
   final PiniaStorage _storage;
+  final HttpService? _httpService;
 
-  AiConfigQueryDatasource({required PiniaStorage storage}) : _storage = storage;
+  AiConfigQueryDatasource({
+    required PiniaStorage storage,
+     HttpService? httpService,
+  }) : _storage = storage,
+       _httpService = httpService;
+
+  Future<List<AiModelDto>> getModels() async {
+    final response = await _httpService!.get(
+      'https://api.muxueai.pro/v1/models',
+    );
+    final models = <AiModelDto>[];
+    for (final model in response.data) {
+      models.add(AiModelDto.fromJson(model));
+    }
+    return models;
+  }
 
   Future<AiConfigDto> getBuiltinConfig([String id = builtinAiConfigId]) async {
     final spec = getBuiltinAiConfigSpecById(id) ?? defaultBuiltinAiConfigSpec;
