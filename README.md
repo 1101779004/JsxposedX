@@ -35,7 +35,39 @@ The author has the right to refuse to provide support for any violating use and 
 
 By continuing to use this project, you are deemed to have read and agreed to this statement.
 
+AI feature targeting
 
+The built-in AI functions of this project are only used as general intelligent auxiliary modules, mainly used for data analysis, content interpretation, result screening, information organization, operation guidance, learning and research, and other scenarios to improve user efficiency and experience.
+
+AI functions are auxiliary services and are not directly involved in the operation control, data destruction, permission bypass, cheat execution, or other illegal operations of any target program.
+
+Built-in interface description
+
+For user convenience, this project provides default AI interface access services. Users can also configure and use legally obtained third-party AI service interfaces according to their own needs, and there are no mandatory restrictions on this project.
+
+Fee description
+
+If some AI functions involve server resources, model call costs, computing power consumption, or interface fees, the project team may charge reasonable costs for related services. This fee only corresponds to the consumption of AI service resources and does not represent support or charges for any violating uses.
+
+Output disclaimer
+
+The AI output content is automatically generated based on the model and may contain errors, omissions, inaccuracies, or circumstances that may not be suitable for specific scenarios, and is for reference only. Users should make their own judgment and bear the responsibility for their final use.
+
+Usage specifications
+
+It is strictly prohibited to use the AI features of this project to engage in the following acts:
+• Plugin production, cheat assistance, and automated illegal operations
+• Hack, attack, or interfere with third-party systems
+• Infringe on the legitimate rights and interests of others
+• Violations of laws, regulations and platform rules
+
+Attribution of responsibility
+
+Any actions and consequences implemented by the user based on the AI functions of this project shall be borne by the user and have nothing to do with the project author.
+
+Author's position
+
+The author has always advocated for the use of AI technology in legal, legitimate, and positive learning research and efficiency improvement scenarios, and opposes any abuse.
 
 ## Summary
 
