@@ -8,6 +8,35 @@ JsxposedX is a Flutter Android application for Xposed/LSPosed and Frida workflow
   Flutter UI layer with Android-side Xposed hooks, LSPosed service integration, native bridge
   modules, shared IDE run configurations, and PowerShell-based install/debug scripts.
 
+
+This project has long adhered to free and open source sharing, aiming to lower the learning threshold and promote positive technology exchange
+
+This project is an open source technical research tool, which is only used for legal purposes such as software debugging, program analysis, memory mechanism learning, development testing, and authorized environment research.
+
+The author develops and publishes this project for the purpose of promoting technical exchange and learning, and does not provide any support for cheating, bypassing protection, or providing guidance on illegal use.
+
+It is strictly prohibited to use the following acts:
+• Cheating in online games, creating plug-ins, and automated illegal operations
+• Interferes with the normal operation of the server or client
+• Unauthorized modification of third-party program data
+• Undermining the level playing field
+• Any use that violates laws, regulations, or platform rules
+
+Responsibility Description:
+
+Users should ensure that their use of the service complies with local laws and regulations and relevant service terms. Any direct or indirect consequences arising from the use, dissemination, and secondary development of this project shall be borne by the user and have nothing to do with the author.
+
+Open Source Notes:
+
+The disclosure of the source code of this project does not encourage abuse. Any modification, distribution, commercialization, or illegal use by any third party based on this project has nothing to do with the original author's position.
+
+The author reserves the right to:
+
+The author has the right to refuse to provide support for any violating use and may adjust, suspend, or terminate the project's public content at any time.
+
+By continuing to use this project, you are deemed to have read and agreed to this statement.
+
+
 ## Project Overview
 
 - App name: `JsxposedX`
