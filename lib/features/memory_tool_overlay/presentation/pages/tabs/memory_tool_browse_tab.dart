@@ -297,25 +297,29 @@ class MemoryToolBrowseTab extends HookConsumerWidget {
         ref: ref,
         sourceKey: 'browse',
         pid: selectedProcess.pid,
-        items: results.map((result) {
-          final preview = resolvedPreviewMap[result.address];
-          final isInstruction = result.isInstruction;
-          final resolvedDisplayValue = isInstruction
-              ? result.effectiveDisplayValue
-              : (preview?.displayValue ?? result.displayValue);
-          return MemoryToolExportItem(
-            pid: selectedProcess.pid,
-            address: result.address,
-            regionStart: result.regionStart,
-            regionTypeKey: result.regionTypeKey,
-            valueType: preview?.type ?? result.type,
-            displayValue: resolvedDisplayValue,
-            rawBytes: preview?.rawBytes ?? result.rawBytes,
-            isFrozen: currentFrozenAddresses.contains(result.address),
-            entryKind: result.entryKind,
-            instructionText: isInstruction ? result.effectiveDisplayValue : null,
-          );
-        }).toList(growable: false),
+        items: results
+            .map((result) {
+              final preview = resolvedPreviewMap[result.address];
+              final isInstruction = result.isInstruction;
+              final resolvedDisplayValue = isInstruction
+                  ? result.effectiveDisplayValue
+                  : (preview?.displayValue ?? result.displayValue);
+              return MemoryToolExportItem(
+                pid: selectedProcess.pid,
+                address: result.address,
+                regionStart: result.regionStart,
+                regionTypeKey: result.regionTypeKey,
+                valueType: preview?.type ?? result.type,
+                displayValue: resolvedDisplayValue,
+                rawBytes: preview?.rawBytes ?? result.rawBytes,
+                isFrozen: currentFrozenAddresses.contains(result.address),
+                entryKind: result.entryKind,
+                instructionText: isInstruction
+                    ? result.effectiveDisplayValue
+                    : null,
+              );
+            })
+            .toList(growable: false),
         meta: <String, Object?>{
           'anchor_address': browseState.anchorAddress == null
               ? null
@@ -577,8 +581,12 @@ class MemoryToolBrowseTab extends HookConsumerWidget {
                               if (!context.mounted) {
                                 return;
                               }
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(error.toString())),
+                              await ToastOverlayMessage.show(
+                                error.toString().replaceFirst(
+                                  'Exception: ',
+                                  '',
+                                ),
+                                duration: const Duration(milliseconds: 1400),
                               );
                             }
                           },
@@ -666,8 +674,12 @@ class MemoryToolBrowseTab extends HookConsumerWidget {
                               if (!context.mounted) {
                                 return;
                               }
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(error.toString())),
+                              await ToastOverlayMessage.show(
+                                error.toString().replaceFirst(
+                                  'Exception: ',
+                                  '',
+                                ),
+                                duration: const Duration(milliseconds: 1400),
                               );
                             }
                           }

@@ -173,9 +173,10 @@ class MemoryToolSavedTab extends HookConsumerWidget {
         if (!context.mounted) {
           return;
         }
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(error.toString())));
+        await ToastOverlayMessage.show(
+          error.toString().replaceFirst('Exception: ', ''),
+          duration: const Duration(milliseconds: 1400),
+        );
       }
     }
 

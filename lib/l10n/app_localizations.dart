@@ -3590,6 +3590,12 @@ abstract class AppLocalizations {
   /// **'文本'**
   String get memoryToolValueCategoryText;
 
+  /// No description provided for @memoryToolValueCategoryGroup.
+  ///
+  /// In zh, this message translates to:
+  /// **'联合'**
+  String get memoryToolValueCategoryGroup;
+
   /// No description provided for @memoryToolValueCategoryAdvanced.
   ///
   /// In zh, this message translates to:
@@ -3655,6 +3661,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'TEXT'**
   String get memoryToolValueTypeText;
+
+  /// No description provided for @memoryToolValueTypeGroup.
+  ///
+  /// In zh, this message translates to:
+  /// **'联合'**
+  String get memoryToolValueTypeGroup;
 
   /// No description provided for @memoryToolRangePresetCommon.
   ///
@@ -4918,6 +4930,36 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'小数类型请输入有效的数字。'**
   String get memoryToolValidationDecimalInvalid;
+
+  /// No description provided for @memoryToolValidationGroupInvalid.
+  ///
+  /// In zh, this message translates to:
+  /// **'联合搜索格式错误，例：i32:100;i32:200::32'**
+  String get memoryToolValidationGroupInvalid;
+
+  /// No description provided for @memoryToolValidationGroupMissingWindow.
+  ///
+  /// In zh, this message translates to:
+  /// **'联合搜索缺少 ::window，例：i32:100;i32:200::32'**
+  String get memoryToolValidationGroupMissingWindow;
+
+  /// No description provided for @memoryToolValidationGroupInvalidWindow.
+  ///
+  /// In zh, this message translates to:
+  /// **'联合搜索 window 必须是大于 0 的整数。'**
+  String get memoryToolValidationGroupInvalidWindow;
+
+  /// No description provided for @memoryToolValidationGroupWindowTooLarge.
+  ///
+  /// In zh, this message translates to:
+  /// **'联合搜索 window 最大支持 4096 字节。'**
+  String get memoryToolValidationGroupWindowTooLarge;
+
+  /// No description provided for @memoryToolValidationGroupTooFewConditions.
+  ///
+  /// In zh, this message translates to:
+  /// **'联合搜索至少需要两个条件。'**
+  String get memoryToolValidationGroupTooFewConditions;
 
   /// No description provided for @memoryToolValidationTypeUnsupported.
   ///

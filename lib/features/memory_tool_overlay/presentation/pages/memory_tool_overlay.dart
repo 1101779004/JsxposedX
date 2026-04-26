@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:JsxposedX/common/pages/toast.dart';
 import 'package:JsxposedX/common/widgets/overlay_window/overlay_window.dart';
 import 'package:JsxposedX/core/extensions/context_extensions.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/pages/ai_overlay/ai_overlay.dart';
@@ -156,7 +157,13 @@ class MemoryToolOverlay extends HookConsumerWidget {
         error: (error, _) {
           if (_isProcessUnavailableError(error)) {
             Future.microtask(handleProcessTerminated);
+            return;
           }
+          unawaited(
+            ToastOverlayMessage.show(
+              error.toString().replaceFirst('Exception: ', ''),
+            ),
+          );
         },
       );
     });

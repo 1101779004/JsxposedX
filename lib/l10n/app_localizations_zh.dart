@@ -1817,6 +1817,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get memoryToolValueCategoryText => '文本';
 
   @override
+  String get memoryToolValueCategoryGroup => '联合';
+
+  @override
   String get memoryToolValueCategoryAdvanced => '高级';
 
   @override
@@ -1848,6 +1851,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get memoryToolValueTypeText => 'TEXT';
+
+  @override
+  String get memoryToolValueTypeGroup => '联合';
 
   @override
   String get memoryToolRangePresetCommon => '常用';
@@ -2496,6 +2502,25 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get memoryToolValidationDecimalInvalid => '小数类型请输入有效的数字。';
+
+  @override
+  String get memoryToolValidationGroupInvalid =>
+      '联合搜索格式错误，例：i32:100;i32:200::32';
+
+  @override
+  String get memoryToolValidationGroupMissingWindow =>
+      '联合搜索缺少 ::window，例：i32:100;i32:200::32';
+
+  @override
+  String get memoryToolValidationGroupInvalidWindow =>
+      '联合搜索 window 必须是大于 0 的整数。';
+
+  @override
+  String get memoryToolValidationGroupWindowTooLarge =>
+      '联合搜索 window 最大支持 4096 字节。';
+
+  @override
+  String get memoryToolValidationGroupTooFewConditions => '联合搜索至少需要两个条件。';
 
   @override
   String get memoryToolValidationTypeUnsupported => '当前搜索类型尚未接入扫描内核。';

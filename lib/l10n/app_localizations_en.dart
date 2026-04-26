@@ -1848,6 +1848,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get memoryToolValueCategoryText => 'Text';
 
   @override
+  String get memoryToolValueCategoryGroup => 'Group';
+
+  @override
   String get memoryToolValueCategoryAdvanced => 'Advanced';
 
   @override
@@ -1879,6 +1882,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get memoryToolValueTypeText => 'TEXT';
+
+  @override
+  String get memoryToolValueTypeGroup => 'GROUP';
 
   @override
   String get memoryToolRangePresetCommon => 'Common';
@@ -2562,6 +2568,26 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get memoryToolValidationDecimalInvalid =>
       'Enter a valid decimal number for this type.';
+
+  @override
+  String get memoryToolValidationGroupInvalid =>
+      'Invalid group search format. Example: i32:100;i32:200::32';
+
+  @override
+  String get memoryToolValidationGroupMissingWindow =>
+      'Group search is missing ::window. Example: i32:100;i32:200::32';
+
+  @override
+  String get memoryToolValidationGroupInvalidWindow =>
+      'Group search window must be an integer greater than 0.';
+
+  @override
+  String get memoryToolValidationGroupWindowTooLarge =>
+      'Group search window supports at most 4096 bytes.';
+
+  @override
+  String get memoryToolValidationGroupTooFewConditions =>
+      'Group search requires at least two conditions.';
 
   @override
   String get memoryToolValidationTypeUnsupported =>

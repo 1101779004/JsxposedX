@@ -19,7 +19,12 @@ import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memo
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_result_stats_bar.dart';
 import 'package:JsxposedX/features/memory_tool_overlay/presentation/widgets/memory_tool_search_result_list.dart';
 import 'package:JsxposedX/generated/memory_tool.g.dart'
-    show FrozenMemoryValue, MemoryValuePreview, PointerScanRequest, SearchResult, SearchSessionState, SearchValueType;
+    show
+        FrozenMemoryValue,
+        MemoryValuePreview,
+        PointerScanRequest,
+        SearchResult,
+        SearchSessionState;
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -163,24 +168,26 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
         ref: ref,
         sourceKey: 'search',
         pid: selectedPid,
-        items: results.map((result) {
-          final preview = previewsByAddress[result.address];
-          return MemoryToolExportItem(
-            pid: selectedPid,
-            address: result.address,
-            regionStart: result.regionStart,
-            regionTypeKey: result.regionTypeKey,
-            valueType: preview?.type ?? result.type,
-            displayValue: resolveMemoryToolPreferredDisplayValue(
-              result: result,
-              livePreview: preview,
-              fallbackDisplayValue: result.displayValue,
-            ),
-            rawBytes: preview?.rawBytes ?? result.rawBytes,
-            isFrozen: frozenAddresses.contains(result.address),
-            entryKind: MemoryToolEntryKind.value,
-          );
-        }).toList(growable: false),
+        items: results
+            .map((result) {
+              final preview = previewsByAddress[result.address];
+              return MemoryToolExportItem(
+                pid: selectedPid,
+                address: result.address,
+                regionStart: result.regionStart,
+                regionTypeKey: result.regionTypeKey,
+                valueType: preview?.type ?? result.type,
+                displayValue: resolveMemoryToolPreferredDisplayValue(
+                  result: result,
+                  livePreview: preview,
+                  fallbackDisplayValue: result.displayValue,
+                ),
+                rawBytes: preview?.rawBytes ?? result.rawBytes,
+                isFrozen: frozenAddresses.contains(result.address),
+                entryKind: MemoryToolEntryKind.value,
+              );
+            })
+            .toList(growable: false),
       );
     }
 
@@ -278,8 +285,12 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
                               if (!context.mounted) {
                                 return;
                               }
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(error.toString())),
+                              await ToastOverlayMessage.show(
+                                error.toString().replaceFirst(
+                                  'Exception: ',
+                                  '',
+                                ),
+                                duration: const Duration(milliseconds: 1400),
                               );
                             }
                           },
@@ -377,8 +388,12 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
                               if (!context.mounted) {
                                 return;
                               }
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(error.toString())),
+                              await ToastOverlayMessage.show(
+                                error.toString().replaceFirst(
+                                  'Exception: ',
+                                  '',
+                                ),
+                                duration: const Duration(milliseconds: 1400),
                               );
                             }
                           }
