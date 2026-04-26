@@ -416,8 +416,8 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
                     ],
                   ),
                   MemoryToolResultSelectionActionGroupData(
-                    icon: Icons.tune_rounded,
-                    label: context.isZh ? '修改与设置' : 'Edit & Settings',
+                    icon: Icons.edit_note_rounded,
+                    label: context.isZh ? '修改' : 'Edit',
                     actions: <MemoryToolResultSelectionActionData>[
                       MemoryToolResultSelectionActionData(
                         icon: Icons.edit_rounded,
@@ -461,6 +461,12 @@ class MemoryToolSearchResultCard extends HookConsumerWidget {
                               }
                             : null,
                       ),
+                    ],
+                  ),
+                  MemoryToolResultSelectionActionGroupData(
+                    icon: Icons.tune_rounded,
+                    label: context.isZh ? '设置' : 'Settings',
+                    actions: <MemoryToolResultSelectionActionData>[
                       MemoryToolResultSelectionActionData(
                         icon: Icons.view_week_rounded,
                         label: context.isZh ? '显示数量' : 'Display Limit',
